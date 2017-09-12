@@ -25,11 +25,12 @@
     -->
   </properties>
 
-  <name>TODO Plugin</name>
-  <description>TODO</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
+  <name>Jenkins FaaS Branch Source for OrangeForge Tuleap</name>
+  <description>Mimic the Github Branch Source plugin for OrangeForge Tuleap so that Jenkins' jobs are
+    autocreated when a git repository containing a jenkinsFile is discovered in the OrangeForge project's
+    repo</description>
 
-  <!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the applicable one if needed. -->
+  <!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the applicable one if needed.
 
   <licenses>
     <license>
@@ -38,7 +39,7 @@
     </license>
   </licenses>
 
-  <!-- If you want this to appear on the wiki page:
+ If you want this to appear on the wiki page:
   <developers>
     <developer>
       <id>bhacker</id>
@@ -66,14 +67,50 @@
       <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
-  <!-- If you want to depend on other plugins:
+  <!-- depend on other plugins  -->
   <dependencies>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>credentials</artifactId>
-      <version>2.0</version>
+      <artifactId>scm-api</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>3.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>1.13.0</version>
+    </dependency>
+
+    <!-- tests -->
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <version>3.9.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.9.5</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
-  -->
+
 
 </project>
