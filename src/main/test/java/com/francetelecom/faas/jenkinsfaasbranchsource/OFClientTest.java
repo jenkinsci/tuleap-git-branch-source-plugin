@@ -1,11 +1,11 @@
-package com.francetelecom.faas.jenkinstuleapfaasbranchsource;
+package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.francetelecom.faas.jenkinstuleapfaasbranchsource.config.OrangeForgeSettings;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 
 import static org.hamcrest.Matchers.containsString;
 

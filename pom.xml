@@ -10,7 +10,7 @@
     <relativePath/>
   </parent>
   <groupId>com.francetelecom.faas</groupId>
-  <artifactId>jenkins-tuleap-faas-branch-source</artifactId>
+  <artifactId>jenkins-faas-branch-source</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 

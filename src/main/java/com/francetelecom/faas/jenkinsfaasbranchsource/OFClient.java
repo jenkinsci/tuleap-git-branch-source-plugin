@@ -1,10 +1,10 @@
-package com.francetelecom.faas.jenkinstuleapfaasbranchsource;
+package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 
-import com.francetelecom.faas.jenkinstuleapfaasbranchsource.config.OrangeForgeSettings;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;

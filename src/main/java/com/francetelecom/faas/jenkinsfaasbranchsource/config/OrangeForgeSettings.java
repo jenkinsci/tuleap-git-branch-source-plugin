@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinstuleapfaasbranchsource.config;
+package com.francetelecom.faas.jenkinsfaasbranchsource.config;
 
 import java.io.File;
 import java.io.FileInputStream;

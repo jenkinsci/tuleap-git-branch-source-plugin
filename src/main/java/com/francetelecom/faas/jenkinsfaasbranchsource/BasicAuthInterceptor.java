@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinstuleapfaasbranchsource;
+package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
