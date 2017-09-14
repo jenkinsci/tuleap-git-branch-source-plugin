@@ -8,6 +8,10 @@ import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
 
+/**
+ * Holds config info to acces OrangeForge.
+ * To populate itself, it looks for a .jenkinsfaasbranchsource/orangeForge.properties in user home dir as a config file.
+ */
 public class OrangeForgeSettings {
 
 	private String username;
@@ -17,7 +21,7 @@ public class OrangeForgeSettings {
 
 	private static String fromHomeDir(){
 		File homeDir = new File(System.getProperty("user.home"));
-		File propFile = new File(homeDir, "orangeForge.properties");
+		File propFile = new File(homeDir, ".jenkinsfaasbranchsource/orangeForge.properties");
 		return propFile.getPath();
 	}
 
