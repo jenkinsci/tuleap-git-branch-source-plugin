@@ -14,9 +14,8 @@ import org.apache.commons.io.IOUtils;
  */
 public class OrangeForgeSettings {
 
-	private String username;
-	private String password;
-	private String apiBaseUrl;
+	private String username, password;
+	private String apiBaseUrl, gitBaseUrl;
 	private String FaaSProjectId;
 
 	private static String fromHomeDir(){
@@ -50,6 +49,7 @@ public class OrangeForgeSettings {
 		this.password = props.getProperty("orangeforge.password");
 		this.apiBaseUrl = props.getProperty("orangeforge.api-base-url");
 		this.FaaSProjectId = props.getProperty("orangeforge.project-id");
+		this.gitBaseUrl = props.getProperty("orangeforge.git-base-url");
 	}
 
 	public String getUsername() {
@@ -84,4 +84,11 @@ public class OrangeForgeSettings {
 		FaaSProjectId = faaSProjectId;
 	}
 
+	public String getGitBaseUrl() {
+		return gitBaseUrl;
+	}
+
+	public void setGitBaseUrl(String gitBaseUrl) {
+		this.gitBaseUrl = gitBaseUrl;
+	}
 }

@@ -1,6 +1,7 @@
 package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
+import java.util.List;
 
 
 import org.hamcrest.Matchers;
@@ -10,12 +11,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 
@@ -52,5 +56,12 @@ public class OFClientTest {
 		));
 		assertThat(response.getRepositories(), hasItem(Matchers.<OFGitRepository>hasProperty(
 				"name", equalToIgnoringCase ("pkg/tools/zaproxy-slave"))));
+	}
+
+	@Test
+	public void given__setup__when__get__project_gitBranch__then__return__git__branches() throws IOException {
+		List<OFGitBranch> response = client.branchByGitRepo("faas/pkg/faas/faas-meta-packages.git");
+		assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/develop"))));
+		assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/master"))));
 	}
 }

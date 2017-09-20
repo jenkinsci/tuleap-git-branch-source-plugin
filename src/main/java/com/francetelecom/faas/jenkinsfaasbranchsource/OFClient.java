@@ -1,11 +1,25 @@
 package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+
+import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
 
@@ -23,6 +37,7 @@ import okhttp3.Response;
  */
 public class OFClient {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(OFClient.class);
 	private static final String API_PROJECT_PATH = "/projects";
 	private static final String API_GIT_PATH = "/git";
 
@@ -82,12 +97,67 @@ public class OFClient {
 		}
 	}
 
+	public List<OFGitBranch> branchByGitRepo (final String gitRepoPath) throws
+			IOException, NoSingleRepoByPathException, NoSuchElementException {
+		return gitRepoByPath(gitRepoPath)
+					.map(headsInRepo())
+					.get();
+	}
+
+	private Optional<OFGitRepository> gitRepoByPath(final String gitRepoPath) throws IOException,
+			NoSingleRepoByPathException {
+		OFProjectRepositories repos = projectRepositories();
+		return repos.getRepositories().stream()
+					.filter(ofGitRepository -> gitRepoPath.equals(ofGitRepository.getPath()))
+					.reduce((a,b) -> {
+						throw new NoSingleRepoByPathException(gitRepoPath, a.getUri(), b.getUri());
+					});
+	}
+
+	private Function<OFGitRepository, List<OFGitBranch>> headsInRepo() {
+		return ofGitRepository -> {
+			try {
+				LOGGER.info("Ls-remoting heads of git repository at {} + {}",
+							orangeForgeSettings.getGitBaseUrl(),
+							ofGitRepository.getPath());
+				return new LsRemoteCommand(null)
+						.setCredentialsProvider(new UsernamePasswordCredentialsProvider(
+								orangeForgeSettings.getUsername(), orangeForgeSettings.getPassword()))
+						.setRemote(orangeForgeSettings.getGitBaseUrl()+ofGitRepository.getPath())
+						.setHeads(true)
+						.call()
+						.stream()
+						.map(refToOFGitBranch())
+						.collect(Collectors.toList());
+			} catch (GitAPIException e) {
+				throw new OFGitException(ofGitRepository.getUri(), ofGitRepository.getName(), ofGitRepository.getPath(), e);
+			}
+		};
+	}
+
+	private Function<Ref, OFGitBranch> refToOFGitBranch() {
+		return ref -> new OFGitBranch(ref.getName(), ref.getObjectId().getName());
+	}
+
 	private <T> T parse (String input, Class<T> clazz) throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.readValue(input, clazz);
 		} catch (IOException e) {
 			throw new IOException("Parsing class pbm", e);
+		}
+	}
+
+	private class NoSingleRepoByPathException extends RuntimeException {
+
+		public NoSingleRepoByPathException(String path, String doublonUri, String anotherDoublonUri) {
+			super("Multiple repository with path '"+path+"' :"+doublonUri+" and "+anotherDoublonUri);
+		}
+	}
+
+	private class OFGitException extends RuntimeException {
+		public OFGitException(String uri, String name, String path, Throwable t) {
+			super("Unable to communicate to OrangeForge git: "+name+"at "+uri+"/"+path, t);
 		}
 	}
 }

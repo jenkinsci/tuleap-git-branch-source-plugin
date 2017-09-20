@@ -3,6 +3,7 @@ package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
+ * Encapsulate the Tuleap git representation and JGit git repo
  * Translation of Tuleap's GitRepositoryRepresentation
  *  @see <a href=https://www.forge.orange-labs.fr/api/explorer/#!/git/retrieve>https://www.forge.orange-labs.fr/api/explorer/#!/git/retrieve</a>
  *  @see <a href=https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit>https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit</a>
