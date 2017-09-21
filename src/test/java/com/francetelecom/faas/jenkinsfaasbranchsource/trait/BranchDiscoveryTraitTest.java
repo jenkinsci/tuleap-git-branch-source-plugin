@@ -1,0 +1,28 @@
+package com.francetelecom.faas.jenkinsfaasbranchsource.trait;
+
+
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSourceContext;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+import jenkins.scm.api.SCMHeadObserver;
+
+public class BranchDiscoveryTraitTest {
+
+	@ClassRule
+	public static JenkinsRule j = new JenkinsRule();
+
+	@Test
+	public void given__discoverAll__when__appliedToContext__then__noFilter() throws Exception {
+		OFSCMSourceContext ctx = new OFSCMSourceContext(null, SCMHeadObserver.none());
+		assertThat(ctx.wantBranches(), is(false));
+		BranchDiscoveryTrait instance = new BranchDiscoveryTrait();
+		instance.decorateContext(ctx);
+		assertThat(ctx.wantBranches(), is(true));
+	}
+}

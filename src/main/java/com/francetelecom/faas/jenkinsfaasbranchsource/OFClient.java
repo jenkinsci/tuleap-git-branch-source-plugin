@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.BasicAuthInterceptor;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
@@ -77,7 +78,21 @@ public class OFClient {
 		}
 	}
 
-	public OFProjectRepositories projectRepositories() throws IOException {
+	/**
+	 * Get a list of repositories in the configured orangeForge.properties project
+	 * @return the list of repositories
+	 * @throws IOException in case HTTP errors occurs or parsing of response fail
+	 */
+	public List<OFGitRepository> projectRepositories() throws IOException {
+		return projectRepositoriesWrapper().getRepositories();
+	}
+
+	/**
+	 * Get repositories wrapper of the configured orangeForge.properties project from OrangeForge api
+	 * @return the repositories wrapper {@see OFProjectRepositories}
+	 * @throws IOException in case HTTP errors occurs or parsing of response fail
+	 */
+	private OFProjectRepositories projectRepositoriesWrapper() throws IOException {
 		final String apiRepositoriesUrl = orangeForgeSettings.getApiBaseUrl() + API_PROJECT_PATH + "/" +
 				orangeForgeSettings.getFaaSProjectId() + API_GIT_PATH;
 		//FIXME enable cache later
@@ -106,8 +121,7 @@ public class OFClient {
 
 	private Optional<OFGitRepository> gitRepoByPath(final String gitRepoPath) throws IOException,
 			NoSingleRepoByPathException {
-		OFProjectRepositories repos = projectRepositories();
-		return repos.getRepositories().stream()
+		return projectRepositories().stream()
 					.filter(ofGitRepository -> gitRepoPath.equals(ofGitRepository.getPath()))
 					.reduce((a,b) -> {
 						throw new NoSingleRepoByPathException(gitRepoPath, a.getUri(), b.getUri());
@@ -148,15 +162,15 @@ public class OFClient {
 		}
 	}
 
-	private class NoSingleRepoByPathException extends RuntimeException {
+	private static class NoSingleRepoByPathException extends RuntimeException {
 
-		public NoSingleRepoByPathException(String path, String doublonUri, String anotherDoublonUri) {
+		private NoSingleRepoByPathException(String path, String doublonUri, String anotherDoublonUri) {
 			super("Multiple repository with path '"+path+"' :"+doublonUri+" and "+anotherDoublonUri);
 		}
 	}
 
-	private class OFGitException extends RuntimeException {
-		public OFGitException(String uri, String name, String path, Throwable t) {
+	private static class OFGitException extends RuntimeException {
+		private OFGitException(String uri, String name, String path, Throwable t) {
 			super("Unable to communicate to OrangeForge git: "+name+"at "+uri+"/"+path, t);
 		}
 	}

@@ -14,7 +14,6 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
@@ -50,11 +49,11 @@ public class OFClientTest {
 
 	@Test
 	public void given__setup__when__get__project_git__then__return__git__repositories() throws IOException {
-		OFProjectRepositories response = client.projectRepositories();
-		assertThat(response.getRepositories(), hasItem(Matchers.<OFGitRepository>hasProperty(
+		List<OFGitRepository> response = client.projectRepositories();
+		assertThat(response, hasItem(Matchers.<OFGitRepository>hasProperty(
 				"name", equalToIgnoringCase("pkg/caod/caod-manager"))
 		));
-		assertThat(response.getRepositories(), hasItem(Matchers.<OFGitRepository>hasProperty(
+		assertThat(response, hasItem(Matchers.<OFGitRepository>hasProperty(
 				"name", equalToIgnoringCase ("pkg/tools/zaproxy-slave"))));
 	}
 

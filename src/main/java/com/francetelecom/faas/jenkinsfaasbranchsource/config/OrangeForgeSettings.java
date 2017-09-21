@@ -8,6 +8,10 @@ import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
 
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+
 /**
  * Holds config info to acces OrangeForge.
  * To populate itself, it looks for a .jenkinsfaasbranchsource/orangeForge.properties in user home dir as a config file.
@@ -17,24 +21,6 @@ public class OrangeForgeSettings {
 	private String username, password;
 	private String apiBaseUrl, gitBaseUrl;
 	private String FaaSProjectId;
-
-	private static String fromHomeDir(){
-		File homeDir = new File(System.getProperty("user.home"));
-		File propFile = new File(homeDir, ".jenkinsfaasbranchsource/orangeForge.properties");
-		return propFile.getPath();
-	}
-
-	private static Properties fromPath(String propPath) throws IOException {
-		Properties result = new Properties();
-		FileInputStream thePropIn = null;
-		try {
-			thePropIn = new FileInputStream(propPath);
-			result.load(thePropIn);
-		} finally {
-			IOUtils.closeQuietly(thePropIn);
-		}
-		return result;
-	}
 
 	public OrangeForgeSettings() throws IOException {
 		this(fromHomeDir());
@@ -50,6 +36,11 @@ public class OrangeForgeSettings {
 		this.apiBaseUrl = props.getProperty("orangeforge.api-base-url");
 		this.FaaSProjectId = props.getProperty("orangeforge.project-id");
 		this.gitBaseUrl = props.getProperty("orangeforge.git-base-url");
+	}
+
+	public StandardUsernamePasswordCredentials credentials(){
+		return new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "orangeForge", "FaaS-viewer", getUsername
+				(), getPassword());
 	}
 
 	public String getUsername() {
@@ -90,5 +81,23 @@ public class OrangeForgeSettings {
 
 	public void setGitBaseUrl(String gitBaseUrl) {
 		this.gitBaseUrl = gitBaseUrl;
+	}
+
+	private static String fromHomeDir(){
+		File homeDir = new File(System.getProperty("user.home"));
+		File propFile = new File(homeDir, ".jenkinsfaasbranchsource/orangeForge.properties");
+		return propFile.getPath();
+	}
+
+	private static Properties fromPath(String propPath) throws IOException {
+		Properties result = new Properties();
+		FileInputStream thePropIn = null;
+		try {
+			thePropIn = new FileInputStream(propPath);
+			result.load(thePropIn);
+		} finally {
+			IOUtils.closeQuietly(thePropIn);
+		}
+		return result;
 	}
 }
