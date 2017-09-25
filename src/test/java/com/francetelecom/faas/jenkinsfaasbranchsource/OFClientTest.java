@@ -42,7 +42,7 @@ public class OFClientTest {
 
 	@Test
 	public void given__setup__when__get__project__then__return__projects_infos() throws IOException {
-		OFProject project = client.project();
+		OFProject project = client.configuredProject();
 		Assert.assertThat(project.getLabel(), is("Forge as a Service"));
 		Assert.assertThat(project.getShortname(), is("faas"));
 	}

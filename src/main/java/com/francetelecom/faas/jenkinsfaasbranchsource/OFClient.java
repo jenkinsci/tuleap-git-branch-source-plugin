@@ -29,6 +29,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  *  OrangeForge REST client in charge of establishing connexion given some configuration.
@@ -59,9 +60,13 @@ public class OFClient {
 				.build();
 	}
 
-	public OFProject project() throws IOException {
-		final String apiProjectsUrl = orangeForgeSettings.getApiBaseUrl() + API_PROJECT_PATH + "/" +
-				orangeForgeSettings.getFaaSProjectId();
+	public OFProject configuredProject() throws IOException {
+		return projectById(orangeForgeSettings.getFaaSProjectId());
+
+	}
+
+	public OFProject projectById(String projectId) throws IOException {
+		final String apiProjectsUrl = orangeForgeSettings.getApiBaseUrl() + API_PROJECT_PATH + "/" + projectId;
 		//FIXME enable cache later
 		Request req = new Request.Builder()
 				.url(apiProjectsUrl)
@@ -72,7 +77,12 @@ public class OFClient {
 		try (Response response = client.newCall(req).execute()) {
 			if (!response.isSuccessful()) throw new IOException("HTTP call error at url: "+req.url().toString()+" " +
 																		"with code: "+response.code());
-			return parse(response.body().string(), OFProject.class);
+
+			ResponseBody body = response.body();
+			if (body != null) {
+				return parse(body.string(), OFProject.class);
+			}
+			return null;
 		} catch (IOException e) {
 			throw new IOException("GetProject encounter error", e);
 		}
