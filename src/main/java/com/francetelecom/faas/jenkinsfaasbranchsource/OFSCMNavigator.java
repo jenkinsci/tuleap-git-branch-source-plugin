@@ -10,9 +10,18 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 
@@ -20,8 +29,15 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.RestrictedSince;
+import hudson.Util;
 import hudson.model.Action;
+import hudson.model.Item;
+import hudson.model.Queue;
 import hudson.model.TaskListener;
+import hudson.model.queue.Tasks;
+import hudson.security.ACL;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.SCMNavigatorDescriptor;
 import jenkins.scm.api.SCMNavigatorEvent;
@@ -39,7 +55,11 @@ public class OFSCMNavigator extends SCMNavigator {
 	private final String projectId;
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
-
+	/**
+	 * The API endpoint for the OrangeForge server.
+	 */
+	@CheckForNull
+	private String apiUri;
 
 	@DataBoundConstructor
 	public OFSCMNavigator(String projectId) {
@@ -98,6 +118,45 @@ public class OFSCMNavigator extends SCMNavigator {
 		return actions;
 	}
 
+	public String getApiUri() {
+		return apiUri;
+	}
+
+	@DataBoundSetter
+	public void setApiUri(String apiUri) {
+		this.apiUri = apiUri;
+	}
+
+	/**
+	 * Gets the {@link StandardCredentials#getId()} of the credentials to use when accessing {@link #apiUri} (and also
+	 * the default credentials to use for checking out).
+	 *
+	 * @return the {@link StandardCredentials#getId()} of the credentials to use when accessing {@link #apiUri} (and
+	 * also the default credentials to use for checking out).
+	 * @since 2.2.0
+	 */
+	@CheckForNull
+	public String getCredentialsId() {
+		return credentialsId;
+	}
+
+	/**
+	 * Sets the {@link StandardCredentials#getId()} of the credentials to use when accessing {@link #apiUri} (and also
+	 * the default credentials to use for checking out).
+	 *
+	 * @param credentialsId the {@link StandardCredentials#getId()} of the credentials to use when accessing
+	 *                      {@link #apiUri} (and also the default credentials to use for checking out).
+	 * @since 2.2.0
+	 */
+	@DataBoundSetter
+	public void setCredentialsId(@CheckForNull String credentialsId) {
+		this.credentialsId = Util.fixEmpty(credentialsId);
+	}
+
+	public boolean isApiUriSelectable() {
+		return true;
+	}
+
 	/**
 	 * Gets the Id of the project who's repositories will be navigated.
 	 * @return the Idof the project who's repositories will be navigated.
@@ -147,6 +206,44 @@ public class OFSCMNavigator extends SCMNavigator {
 					new UncategorizedSCMSourceCategory(Messages._OFSCMNavigator_DepotSourceCategory())
 			};
 		}
+	}
+
+	/*@RequirePOST
+	@Restricted(NoExternalUse.class) // stapler
+	public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
+											   @QueryParameter String apiUri,
+											   @QueryParameter String credentialsId) {
+		return Connector.checkScanCredentials(context, apiUri, credentialsId);
+	}*/
+
+	/**
+	 * Populates the drop-down list of credentials.
+	 *
+	 * @param context the context.
+	 * @param apiUri  the end-point.
+	 * @return the drop-down list.
+	 * @since 2.2.0
+	 */
+	@Restricted(NoExternalUse.class) // stapler
+	public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
+												 @QueryParameter String apiUri,
+												 @QueryParameter String credentialsId) {
+		if (context == null
+				? !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)
+				: !context.hasPermission(Item.EXTENDED_READ)) {
+			return new StandardListBoxModel().includeCurrentValue(credentialsId);
+		}
+		return new StandardListBoxModel()
+				.includeEmptyValue()
+				.includeMatchingAs(
+						context instanceof Queue.Task
+								? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
+								: ACL.SYSTEM,
+						context,
+						StandardUsernameCredentials.class,
+						URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, "https://www.forge.orange-labs.fr/projects")).build(),
+						CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class))
+				);
 	}
 
 	private static class SourceFactory implements SCMNavigatorRequest.SourceLambda {

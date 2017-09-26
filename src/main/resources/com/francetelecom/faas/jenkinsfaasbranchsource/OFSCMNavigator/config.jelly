@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials2" xmlns:scm="/jenkins/scm/api/form">
+  <j:choose>
+    <j:when test="${descriptor.apiUriSelectable}">
+      <f:entry title="OrangeForge Api" field="apiUri">
+        <f:select/>
+      </f:entry>
+    </j:when>
+    <j:otherwise>
+      <f:invisibleEntry>
+        <f:select field="apiUri"/>
+      </f:invisibleEntry>
+    </j:otherwise>
+  </j:choose>
+  <f:entry title="${%Credentials}" field="credentialsId">
+    <c:select checkMethod="post"/>
+  </f:entry>
+  <f:entry title="${%ProjectId}" field="projectId">
+    <f:textbox/>
+  </f:entry>
+  <f:entry title="${%Behaviours}">
+    <scm:traits field="traits"/>
+  </f:entry>
+</j:jelly>

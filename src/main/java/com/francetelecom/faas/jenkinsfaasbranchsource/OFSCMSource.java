@@ -1,31 +1,25 @@
 package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 
-import org.kohsuke.stapler.DataBoundConstructor;
-
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.plugins.git.GitSCM;
 import hudson.scm.SCM;
-import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMHeadEvent;
 import jenkins.scm.api.SCMHeadObserver;
 import jenkins.scm.api.SCMRevision;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.SCMSourceCriteria;
-import jenkins.scm.api.SCMSourceDescriptor;
-import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 
 /**
@@ -37,26 +31,26 @@ public class OFSCMSource extends SCMSource {
 	/**
 	 * OrangeForge project to build URL from.
 	 */
-	private final String project;
+	/*private final String project;
 
 
-	/**
+	*//**
 	 * Git Repository name to build URL from.
-	 */
-	private String repository;
+	 *//*
+	private final String repository;
 
-	/**
+	*//**
 	 * The behaviours to apply to this source.
 	 */
-	private List<SCMSourceTrait> traits;
+	private List<SCMSourceTrait> traits = new ArrayList<>();
 
-	//TO be used in SCM Navigator
+	/*//TO be used in SCM Navigator
 	//TODO
 	@DataBoundConstructor
 	public OFSCMSource(String project, String repository) {
 		this.project = project;
 		this.repository = repository;
-	}
+	}*/
 
 	@Override
 	protected void retrieve(@CheckForNull SCMSourceCriteria criteria,
@@ -67,7 +61,7 @@ public class OFSCMSource extends SCMSource {
 		try (final OFSCMSourceRequest request = new OFSCMSourceContext(criteria, observer)
 				.withTraits(traits)
 				.newRequest(this, listener)) {
-			StandardCredentials credentials = new OrangeForgeSettings().credentials();
+			StandardUsernamePasswordCredentials credentials = new OrangeForgeSettings().credentials();
 			request.listener().getLogger().print("");
 			if (request.isFetchBranches()) {
 				OFClient client = new OFClient(new OrangeForgeSettings());
@@ -76,13 +70,13 @@ public class OFSCMSource extends SCMSource {
 				int count=0;
 				for (OFGitBranch branch : branches) {
 					count++;
-					if (request.process(new OFBranchSCMHead(branch.getName()),
+					/*if (request.process(new OFBranchSCMHead(branch.getName()),
 										branch::getSha1,
 										new OFProbeFactory(client, request),
 										new OFRevisionFactory(),
 										new OFWitness())) {
 						request.listener().getLogger().format("%n  %d branches were processed (query completed)%n", count);
-					}
+					}*/
 
 				}
 
@@ -90,12 +84,27 @@ public class OFSCMSource extends SCMSource {
 		}
 	}
 
+	/*@NonNull
+	@Override
+	protected SCMProbe createProbe(@NonNull SCMHead head, @CheckForNull SCMRevision revision) throws IOException {
+		return null;
+	}*/
+
 	@Override
 	public SCM build(@NonNull SCMHead scmHead,
 					 @CheckForNull SCMRevision scmRevision) {
 		//String ref = scmHead.getName();
 		//TODO
 		return new GitSCM("the repo");
+	}
+
+	/*public List<SCMSourceTrait> getTraits() {
+		return Collections.unmodifiableList(traits);
+	}
+
+	@DataBoundSetter
+	public void setTraits(List<SCMSourceTrait> traits) {
+		this.traits = new ArrayList<>(Util.fixNull(traits));
 	}
 
 	//TODO
@@ -155,5 +164,5 @@ public class OFSCMSource extends SCMSource {
 				}
 			};
 		}
-	}
+	}*/
 }
