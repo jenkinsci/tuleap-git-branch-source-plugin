@@ -6,7 +6,6 @@ import jenkins.scm.api.SCMSourceObserver;
 import jenkins.scm.api.trait.SCMNavigatorContext;
 import jenkins.scm.api.trait.SCMNavigatorRequest;
 
-//TODO
 public class OFSCMNavigatorRequest extends SCMNavigatorRequest {
 
 

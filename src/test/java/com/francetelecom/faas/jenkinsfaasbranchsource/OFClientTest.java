@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitCommit;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 
@@ -37,7 +38,7 @@ public class OFClientTest {
 
 	@After
 	public void tearDown() throws Exception {
-
+		client = null;
 	}
 
 	@Test
@@ -62,5 +63,12 @@ public class OFClientTest {
 		List<OFGitBranch> response = client.branchByGitRepo("faas/pkg/faas/faas-meta-packages.git");
 		assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/develop"))));
 		assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/master"))));
+	}
+
+	@Test
+	public void testGo() {
+		OFGitCommit commit = client.resolveCommit("03ed40e5a9dd003cbe3968a6613e0e1496fad673",
+												  "faas/pkg/faas/faas-meta-packages.git");
+		assertThat(commit.getDateMillis(), is(2L));
 	}
 }

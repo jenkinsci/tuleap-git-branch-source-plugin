@@ -3,6 +3,8 @@ package com.francetelecom.faas.jenkinsfaasbranchsource.trait;
 import java.io.IOException;
 
 
+import org.kohsuke.stapler.DataBoundConstructor;
+
 import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFBranchSCMHead;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSource;
@@ -21,6 +23,10 @@ import jenkins.scm.impl.trait.Discovery;
 
 public class BranchDiscoveryTrait extends SCMSourceTrait {
 
+	@DataBoundConstructor
+	public BranchDiscoveryTrait() {
+
+	}
 
 	@Override
 	protected void decorateContext(SCMSourceContext<?, ?> context) {
@@ -32,7 +38,6 @@ public class BranchDiscoveryTrait extends SCMSourceTrait {
 	/**
 	 * The descriptor.
 	 */
-	//TODO
 	@Extension
 	@Discovery
 	public static class DescriptorImpl extends SCMSourceTraitDescriptor {

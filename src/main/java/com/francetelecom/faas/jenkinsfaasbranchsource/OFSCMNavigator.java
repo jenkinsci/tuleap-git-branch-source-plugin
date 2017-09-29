@@ -2,8 +2,11 @@ package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import javax.inject.Inject;
 
 
 import org.apache.commons.lang.StringUtils;
@@ -52,7 +55,7 @@ import net.jcip.annotations.GuardedBy;
 
 public class OFSCMNavigator extends SCMNavigator {
 
-	private final String projectId;
+	private String projectId;
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
 	/**
@@ -62,8 +65,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	private String apiUri;
 
 	@DataBoundConstructor
-	public OFSCMNavigator(String projectId) {
-		this.projectId = projectId;
+	public OFSCMNavigator() {
 		this.traits = new ArrayList<>();
 	}
 
@@ -76,7 +78,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	public void visitSources(SCMSourceObserver observer) throws IOException, InterruptedException {
 		TaskListener listener = observer.getListener();
 
-		if (StringUtils.isBlank(projectId)) {
+		if (StringUtils.isBlank(getprojectId())) {
 			listener.getLogger().format("Must specify a project Id%n");
 			return;
 		}
@@ -85,7 +87,6 @@ public class OFSCMNavigator extends SCMNavigator {
 		final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
 		StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
 		OFClient client = new OFClient(orangeForgeSettings);
-		client.projectRepositories();
 
 		try (final OFSCMNavigatorRequest request = new OFSCMNavigatorContext()
 				.withTraits(traits)
@@ -93,7 +94,7 @@ public class OFSCMNavigator extends SCMNavigator {
 			SourceFactory sourceFactory = new SourceFactory(request);
 			WitnessImpl witness = new WitnessImpl(listener);
 			for (OFGitRepository repo : client.projectRepositories()) {
-				if (request.process(repo.getName(), sourceFactory, null, witness)) {
+				if (request.process(repo.getPath(), sourceFactory, null, witness)) {
 					listener.getLogger().format(
 							"%d repositories were processed (query completed)%n", witness.getCount());
 				}
@@ -114,7 +115,7 @@ public class OFSCMNavigator extends SCMNavigator {
 		StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
 		OFClient client = new OFClient(orangeForgeSettings);
 
-		actions.add(new OFProjectMetadataAction(client.projectById(projectId)));
+		actions.add(new OFProjectMetadataAction(client.projectById(getprojectId())));
 		return actions;
 	}
 
@@ -125,6 +126,22 @@ public class OFSCMNavigator extends SCMNavigator {
 	@DataBoundSetter
 	public void setApiUri(String apiUri) {
 		this.apiUri = apiUri;
+	}
+
+	public List<SCMTrait<? extends SCMTrait>> getTraits() {
+		return Collections.unmodifiableList(traits);
+	}
+
+	/**
+	 * Sets the behavioural traits that are applied to this navigator and any {@link OFSCMSource} instances it
+	 * discovers. The new traits will take affect on the next navigation through any of the
+	 * {@link #visitSources(SCMSourceObserver)} overloads or {@link #visitSource(String, SCMSourceObserver)}.
+	 *
+	 * @param traits the new behavioural traits.
+	 */
+	@DataBoundSetter
+	public void setTraits(@CheckForNull List<SCMTrait<? extends SCMTrait<?>>> traits) {
+		this.traits = traits != null ? new ArrayList<>(traits) : new ArrayList<>();
 	}
 
 	/**
@@ -165,6 +182,11 @@ public class OFSCMNavigator extends SCMNavigator {
 		return projectId;
 	}
 
+	@DataBoundSetter
+	public void setProjectId(final String projectId) {
+		this.projectId = projectId;
+	}
+
 	@Symbol("orangeforge")
 	@Extension
 	public static class DescriptorImpl extends SCMNavigatorDescriptor {
@@ -180,22 +202,30 @@ public class OFSCMNavigator extends SCMNavigator {
 		@RestrictedSince("2.2.0")
 		public static final String defaultExcludes = "";
 
-		//@Inject private OFSCMSource.DescriptorImpl delegate;
+		@Inject private OFSCMSource.DescriptorImpl delegate;
 
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public String getPronoun() {
 			return Messages.OFSCMNavigator_Pronoun();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public SCMNavigator newInstance(@CheckForNull String projectId) {
-			OFSCMNavigator navigator = new OFSCMNavigator(projectId);
-			//navigator.setTraits(getTraitsDefaults());
+			OFSCMNavigator navigator = new OFSCMNavigator();
+			navigator.setTraits(getTraitsDefaults());
 			return navigator;
 		}
 
-
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public String getDisplayName() {
 			return "OrangeForge Project";
@@ -206,47 +236,70 @@ public class OFSCMNavigator extends SCMNavigator {
 					new UncategorizedSCMSourceCategory(Messages._OFSCMNavigator_DepotSourceCategory())
 			};
 		}
-	}
 
-	/*@RequirePOST
-	@Restricted(NoExternalUse.class) // stapler
-	public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
-											   @QueryParameter String apiUri,
-											   @QueryParameter String credentialsId) {
-		return Connector.checkScanCredentials(context, apiUri, credentialsId);
-	}*/
-
-	/**
-	 * Populates the drop-down list of credentials.
-	 *
-	 * @param context the context.
-	 * @param apiUri  the end-point.
-	 * @return the drop-down list.
-	 * @since 2.2.0
-	 */
-	@Restricted(NoExternalUse.class) // stapler
-	public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-												 @QueryParameter String apiUri,
-												 @QueryParameter String credentialsId) {
-		if (context == null
-				? !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)
-				: !context.hasPermission(Item.EXTENDED_READ)) {
-			return new StandardListBoxModel().includeCurrentValue(credentialsId);
+		/**
+		 * {@inheritDoc}
+		 */
+		@NonNull
+		@Override
+		public String getDescription() {
+			return Messages.OFSCMNavigator_Description();
 		}
-		return new StandardListBoxModel()
-				.includeEmptyValue()
-				.includeMatchingAs(
-						context instanceof Queue.Task
-								? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
-								: ACL.SYSTEM,
-						context,
-						StandardUsernameCredentials.class,
-						URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, "https://www.forge.orange-labs.fr/projects")).build(),
-						CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class))
-				);
+
+		/*@RequirePOST
+		@Restricted(NoExternalUse.class) // stapler
+		public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
+												   @QueryParameter String apiUri,
+												   @QueryParameter String credentialsId) {
+			return Connector.checkScanCredentials(context, apiUri, credentialsId);
+		}*/
+
+		public ListBoxModel doFillApiUriItems() {
+			ListBoxModel listBox = new ListBoxModel();
+			listBox.add("OrangeForge", "");
+			listBox.add("OrangeForge API", "https://www.forge.orange-labs.fr/api");
+			return listBox;
+		}
+
+		@SuppressWarnings("unused") // jelly
+		public List<SCMTrait<? extends SCMTrait<?>>> getTraitsDefaults() {
+			List<SCMTrait<? extends SCMTrait<?>>> result = new ArrayList<>();
+			result.addAll(delegate.getTraitsDefaults());
+			return result;
+		}
+
+		/**
+		 * Populates the drop-down list of credentials.
+		 *
+		 * @param context the context.
+		 * @param apiUri  the end-point.
+		 * @return the drop-down list.
+		 * @since 2.2.0
+		 */
+		@Restricted(NoExternalUse.class) // stapler
+		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
+													 @QueryParameter String apiUri,
+													 @QueryParameter String credentialsId) {
+			if (context == null
+					? !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)
+					: !context.hasPermission(Item.EXTENDED_READ)) {
+				return new StandardListBoxModel().includeCurrentValue(credentialsId);
+			}
+			return new StandardListBoxModel()
+					.includeEmptyValue()
+					.includeMatchingAs(
+							context instanceof Queue.Task
+									? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
+									: ACL.SYSTEM,
+							context,
+							StandardUsernameCredentials.class,
+							URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, "https://www.forge.orange-labs.fr/projects")).build(),
+							CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class))
+					);
+		}
 	}
 
-	private static class SourceFactory implements SCMNavigatorRequest.SourceLambda {
+	private class SourceFactory implements SCMNavigatorRequest.SourceLambda {
 
 		private final OFSCMNavigatorRequest request;
 
@@ -256,10 +309,10 @@ public class OFSCMNavigator extends SCMNavigator {
 
 		@NonNull
 		@Override
-		public SCMSource create(@NonNull String projectName) throws IOException, InterruptedException {
-			//TODO
-			//return new OFSCMSource(projectName, "the repo");
-			return new OFSCMSource();
+		public SCMSource create(@NonNull String repositoryName) throws IOException, InterruptedException {
+			return new OFSCMSourceBuilder(getId()+repositoryName, credentialsId, projectId, repositoryName)
+					.withRequest(request)
+					.build();
 		}
 	}
 

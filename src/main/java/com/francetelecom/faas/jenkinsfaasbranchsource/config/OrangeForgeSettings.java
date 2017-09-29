@@ -7,6 +7,8 @@ import java.util.Properties;
 
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -18,6 +20,7 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
  */
 public class OrangeForgeSettings {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(OrangeForgeSettings.class);
 	private String username, password;
 	private String apiBaseUrl, gitBaseUrl;
 	private String FaaSProjectId;
@@ -84,12 +87,14 @@ public class OrangeForgeSettings {
 	}
 
 	private static String fromHomeDir(){
+		LOGGER.info("Fetch config in .jenkinsfaasbranchsource/orangeForge.properties from user.home property system");
 		File homeDir = new File(System.getProperty("user.home"));
 		File propFile = new File(homeDir, ".jenkinsfaasbranchsource/orangeForge.properties");
 		return propFile.getPath();
 	}
 
 	private static Properties fromPath(String propPath) throws IOException {
+		LOGGER.info("Fetch config in orangeForge.properties from path : {}", propPath);
 		Properties result = new Properties();
 		FileInputStream thePropIn = null;
 		try {
