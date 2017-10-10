@@ -14,7 +14,7 @@ public class OFSCMSourceContext extends SCMSourceContext<OFSCMSourceContext, OFS
 	/**
 	 * {@code true} if the {@link OFSCMSourceRequest} will need information about branches.
 	 */
-	private boolean wantBranches;
+	private boolean wantBranches = false;
 
 	public OFSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer) {
 		super(criteria, observer);

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.BasicAuthInterceptor;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitCommit;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
@@ -185,41 +184,6 @@ public class OFClient {
 		}
 	}
 
-	public OFGitCommit resolveCommit(String sha1, String repoPath) {
-		/*Repository repo ;
-		GitClient cleint;
-		//new org.jenkinsci.plugins.gitclient.RemoteGitImpl();
-		ArchiveCommand a = new ArchiveCommand(null);
-		try {
-			final LsRemoteCommand lsRemoteCommand = new LsRemoteCommand(null)
-					.setCredentialsProvider(new UsernamePasswordCredentialsProvider(
-							orangeForgeSettings.getUsername(), orangeForgeSettings.getPassword()))
-					.setRemote(orangeForgeSettings.getGitBaseUrl() + repoPath);
-			lsRemoteCommand.call();
-			Repository r = lsRemoteCommand.getRepository();
-			ObjectId id = ObjectId.fromString(sha1);
-			Git g = Git.init().call();
-			g.remoteSetUrl().setUri(new URIish(orangeForgeSettings.getGitBaseUrl()+repoPath));
-			CloneCommand c ;
-			RevWalk walk = new RevWalk(r);
-			RevCommit c = walk.parseCommit(id);
-			return new OFGitCommit(c.getShortMessage(), sha1, c.getCommitTime());
-		} catch (IOException e) {
-			throw new OFGitException("","", e);
-		} catch (InvalidRemoteException e) {
-			throw new OFGitException("","", e);
-
-		} catch (TransportException e) {
-			throw new OFGitException("","", e);
-
-		} catch (GitAPIException e) {
-			throw new OFGitException("","", e);
-
-		} catch (URISyntaxException e) {
-			throw new OFGitException("","", e);
-		}*/
-		return new OFGitCommit("sample commit msg", sha1, 0);
-	}
 
 	private static class NoSingleRepoByPathException extends RuntimeException {
 

@@ -34,7 +34,7 @@ public class OFSCMSourceBuilder extends SCMSourceBuilder<OFSCMSourceBuilder, OFS
 	public OFSCMSource build() {
 		OFSCMSource result = new OFSCMSource(id(), projectId(), projectName());
 		//TODO use below when moving to 2.60 with org.jenkins-ci.plugins.git:3.5.0
-		//result.setId();
+		//result.setId(id());
 		result.setTraits(traits());
 		result.setCredentialsId(credentialsId());
 		return result;

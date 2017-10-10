@@ -10,6 +10,8 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.transport.RefSpec;
 import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -19,13 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitCommit;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.trait.BranchDiscoveryTrait;
 
@@ -40,6 +42,7 @@ import hudson.model.TaskListener;
 import hudson.model.queue.Tasks;
 import hudson.scm.SCM;
 import hudson.security.ACL;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.plugins.git.AbstractGitSCMSource;
@@ -67,8 +70,8 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	 */
 	private final String projectId;
 
-	private static String includes = "*";
-	private static String excludes = "";
+	private static String includes = "";
+	private static String excludes = "*";
 
 	private WildcardSCMHeadFilterTrait wildcardTrait;
 
@@ -78,10 +81,16 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	private final String repositoryPath;
 
 	/**
+	 * Git remote URL.
+	 */
+	private String remoteUrl;
+
+	/**
 	 * The behaviours to apply to this source.
 	 */
 	private List<SCMSourceTrait> traits = new ArrayList<>();
 	private String credentialsId;
+	private StandardUsernameCredentials credentials;
 
 	@DataBoundConstructor
 	public OFSCMSource(String id, String projectId, String repositoryPath) {
@@ -100,23 +109,36 @@ public class OFSCMSource extends AbstractGitSCMSource {
 			throws IOException, InterruptedException {
 		try (final OFSCMSourceRequest request = new OFSCMSourceContext(criteria, observer)
 				.withTraits(traits)
+				.wantBranches(true)
 				.newRequest(this, listener)) {
-			StandardUsernamePasswordCredentials credentials = new OrangeForgeSettings().credentials();
-			request.listener().getLogger().print("");
+			final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
+			setRemoteUrl(orangeForgeSettings.getGitBaseUrl()+repositoryPath);
+			StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
+			setCredentials(credentials);
 			if (request.isFetchBranches()) {
-				OFClient client = new OFClient(new OrangeForgeSettings());
-				LOGGER.info("Fecthing branches for repository at %s", repositoryPath);
+				OFClient client = new OFClient(orangeForgeSettings);
+				LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
 				final List<OFGitBranch> branches = client.branchByGitRepo(repositoryPath);
 				request.setBranches(branches);
 				int count=0;
 				for (OFGitBranch branch : branches) {
 					count++;
-					if (request.process(new OFBranchSCMHead(branch.getName()),
-										branch::getSha1,
-										new OFProbeFactory(client, request, repositoryPath),
-										new OFRevisionFactory(),
+					request.listener().getLogger().format("Crawling branch %s::%s for repo %s", branch.getName(),
+														 branch.getSha1(), getRemote()).println();
+					OFBranchSCMHead head = new OFBranchSCMHead(branch.getName());
+					if (request.process(head, new SCMRevisionImpl(head, branch.getSha1()),
+										new SCMSourceRequest.ProbeLambda<OFBranchSCMHead, SCMRevisionImpl>() {
+											@NonNull
+											@Override
+											public SCMSourceCriteria.Probe create(@NonNull OFBranchSCMHead head,
+																				  @Nullable SCMRevisionImpl revisionInfo)
+													throws IOException, InterruptedException {
+												return OFSCMSource.this.fromSCMFileSystem(head, revisionInfo);
+											}
+										},
 										new OFWitness(listener))) {
-						request.listener().getLogger().format("%n  %d branches were processed (query completed)%n", count);
+						request.listener().getLogger().format("%n  %d branches were processed (query completed)%n",
+															  count).println();
 					}
 
 				}
@@ -127,7 +149,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
 
 	@Override
 	protected List<RefSpec> getRefSpecs() {
-		return null;
+		return Arrays.asList(new RefSpec("+refs/heads/*:refs/remotes/origin/*", RefSpec.WildcardMode.ALLOW_MISMATCH));
 	}
 
 	/**
@@ -144,6 +166,14 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		return false;
 	}
 
+	@Override
+	protected StandardUsernameCredentials getCredentials() {
+		return credentials;
+	}
+
+	public void setCredentials(StandardUsernameCredentials credentials) {
+		this.credentials = credentials;
+	}
 
 	@Override
 	public SCM build(@NonNull SCMHead scmHead,
@@ -162,7 +192,12 @@ public class OFSCMSource extends AbstractGitSCMSource {
 
 	@Override
 	public String getRemote() {
-		return repositoryPath;
+		return remoteUrl;
+	}
+
+
+	public void setRemoteUrl(String remoteUrl) {
+		this.remoteUrl = remoteUrl;
 	}
 
 	@Override
@@ -214,6 +249,32 @@ public class OFSCMSource extends AbstractGitSCMSource {
 			return Arrays.asList(new BranchDiscoveryTrait(), new WildcardSCMHeadFilterTrait(includes, excludes));
 		}
 
+		@RequirePOST
+		@Restricted(NoExternalUse.class) // stapler
+		public FormValidation doCheckCredentialsId( @AncestorInPath Item item, @QueryParameter String value,
+													@CheckForNull @AncestorInPath Item context,  @QueryParameter
+															String apiUri, @QueryParameter String credentialsId ) {
+			if (item == null) {
+				if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+					return FormValidation.ok();
+				}
+			} else {
+				if (!item.hasPermission(Item.EXTENDED_READ)
+						&& !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+					return FormValidation.ok();
+				}
+			}
+			// check credential exists, ask orangeforge if credentials are valid credentials and then ok else invalid
+			/*if (CredentialsProvider.listCredentials(StandardUsernamePasswordCredentials.class,
+			item,
+			item instanceof Queue.Task
+					? Tasks.getAuthenticationOf((Queue.Task)item) : ACL.SYSTEM, URIRequirementBuilder.fromUri(apiUri),
+			null ).isEmpty()) {
+				return FormValidation.error("Cannot find currently selected credentials");
+			}*/
+			return FormValidation.ok();
+		}
+
 		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
 													 @QueryParameter String apiUri,
 													 @QueryParameter String credentialsId) {
@@ -254,22 +315,12 @@ public class OFSCMSource extends AbstractGitSCMSource {
 			//TODO refactor also in SCMNavigator
 			final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
 			StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
+
 			OFClient client = new OFClient(orangeForgeSettings);
 			for (OFGitRepository repo : client.projectRepositories()) {
 				model.add(repo.getName());
 			}
 			return model;
-		}
-	}
-
-	private static class OFRevisionFactory  implements SCMSourceRequest.LazyRevisionLambda<SCMHead, SCMRevision,
-			String> {
-
-		@NonNull
-		@Override
-		public SCMRevision create(@NonNull SCMHead scmHead, @Nullable String sha1) throws IOException,
-				InterruptedException {
-			return new AbstractGitSCMSource.SCMRevisionImpl(scmHead, sha1);
 		}
 	}
 
@@ -290,46 +341,4 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		}
 	}
 
-	private static class OFProbeFactory implements SCMSourceRequest.ProbeLambda<SCMHead, String> {
-
-		private final OFClient ofClient;
-		private final OFSCMSourceRequest request;
-		private final String repoPath;
-
-		public OFProbeFactory(OFClient ofClient, OFSCMSourceRequest request, String repoPath) {
-			this.ofClient = ofClient;
-			this.request = request;
-			this.repoPath = repoPath;
-		}
-
-		@NonNull
-		@Override
-		public SCMSourceCriteria.Probe create(@NonNull SCMHead head, @Nullable String sha1) throws IOException,
-				InterruptedException {
-			return new SCMSourceCriteria.Probe() {
-				@Override
-				public String name() {
-					return head.getName();
-				}
-
-				@Override
-				public long lastModified() {
-						OFGitCommit commit = ofClient.resolveCommit(sha1, repoPath);
-						if (commit == null) {
-							request.listener().getLogger()
-								   .format("Can not resolve commit by hash [%s] on repository %s/%s%n",
-										   sha1, repoPath, repoPath);
-							return 0;
-						}
-						return commit.getDateMillis();
-				}
-
-				@Deprecated
-				@Override
-				public boolean exists(@NonNull String path) throws IOException {
-					return true;
-				}
-			};
-		}
-	}
 }

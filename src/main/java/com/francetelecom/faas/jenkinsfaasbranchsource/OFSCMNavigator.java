@@ -18,8 +18,10 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
@@ -27,6 +29,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -39,6 +42,7 @@ import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.model.queue.Tasks;
 import hudson.security.ACL;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.scm.api.SCMNavigator;
@@ -56,6 +60,7 @@ import net.jcip.annotations.GuardedBy;
 public class OFSCMNavigator extends SCMNavigator {
 
 	private String projectId;
+	private OFProject project;
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
 	/**
@@ -71,7 +76,7 @@ public class OFSCMNavigator extends SCMNavigator {
 
 	@Override
 	protected String id() {
-		return "https://www.forge.orange-labs.fr/projects/" + projectId;
+		return "https://www.forge.orange-labs.fr/projects::" + project;
 	}
 
 	@Override
@@ -115,7 +120,8 @@ public class OFSCMNavigator extends SCMNavigator {
 		StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
 		OFClient client = new OFClient(orangeForgeSettings);
 
-		actions.add(new OFProjectMetadataAction(client.projectById(getprojectId())));
+		final OFProject project = client.projectById(getprojectId());
+		actions.add(new OFProjectMetadataAction(project));
 		return actions;
 	}
 
@@ -246,13 +252,31 @@ public class OFSCMNavigator extends SCMNavigator {
 			return Messages.OFSCMNavigator_Description();
 		}
 
-		/*@RequirePOST
+		@RequirePOST
 		@Restricted(NoExternalUse.class) // stapler
-		public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
-												   @QueryParameter String apiUri,
-												   @QueryParameter String credentialsId) {
-			return Connector.checkScanCredentials(context, apiUri, credentialsId);
-		}*/
+		public FormValidation doCheckCredentialsId( @AncestorInPath Item item, @QueryParameter String value,
+													@CheckForNull @AncestorInPath Item context,  @QueryParameter
+															String apiUri, @QueryParameter String credentialsId ) {
+			if (item == null) {
+				if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+					return FormValidation.ok();
+				}
+			} else {
+				if (!item.hasPermission(Item.EXTENDED_READ)
+						&& !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+					return FormValidation.ok();
+				}
+			}
+			// check credential exists, ask orangeforge if credentials are valid credentials and then ok else invalid
+			/*if (CredentialsProvider.listCredentials(StandardUsernamePasswordCredentials.class,
+			item,
+			item instanceof Queue.Task
+					? Tasks.getAuthenticationOf((Queue.Task)item) : ACL.SYSTEM, URIRequirementBuilder.fromUri(apiUri),
+			null ).isEmpty()) {
+				return FormValidation.error("Cannot find currently selected credentials");
+			}*/
+			return FormValidation.ok();
+		}
 
 		public ListBoxModel doFillApiUriItems() {
 			ListBoxModel listBox = new ListBoxModel();
