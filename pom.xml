@@ -20,6 +20,8 @@
 
   </properties>
 
+  <!--TODO Align version from work/plugins-->
+
   <name>Jenkins FaaS Branch Source for OrangeForge Tuleap</name>
   <description>Mimic the Github Branch Source plugin for OrangeForge Tuleap so that Jenkins' jobs are
     autocreated when a git repository containing a jenkinsFile is discovered in the OrangeForge project's

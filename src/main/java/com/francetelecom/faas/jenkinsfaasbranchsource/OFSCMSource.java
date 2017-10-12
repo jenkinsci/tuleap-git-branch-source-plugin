@@ -46,6 +46,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.plugins.git.AbstractGitSCMSource;
+import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMHeadCategory;
 import jenkins.scm.api.SCMHeadEvent;
@@ -99,7 +100,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		this.projectId = projectId;
 		this.repositoryPath = repositoryPath;
 		this.wildcardTrait = new WildcardSCMHeadFilterTrait(includes, excludes);
-		traits.add(wildcardTrait);
+		//traits.add(wildcardTrait);
 		traits.add(new BranchDiscoveryTrait());
 	}
 
@@ -178,7 +179,8 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	@Override
 	public SCM build(@NonNull SCMHead scmHead,
 					 @CheckForNull SCMRevision scmRevision) {
-		return new OFSCMBuilder(scmHead, scmRevision, repositoryPath).withTraits(traits).build();
+		//TODO check credentialsId is propagated from Navigator to here and to GtiSCM so it can perform clone
+		return new GitSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId).withTraits(traits).build();
 	}
 
 	public List<SCMSourceTrait> getTraits() {
@@ -239,15 +241,16 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	@Extension
 	public static class DescriptorImpl extends SCMSourceDescriptor {
 
-
 		@Override
 		public String getDisplayName() {
 			return "OrangeForge";
 		}
 
 		public List<SCMSourceTrait> getTraitsDefaults() {
-			return Arrays.asList(new BranchDiscoveryTrait(), new WildcardSCMHeadFilterTrait(includes, excludes));
+			return Arrays.asList(new BranchDiscoveryTrait());
 		}
+
+
 
 		@RequirePOST
 		@Restricted(NoExternalUse.class) // stapler
@@ -297,19 +300,8 @@ public class OFSCMSource extends AbstractGitSCMSource {
 					);
 		}
 
-		public ListBoxModel doFillApiUriItems() {
-			ListBoxModel listBox = new ListBoxModel();
-			listBox.add("OrangeForge", "");
-			listBox.add("OrangeForge API", "https://www.forge.orange-labs.fr/api");
-			return listBox;
-		}
-
-		public boolean isApiUriSelectable() {
-			return true;
-		}
-
 		@RequirePOST
-		public ListBoxModel doFillRepositoryItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String apiUri,
+		public ListBoxModel doFillRepositoryItems(@CheckForNull @AncestorInPath Item context,
 												  @QueryParameter String credentialsId, @QueryParameter String repoOwner) throws IOException {
 			ListBoxModel model = new ListBoxModel();
 			//TODO refactor also in SCMNavigator

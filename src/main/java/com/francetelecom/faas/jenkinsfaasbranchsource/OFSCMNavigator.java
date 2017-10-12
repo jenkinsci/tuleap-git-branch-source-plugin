@@ -2,14 +2,20 @@ package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkins.ui.icon.Icon;
+import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -30,6 +36,7 @@ import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.trait.OFUserForkRepositoryTrait;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -45,6 +52,8 @@ import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.plugins.git.GitSCMBuilder;
+import jenkins.plugins.git.traits.GitBrowserSCMSourceTrait;
 import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.SCMNavigatorDescriptor;
 import jenkins.scm.api.SCMNavigatorEvent;
@@ -53,8 +62,17 @@ import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.SCMSourceCategory;
 import jenkins.scm.api.SCMSourceObserver;
 import jenkins.scm.api.trait.SCMNavigatorRequest;
+import jenkins.scm.api.trait.SCMNavigatorTrait;
+import jenkins.scm.api.trait.SCMNavigatorTraitDescriptor;
+import jenkins.scm.api.trait.SCMSourceTrait;
 import jenkins.scm.api.trait.SCMTrait;
+import jenkins.scm.api.trait.SCMTraitDescriptor;
 import jenkins.scm.impl.UncategorizedSCMSourceCategory;
+import jenkins.scm.impl.form.NamedArrayList;
+import jenkins.scm.impl.trait.Discovery;
+import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
+import jenkins.scm.impl.trait.Selection;
+import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import net.jcip.annotations.GuardedBy;
 
 public class OFSCMNavigator extends SCMNavigator {
@@ -63,15 +81,11 @@ public class OFSCMNavigator extends SCMNavigator {
 	private OFProject project;
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
-	/**
-	 * The API endpoint for the OrangeForge server.
-	 */
-	@CheckForNull
-	private String apiUri;
 
 	@DataBoundConstructor
 	public OFSCMNavigator() {
-		this.traits = new ArrayList<>();
+		this.traits = Arrays.asList(new WildcardSCMSourceFilterTrait("", "*"),
+			new RegexSCMSourceFilterTrait("^/u/.*$"));
 	}
 
 	@Override
@@ -125,15 +139,6 @@ public class OFSCMNavigator extends SCMNavigator {
 		return actions;
 	}
 
-	public String getApiUri() {
-		return apiUri;
-	}
-
-	@DataBoundSetter
-	public void setApiUri(String apiUri) {
-		this.apiUri = apiUri;
-	}
-
 	public List<SCMTrait<? extends SCMTrait>> getTraits() {
 		return Collections.unmodifiableList(traits);
 	}
@@ -151,10 +156,10 @@ public class OFSCMNavigator extends SCMNavigator {
 	}
 
 	/**
-	 * Gets the {@link StandardCredentials#getId()} of the credentials to use when accessing {@link #apiUri} (and also
+	 * Gets the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and also
 	 * the default credentials to use for checking out).
 	 *
-	 * @return the {@link StandardCredentials#getId()} of the credentials to use when accessing {@link #apiUri} (and
+	 * @return the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and
 	 * also the default credentials to use for checking out).
 	 * @since 2.2.0
 	 */
@@ -164,20 +169,16 @@ public class OFSCMNavigator extends SCMNavigator {
 	}
 
 	/**
-	 * Sets the {@link StandardCredentials#getId()} of the credentials to use when accessing {@link #apiUri} (and also
+	 * Sets the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and also
 	 * the default credentials to use for checking out).
 	 *
 	 * @param credentialsId the {@link StandardCredentials#getId()} of the credentials to use when accessing
-	 *                      {@link #apiUri} (and also the default credentials to use for checking out).
+	 *                      OrangeForge (and also the default credentials to use for checking out).
 	 * @since 2.2.0
 	 */
 	@DataBoundSetter
 	public void setCredentialsId(@CheckForNull String credentialsId) {
 		this.credentialsId = Util.fixEmpty(credentialsId);
-	}
-
-	public boolean isApiUriSelectable() {
-		return true;
 	}
 
 	/**
@@ -202,11 +203,11 @@ public class OFSCMNavigator extends SCMNavigator {
 		@Deprecated
 		@Restricted(DoNotUse.class)
 		@RestrictedSince("2.2.0")
-		public static final String defaultIncludes = "*";
+		public static final String defaultIncludes = "";
 		@Deprecated
 		@Restricted(DoNotUse.class)
 		@RestrictedSince("2.2.0")
-		public static final String defaultExcludes = "";
+		public static final String defaultExcludes = "*";
 
 		@Inject private OFSCMSource.DescriptorImpl delegate;
 
@@ -225,7 +226,10 @@ public class OFSCMNavigator extends SCMNavigator {
 		@Override
 		public SCMNavigator newInstance(@CheckForNull String projectId) {
 			OFSCMNavigator navigator = new OFSCMNavigator();
-			navigator.setTraits(getTraitsDefaults());
+			List<SCMTrait<? extends SCMTrait<?>>> someTraits = getTraitsDefaults();
+			someTraits.add(new OFUserForkRepositoryTrait(1));
+			someTraits.add(new WildcardSCMSourceFilterTrait("", "*"));
+			navigator.setTraits(someTraits);
 			return navigator;
 		}
 
@@ -252,11 +256,26 @@ public class OFSCMNavigator extends SCMNavigator {
 			return Messages.OFSCMNavigator_Description();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public String getIconFilePathPattern() {
+			return "plugin/jenkins-faas-branch-source/images/:size/orangeforge-scmnavigator.png";
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public String getIconClassName() {
+			return "icon-orangeforge-scm-navigator";
+		}
+
 		@RequirePOST
 		@Restricted(NoExternalUse.class) // stapler
 		public FormValidation doCheckCredentialsId( @AncestorInPath Item item, @QueryParameter String value,
-													@CheckForNull @AncestorInPath Item context,  @QueryParameter
-															String apiUri, @QueryParameter String credentialsId ) {
+													@CheckForNull @AncestorInPath Item context, @QueryParameter String credentialsId ) {
 			if (item == null) {
 				if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
 					return FormValidation.ok();
@@ -267,7 +286,8 @@ public class OFSCMNavigator extends SCMNavigator {
 					return FormValidation.ok();
 				}
 			}
-			// check credential exists, ask orangeforge if credentials are valid credentials and then ok else invalid
+			// TODO check credential exists, ask orangeforge if credentials are valid credentials and then ok else
+			// invalid
 			/*if (CredentialsProvider.listCredentials(StandardUsernamePasswordCredentials.class,
 			item,
 			item instanceof Queue.Task
@@ -278,31 +298,93 @@ public class OFSCMNavigator extends SCMNavigator {
 			return FormValidation.ok();
 		}
 
-		public ListBoxModel doFillApiUriItems() {
-			ListBoxModel listBox = new ListBoxModel();
-			listBox.add("OrangeForge", "");
-			listBox.add("OrangeForge API", "https://www.forge.orange-labs.fr/api");
-			return listBox;
-		}
-
 		@SuppressWarnings("unused") // jelly
 		public List<SCMTrait<? extends SCMTrait<?>>> getTraitsDefaults() {
 			List<SCMTrait<? extends SCMTrait<?>>> result = new ArrayList<>();
 			result.addAll(delegate.getTraitsDefaults());
+			//result.add();
 			return result;
+		}
+
+		static {
+			IconSet.icons.addIcon(
+					new Icon("icon-orangeforge-scm-navigator icon-sm",
+							 "plugin/jenkins-faas-branch-source/images/16x16/orangeforge-scmnavigator.png",
+							 Icon.ICON_SMALL_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-orangeforge-scm-navigator icon-md",
+							 "plugin/jenkins-faas-branch-source/images/24x24/orangeforge-scmnavigator.png",
+							 Icon.ICON_MEDIUM_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-orangeforge-scm-navigator icon-lg",
+							 "plugin/jenkins-faas-branch-source/images/32x32/orangeforge-scmnavigator.png",
+							 Icon.ICON_LARGE_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-orangeforge-scm-navigator icon-xlg",
+							 "plugin/jenkins-faas-branch-source/images/48x48/orangeforge-scmnavigator.png",
+							 Icon.ICON_XLARGE_STYLE));
+
+			IconSet.icons.addIcon(
+					new Icon("icon-github-logo icon-sm",
+							 "plugin/jenkins-faas-branch-source/images/16x16/git-logo.png",
+							 Icon.ICON_SMALL_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-logo icon-md",
+							 "plugin/jenkins-faas-branch-source/images/24x24/git-logo.png",
+							 Icon.ICON_MEDIUM_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-logo icon-lg",
+							 "plugin/jenkins-faas-branch-source/images/32x32/git-logo.png",
+							 Icon.ICON_LARGE_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-logo icon-xlg",
+							 "plugin/jenkins-faas-branch-source/images/48x48/git-logo.png",
+							 Icon.ICON_XLARGE_STYLE));
+
+			IconSet.icons.addIcon(
+					new Icon("icon-github-repo icon-sm",
+							 "plugin/jenkins-faas-branch-source/images/16x16/git-repo.png",
+							 Icon.ICON_SMALL_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-repo icon-md",
+							 "plugin/jenkins-faas-branch-source/images/24x24/git-repo.png",
+							 Icon.ICON_MEDIUM_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-repo icon-lg",
+							 "plugin/jenkins-faas-branch-source/images/32x32/git-repo.png",
+							 Icon.ICON_LARGE_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-repo icon-xlg",
+							 "plugin/jenkins-faas-branch-source/images/48x48/git-repo.png",
+							 Icon.ICON_XLARGE_STYLE));
+
+			IconSet.icons.addIcon(
+					new Icon("icon-github-branch icon-sm",
+							 "plugin/jenkins-faas-branch-source/images/16x16/git-branch.png",
+							 Icon.ICON_SMALL_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-branch icon-md",
+							 "plugin/jenkins-faas-branch-source/images/24x24/git-branch.png",
+							 Icon.ICON_MEDIUM_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-branch icon-lg",
+							 "plugin/jenkins-faas-branch-source/images/32x32/git-branch.png",
+							 Icon.ICON_LARGE_STYLE));
+			IconSet.icons.addIcon(
+					new Icon("icon-github-branch icon-xlg",
+							 "plugin/jenkins-faas-branch-source/images/48x48/git-branch.png",
+							 Icon.ICON_XLARGE_STYLE));
 		}
 
 		/**
 		 * Populates the drop-down list of credentials.
 		 *
 		 * @param context the context.
-		 * @param apiUri  the end-point.
 		 * @return the drop-down list.
 		 * @since 2.2.0
 		 */
 		@Restricted(NoExternalUse.class) // stapler
 		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-													 @QueryParameter String apiUri,
 													 @QueryParameter String credentialsId) {
 			if (context == null
 					? !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)
@@ -317,9 +399,48 @@ public class OFSCMNavigator extends SCMNavigator {
 									: ACL.SYSTEM,
 							context,
 							StandardUsernameCredentials.class,
-							URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, "https://www.forge.orange-labs.fr/projects")).build(),
+							URIRequirementBuilder.fromUri(StringUtils.defaultString("https://www.forge.orange-labs.fr/api")).build(),
 							CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class))
 					);
+		}
+
+		/**
+		 * Returns the {@link SCMTraitDescriptor} instances grouped into categories.
+		 *
+		 * @return the categorized list of {@link SCMTraitDescriptor} instances.
+		 * @since 2.2.0
+		 */
+		@SuppressWarnings("unused") // jelly
+		public List<NamedArrayList<? extends SCMTraitDescriptor<?>>> getTraitsDescriptorLists() {
+			OFSCMSource.DescriptorImpl sourceDescriptor =
+					Jenkins.getActiveInstance().getDescriptorByType(OFSCMSource.DescriptorImpl.class);
+			List<SCMTraitDescriptor<?>> all = new ArrayList<>();
+			all.addAll(SCMNavigatorTrait._for(this, OFSCMNavigatorContext.class, OFSCMSourceBuilder.class));
+			all.addAll(SCMSourceTrait._for(sourceDescriptor, OFSCMSourceContext.class, null));
+			all.addAll(SCMSourceTrait._for(sourceDescriptor, null, GitSCMBuilder.class));
+			Set<SCMTraitDescriptor<?>> dedup = new HashSet<>();
+			for (Iterator<SCMTraitDescriptor<?>> iterator = all.iterator(); iterator.hasNext(); ) {
+				SCMTraitDescriptor<?> d = iterator.next();
+				if (dedup.contains(d)
+						|| d instanceof GitBrowserSCMSourceTrait.DescriptorImpl) {
+					// remove any we have seen already and ban the browser configuration as it will always be github
+					iterator.remove();
+				} else {
+					dedup.add(d);
+				}
+			}
+			List<NamedArrayList<? extends SCMTraitDescriptor<?>>> result = new ArrayList<>();
+			NamedArrayList.select(all, "Repositories", new NamedArrayList.Predicate<SCMTraitDescriptor<?>>() {
+									  @Override
+									  public boolean test(SCMTraitDescriptor<?> scmTraitDescriptor) {
+										  return scmTraitDescriptor instanceof SCMNavigatorTraitDescriptor;
+									  }
+								  },
+								  true, result);
+			NamedArrayList.select(all, "Within repository", NamedArrayList.anyOf(NamedArrayList.withAnnotation(Discovery.class), NamedArrayList.withAnnotation(Selection.class)),
+								  true, result);
+			NamedArrayList.select(all, "Additional", null, true, result);
+			return result;
 		}
 	}
 

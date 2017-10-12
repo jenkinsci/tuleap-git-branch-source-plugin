@@ -13,6 +13,7 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSourceRequest;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import jenkins.scm.api.SCMHeadCategory;
 import jenkins.scm.api.SCMRevision;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.trait.SCMHeadAuthority;
@@ -32,7 +33,15 @@ public class BranchDiscoveryTrait extends SCMSourceTrait {
 	protected void decorateContext(SCMSourceContext<?, ?> context) {
 		OFSCMSourceContext ctx = (OFSCMSourceContext) context;
 		ctx.wantBranches(true);
-		ctx.withAuthority(new OFBranchSCMHeadAuthority());
+		//ctx.withAuthority(new OFBranchSCMHeadAuthority());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean includeCategory(@NonNull SCMHeadCategory category) {
+		return category.isUncategorized();
 	}
 
 	/**
@@ -69,4 +78,12 @@ public class BranchDiscoveryTrait extends SCMSourceTrait {
 			return true;
 		}
 	}
+
+	/*private class ExcludeBranchesSCMHeadFilter extends SCMHeadFilter {
+		@Override
+		public boolean isExcluded(@NonNull SCMSourceRequest request, @NonNull SCMHead head) throws IOException,
+				InterruptedException {
+			return false;
+		}
+	}*/
 }

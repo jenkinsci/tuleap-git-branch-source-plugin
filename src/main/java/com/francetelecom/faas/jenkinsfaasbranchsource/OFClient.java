@@ -103,6 +103,10 @@ public class OFClient {
 	 * @throws IOException in case HTTP errors occurs or parsing of response fail
 	 */
 	private OFProjectRepositories projectRepositoriesWrapper() throws IOException {
+		//TODO Only return projects that current user is member of using ?query={"is_member_of": true}
+		// From docs https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve :
+		// 		Please note that {"is_member_of": false} is not supported and will result in a 400 Bad Request error.
+		// curl -L -u "qsqf2513" -X GET  https://www.forge.orange-labs.fr/api/projects?query=%7B%22is_member_of%22%3A%20true%7D
 		final String apiRepositoriesUrl = orangeForgeSettings.getApiBaseUrl() + API_PROJECT_PATH + "/" +
 				orangeForgeSettings.getFaaSProjectId() + API_GIT_PATH;
 		//FIXME enable cache later
