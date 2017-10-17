@@ -13,17 +13,23 @@ import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.BasicAuthInterceptor;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFUser;
 
+import static com.sun.javafx.font.FontResource.SALT;
+
+import hudson.Util;
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -41,32 +47,59 @@ public class OFClient {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OFClient.class);
 	private static final String API_PROJECT_PATH = "/projects";
+	private static final String API_USER_PATH = "/projects";
 	private static final String API_GIT_PATH = "/git";
-
-	private OrangeForgeSettings orangeForgeSettings;
+	private final String apiBaseUrl, gitBaseUrl;
+	private StandardUsernamePasswordCredentials credentials;
 
 	private final OkHttpClient client;
 
-	public OFClient(final OrangeForgeSettings orangeForgeSettings) {
-		this.orangeForgeSettings = orangeForgeSettings;
-		//FIXME enable cache later
-		this.client = new OkHttpClient.Builder()
-				.addInterceptor(new BasicAuthInterceptor(orangeForgeSettings.getUsername(),
-														 orangeForgeSettings.getPassword()))
-				.connectTimeout(10, TimeUnit.SECONDS)
-				.writeTimeout(10, TimeUnit.SECONDS)
-				.readTimeout(10, TimeUnit.SECONDS)
-				.cache(null)
+	public OFClient(StandardCredentials credentials, final String apiBaseUrl, final String gitBaseUrl) {
+		if (credentials instanceof StandardUsernamePasswordCredentials) {
+			this.apiBaseUrl = apiBaseUrl;
+			this.gitBaseUrl = gitBaseUrl;
+			this.credentials = (StandardUsernamePasswordCredentials) credentials;
+			final String username = this.credentials.getUsername();
+			final String password = this.credentials.getPassword().getPlainText();
+			final String hash = Util.getDigestOf(password + SALT);
+			this.client = new OkHttpClient.Builder()
+					.addInterceptor(new BasicAuthInterceptor(username, password))
+					.connectTimeout(10, TimeUnit.SECONDS)
+					.writeTimeout(10, TimeUnit.SECONDS)
+					.readTimeout(10, TimeUnit.SECONDS)
+					.cache(null)
+					.build();
+		} else {
+			throw new UnsupportedOperationException("TODO implement/contribute");
+		}
+	}
+
+	public boolean isCredentialValid() throws IOException {
+		final String url = "https://www.forge.orange-labs.fr/api/users?query=%7B%22username%22%3A%20%22qsqf2513%22%7D";
+		Request req = new Request.Builder()
+				.url(url)
+				.addHeader("content-type", "application/json")
+				.cacheControl(CacheControl.FORCE_NETWORK)
+				.get()
 				.build();
+		try (Response response = client.newCall(req).execute()) {
+			if (!response.isSuccessful()) throw new IOException("HTTP call error at url: "+req.url().toString()+" " +
+																		"with code: "+response.code());
+
+			ResponseBody body = response.body();
+			if (body != null) {
+				/*com.fasterxml.jackson.databind.JsonMappingException: Can not deserialize instance of com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFUser out of START_ARRAY token
+ at [Source: [{"email":"haja.rambelontsalama@orange.com","status":"A","id":18600,"uri":"users\/18600","user_url":"\/users\/qsqf2513","real_name":"RAMBELONTSALAMA Haja OBS\/OAB","display_name":"RAMBELONTSALAMA Haja OBS\/OAB (qsqf2513)","username":"qsqf2513","ldap_id":"QSQF2513","avatar_url":"https:\/\/www.forge.orange-labs.fr\/themes\/common\/images\/avatar_default.png","is_anonymous":false}]; line: 1, column: 1]*/
+				return StringUtils.isEmptyOrNull(parse(body.string(), OFUser.class).getEmail());
+			}
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
-	public OFProject configuredProject() throws IOException {
-		return projectById(orangeForgeSettings.getFaaSProjectId());
-
-	}
-
-	public OFProject projectById(String projectId) throws IOException {
-		final String apiProjectsUrl = orangeForgeSettings.getApiBaseUrl() + API_PROJECT_PATH + "/" + projectId;
+	public OFProject projectById(final String  projectId) throws IOException {
+		final String apiProjectsUrl = apiBaseUrl + API_PROJECT_PATH + "/" + projectId;
 		//FIXME enable cache later
 		Request req = new Request.Builder()
 				.url(apiProjectsUrl)
@@ -93,8 +126,8 @@ public class OFClient {
 	 * @return the list of repositories
 	 * @throws IOException in case HTTP errors occurs or parsing of response fail
 	 */
-	public List<OFGitRepository> projectRepositories() throws IOException {
-		return projectRepositoriesWrapper().getRepositories();
+	public List<OFGitRepository> projectRepositories(final String  projectId) throws IOException {
+		return projectRepositoriesWrapper(projectId).getRepositories();
 	}
 
 	/**
@@ -102,13 +135,12 @@ public class OFClient {
 	 * @return the repositories wrapper {@see OFProjectRepositories}
 	 * @throws IOException in case HTTP errors occurs or parsing of response fail
 	 */
-	private OFProjectRepositories projectRepositoriesWrapper() throws IOException {
+	private OFProjectRepositories projectRepositoriesWrapper(final String  projectId) throws IOException {
 		//TODO Only return projects that current user is member of using ?query={"is_member_of": true}
 		// From docs https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve :
 		// 		Please note that {"is_member_of": false} is not supported and will result in a 400 Bad Request error.
 		// curl -L -u "qsqf2513" -X GET  https://www.forge.orange-labs.fr/api/projects?query=%7B%22is_member_of%22%3A%20true%7D
-		final String apiRepositoriesUrl = orangeForgeSettings.getApiBaseUrl() + API_PROJECT_PATH + "/" +
-				orangeForgeSettings.getFaaSProjectId() + API_GIT_PATH;
+		final String apiRepositoriesUrl = apiBaseUrl + API_PROJECT_PATH + "/" + projectId + API_GIT_PATH;
 		//FIXME enable cache later
 		Request req = new Request.Builder()
 				.url(HttpUrl.parse(apiRepositoriesUrl).newBuilder()
@@ -129,57 +161,38 @@ public class OFClient {
 	public List<OFGitBranch> branchByGitRepo (final String gitRepoPath) throws
 			IOException, NoSingleRepoByPathException, NoSuchElementException {
 		try {
-			LOGGER.info("Ls-remoting heads of git repository at {} + {}",
-						orangeForgeSettings.getGitBaseUrl(), gitRepoPath);
+			LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
+			final String username = this.credentials.getUsername();
+			final String password = this.credentials.getPassword().getPlainText();
+			final String hash = Util.getDigestOf(password + SALT);
 			return new LsRemoteCommand(null)
-					.setCredentialsProvider(new UsernamePasswordCredentialsProvider(
-							orangeForgeSettings.getUsername(), orangeForgeSettings.getPassword()))
-					.setRemote(orangeForgeSettings.getGitBaseUrl()+ gitRepoPath)
+					.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
+					.setRemote(gitBaseUrl+ gitRepoPath)
 					.setHeads(true)
 					.call()
 					.stream()
 					.map(refToOFGitBranch())
 					.collect(Collectors.toList());
 		} catch (GitAPIException e) {
-			throw new OFGitException(orangeForgeSettings.getGitBaseUrl(), gitRepoPath, e);
+			throw new OFGitException(gitBaseUrl, gitRepoPath, e);
 		}
 	}
 
-	private Optional<OFGitRepository> gitRepoByPath(final String gitRepoPath) throws IOException,
+	private Optional<OFGitRepository> gitRepoByPath(final String projectId, final String gitRepoPath) throws
+			IOException,
 			NoSingleRepoByPathException {
-		return projectRepositories().stream()
+		return projectRepositories(projectId).stream()
 					.filter(ofGitRepository -> gitRepoPath.equals(ofGitRepository.getPath()))
 					.reduce((a,b) -> {
 						throw new NoSingleRepoByPathException(gitRepoPath, a.getUri(), b.getUri());
 					});
 	}
 
-	private Function<OFGitRepository, List<OFGitBranch>> headsInRepo() {
-		return ofGitRepository -> {
-			try {
-				LOGGER.info("Ls-remoting heads of git repository at {} + {}",
-							orangeForgeSettings.getGitBaseUrl(),
-							ofGitRepository.getPath());
-				return new LsRemoteCommand(null)
-						.setCredentialsProvider(new UsernamePasswordCredentialsProvider(
-								orangeForgeSettings.getUsername(), orangeForgeSettings.getPassword()))
-						.setRemote(orangeForgeSettings.getGitBaseUrl()+ofGitRepository.getPath())
-						.setHeads(true)
-						.call()
-						.stream()
-						.map(refToOFGitBranch())
-						.collect(Collectors.toList());
-			} catch (GitAPIException e) {
-				throw new OFGitException(ofGitRepository.getUri(), /*ofGitRepository.getName(),*/ ofGitRepository.getPath(), e);
-			}
-		};
-	}
-
 	private Function<Ref, OFGitBranch> refToOFGitBranch() {
 		return ref -> new OFGitBranch(ref.getName(), ref.getObjectId().getName());
 	}
 
-	private <T> T parse (String input, Class<T> clazz) throws IOException {
+	private <T> T parse (final String  input, Class<T> clazz) throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.readValue(input, clazz);
@@ -188,16 +201,15 @@ public class OFClient {
 		}
 	}
 
-
 	private static class NoSingleRepoByPathException extends RuntimeException {
 
-		private NoSingleRepoByPathException(String path, String doublonUri, String anotherDoublonUri) {
+		private NoSingleRepoByPathException(final String path, final String  doublonUri, final String  anotherDoublonUri) {
 			super("Multiple repository with path '"+path+"' :"+doublonUri+" and "+anotherDoublonUri);
 		}
 	}
 
 	private static class OFGitException extends RuntimeException {
-		private OFGitException(String uri, String path, Throwable t) {
+		private OFGitException(final String uri, final String  path, Throwable t) {
 			super("Unable to communicate to OrangeForge git at "+uri+"/"+path, t);
 		}
 	}

@@ -22,17 +22,17 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 
-/**
- * Created by qsqf2513 on 9/11/17.
- */
 public class OFClientTest {
 
 
 	private OFClient client;
+	private OrangeForgeSettings orangeForgeSettings;
 
 	@Before
 	public void setUp() throws Exception {
-		client = new OFClient(new OrangeForgeSettings());
+		orangeForgeSettings = new OrangeForgeSettings();
+		client = new OFClient(orangeForgeSettings.credentials(), orangeForgeSettings.getApiBaseUrl(),
+							  orangeForgeSettings.getGitBaseUrl());
 	}
 
 	@After
@@ -42,14 +42,14 @@ public class OFClientTest {
 
 	@Test
 	public void given__setup__when__get__project__then__return__projects_infos() throws IOException {
-		OFProject project = client.configuredProject();
+		OFProject project = orangeForgeSettings.configuredProject(client);
 		Assert.assertThat(project.getLabel(), is("Forge as a Service"));
 		Assert.assertThat(project.getShortname(), is("faas"));
 	}
 
 	@Test
 	public void given__setup__when__get__project_git__then__return__git__repositories() throws IOException {
-		List<OFGitRepository> response = client.projectRepositories();
+		List<OFGitRepository> response = client.projectRepositories(orangeForgeSettings.getFaaSProjectId());
 		assertThat(response, hasItem(Matchers.<OFGitRepository>hasProperty(
 				"name", equalToIgnoringCase("pkg/caod/caod-manager"))
 		));

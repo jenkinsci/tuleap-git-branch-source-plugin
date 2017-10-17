@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.transport.RefSpec;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
@@ -20,31 +19,24 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.trait.BranchDiscoveryTrait;
+
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.checkCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.listScanCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.lookupScanCredentials;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Item;
-import hudson.model.Queue;
 import hudson.model.TaskListener;
-import hudson.model.queue.Tasks;
 import hudson.scm.SCM;
-import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.scm.api.SCMHead;
@@ -56,7 +48,6 @@ import jenkins.scm.api.SCMSourceCriteria;
 import jenkins.scm.api.SCMSourceDescriptor;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
-import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
 
 /**
  * SCM source implementation for OrangeForge
@@ -71,10 +62,8 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	 */
 	private final String projectId;
 
-	private static String includes = "";
-	private static String excludes = "*";
-
-	private WildcardSCMHeadFilterTrait wildcardTrait;
+	private String apiBaseUri;
+	private String gitBaseUri;
 
 	/**
 	 * Git Repository path to build URL from.
@@ -91,16 +80,13 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	 */
 	private List<SCMSourceTrait> traits = new ArrayList<>();
 	private String credentialsId;
-	private StandardUsernameCredentials credentials;
+	private StandardCredentials credentials;
 
 	@DataBoundConstructor
-	public OFSCMSource(String id, String projectId, String repositoryPath) {
-		//TODO remove call to super(..) when moving to 2.60 with org.jenkins-ci.plugins.git:3.5.0
-		super(id);
+	public OFSCMSource(final String projectId, final String
+			repositoryPath) {
 		this.projectId = projectId;
 		this.repositoryPath = repositoryPath;
-		this.wildcardTrait = new WildcardSCMHeadFilterTrait(includes, excludes);
-		//traits.add(wildcardTrait);
 		traits.add(new BranchDiscoveryTrait());
 	}
 
@@ -112,12 +98,11 @@ public class OFSCMSource extends AbstractGitSCMSource {
 				.withTraits(traits)
 				.wantBranches(true)
 				.newRequest(this, listener)) {
-			final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
-			setRemoteUrl(orangeForgeSettings.getGitBaseUrl()+repositoryPath);
-			StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
+			setRemoteUrl(gitBaseUri+repositoryPath);
+			StandardCredentials credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(), getCredentialsId());
 			setCredentials(credentials);
 			if (request.isFetchBranches()) {
-				OFClient client = new OFClient(orangeForgeSettings);
+				OFClient client = new OFClient(credentials, getApiBaseUri(), getGitBaseUri());
 				LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
 				final List<OFGitBranch> branches = client.branchByGitRepo(repositoryPath);
 				request.setBranches(branches);
@@ -128,15 +113,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
 														 branch.getSha1(), getRemote()).println();
 					OFBranchSCMHead head = new OFBranchSCMHead(branch.getName());
 					if (request.process(head, new SCMRevisionImpl(head, branch.getSha1()),
-										new SCMSourceRequest.ProbeLambda<OFBranchSCMHead, SCMRevisionImpl>() {
-											@NonNull
-											@Override
-											public SCMSourceCriteria.Probe create(@NonNull OFBranchSCMHead head,
-																				  @Nullable SCMRevisionImpl revisionInfo)
-													throws IOException, InterruptedException {
-												return OFSCMSource.this.fromSCMFileSystem(head, revisionInfo);
-											}
-										},
+										OFSCMSource.this::fromSCMFileSystem,
 										new OFWitness(listener))) {
 						request.listener().getLogger().format("%n  %d branches were processed (query completed)%n",
 															  count).println();
@@ -167,12 +144,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		return false;
 	}
 
-	@Override
-	protected StandardUsernameCredentials getCredentials() {
-		return credentials;
-	}
-
-	public void setCredentials(StandardUsernameCredentials credentials) {
+	public void setCredentials(StandardCredentials credentials) {
 		this.credentials = credentials;
 	}
 
@@ -202,16 +174,6 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		this.remoteUrl = remoteUrl;
 	}
 
-	@Override
-	public String getIncludes() {
-		return wildcardTrait.getIncludes();
-	}
-
-	@Override
-	public String getExcludes() {
-		return wildcardTrait.getExcludes();
-	}
-
 	/**
 	 * Gets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking
 	 * out
@@ -237,6 +199,24 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		this.credentialsId = credentialsId;
 	}
 
+	public String getApiBaseUri() {
+		return apiBaseUri;
+	}
+
+	@DataBoundSetter
+	public void setApiBaseUri(String apiBaseUri) {
+		this.apiBaseUri = apiBaseUri;
+	}
+
+	public String getGitBaseUri() {
+		return gitBaseUri;
+	}
+
+	@DataBoundSetter
+	public void setGitBaseUri(String gitBaseUri) {
+		this.gitBaseUri = gitBaseUri;
+	}
+
 	@Symbol("orangeforge")
 	@Extension
 	public static class DescriptorImpl extends SCMSourceDescriptor {
@@ -257,61 +237,23 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		public FormValidation doCheckCredentialsId( @AncestorInPath Item item, @QueryParameter String value,
 													@CheckForNull @AncestorInPath Item context,  @QueryParameter
 															String apiUri, @QueryParameter String credentialsId ) {
-			if (item == null) {
-				if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
-					return FormValidation.ok();
-				}
-			} else {
-				if (!item.hasPermission(Item.EXTENDED_READ)
-						&& !item.hasPermission(CredentialsProvider.USE_ITEM)) {
-					return FormValidation.ok();
-				}
-			}
-			// check credential exists, ask orangeforge if credentials are valid credentials and then ok else invalid
-			/*if (CredentialsProvider.listCredentials(StandardUsernamePasswordCredentials.class,
-			item,
-			item instanceof Queue.Task
-					? Tasks.getAuthenticationOf((Queue.Task)item) : ACL.SYSTEM, URIRequirementBuilder.fromUri(apiUri),
-			null ).isEmpty()) {
-				return FormValidation.error("Cannot find currently selected credentials");
-			}*/
-			return FormValidation.ok();
+			return checkCredentials(item, apiUri);
 		}
 
 		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
 													 @QueryParameter String apiUri,
 													 @QueryParameter String credentialsId) {
-			if (context == null
-					? !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)
-					: !context.hasPermission(Item.EXTENDED_READ)) {
-				return new StandardListBoxModel().includeCurrentValue(credentialsId);
-			}
-			return new StandardListBoxModel()
-					.includeEmptyValue()
-					.includeMatchingAs(
-							context instanceof Queue.Task
-									? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
-									: ACL.SYSTEM,
-							context,
-							StandardUsernameCredentials.class,
-							URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, "https://www.forge.orange-labs.fr/api"))
-												 .build(),
-							CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class))
-					);
+			return listScanCredentials(context, apiUri, credentialsId);
 		}
 
 		@RequirePOST
-		public ListBoxModel doFillRepositoryItems(@CheckForNull @AncestorInPath Item context,
-												  @QueryParameter String credentialsId, @QueryParameter String repoOwner) throws IOException {
+		public ListBoxModel doFillRepositoryItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
+				projectId, @QueryParameter String credentialsId, @QueryParameter String repoOwner) throws IOException {
 			ListBoxModel model = new ListBoxModel();
-			//TODO refactor also in SCMNavigator
-			final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
-			StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
-
-			OFClient client = new OFClient(orangeForgeSettings);
-			for (OFGitRepository repo : client.projectRepositories()) {
-				model.add(repo.getName());
-			}
+			final String apiBaseUrl = OFConfiguration.get().getApiBaseUrl();
+			StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
+			OFClient client = new OFClient(credentials, apiBaseUrl, OFConfiguration.get().getGitBaseUrl());
+			client.projectRepositories(projectId).stream().distinct().forEach(ofGitRepository -> model.add(ofGitRepository.getName()));
 			return model;
 		}
 	}

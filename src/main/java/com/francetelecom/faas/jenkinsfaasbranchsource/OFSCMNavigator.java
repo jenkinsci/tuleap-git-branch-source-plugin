@@ -18,7 +18,6 @@ import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -26,29 +25,24 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.OrangeForgeSettings;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.trait.OFUserForkRepositoryTrait;
 
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.checkCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.listScanCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.lookupScanCredentials;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.RestrictedSince;
 import hudson.Util;
 import hudson.model.Action;
 import hudson.model.Item;
-import hudson.model.Queue;
 import hudson.model.TaskListener;
-import hudson.model.queue.Tasks;
-import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
@@ -78,9 +72,9 @@ import net.jcip.annotations.GuardedBy;
 public class OFSCMNavigator extends SCMNavigator {
 
 	private String projectId;
-	private OFProject project;
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
+	private String apiUri, gitBaseUri;
 
 	@DataBoundConstructor
 	public OFSCMNavigator() {
@@ -88,9 +82,10 @@ public class OFSCMNavigator extends SCMNavigator {
 			new RegexSCMSourceFilterTrait("^/u/.*$"));
 	}
 
+	@NonNull
 	@Override
 	protected String id() {
-		return "https://www.forge.orange-labs.fr/projects::" + project;
+		return "https://www.forge.orange-labs.fr/projects::" + projectId;
 	}
 
 	@Override
@@ -102,17 +97,15 @@ public class OFSCMNavigator extends SCMNavigator {
 			return;
 		}
 		listener.getLogger().printf("Visit Sources of %s...%n", getprojectId());
-
-		final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
-		StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
-		OFClient client = new OFClient(orangeForgeSettings);
+		StandardCredentials cred = OFConnector.lookupScanCredentials((Item) observer, apiUri, credentialsId);
+		OFClient client = new OFClient(cred, apiUri, gitBaseUri);
 
 		try (final OFSCMNavigatorRequest request = new OFSCMNavigatorContext()
 				.withTraits(traits)
 				.newRequest(this, observer)) {
 			SourceFactory sourceFactory = new SourceFactory(request);
 			WitnessImpl witness = new WitnessImpl(listener);
-			for (OFGitRepository repo : client.projectRepositories()) {
+			for (OFGitRepository repo : client.projectRepositories(getprojectId())) {
 				if (request.process(repo.getPath(), sourceFactory, null, witness)) {
 					listener.getLogger().format(
 							"%d repositories were processed (query completed)%n", witness.getCount());
@@ -129,10 +122,8 @@ public class OFSCMNavigator extends SCMNavigator {
 		listener.getLogger().printf("Looking up details of %s...%n", getprojectId());
 		List<Action> actions = new ArrayList<>();
 
-		//TODO standardize & factorize somewhere else
-		final OrangeForgeSettings orangeForgeSettings = new OrangeForgeSettings();
-		StandardUsernamePasswordCredentials credentials = orangeForgeSettings.credentials();
-		OFClient client = new OFClient(orangeForgeSettings);
+		final StandardCredentials credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
+		OFClient client = new OFClient(credentials, getApiUri(), getGitBaseUri());
 
 		final OFProject project = client.projectById(getprojectId());
 		actions.add(new OFProjectMetadataAction(project));
@@ -182,6 +173,50 @@ public class OFSCMNavigator extends SCMNavigator {
 	}
 
 	/**
+	 * Gets the API endpoint for the OrangeForge server.
+	 *
+	 * @return the API endpoint for the OrangeForge server.
+	 */
+	@CheckForNull
+	public String getApiUri() {
+		return apiUri;
+	}
+
+	/**
+	 * Sets the API endpoint for the OrangeForge server.
+	 *
+	 * @param apiUri the API endpoint for the OrangeForge server.
+	 * @since 2.2.0
+	 */
+	@DataBoundSetter
+	public void setApiUri(String apiUri) {
+		//TODO normalize url
+		this.apiUri = Util.fixEmptyAndTrim(apiUri);
+	}
+
+	/**
+	 * Gets the Git endpoint for OrangeForge server.
+	 *
+	 * @return the Git endpoint for OrangeForge server.
+	 */
+	@CheckForNull
+	public String getGitBaseUri() {
+		return gitBaseUri;
+	}
+
+	/**
+	 * Sets the Git endpoint for OrangeForge server.
+	 *
+	 * @param gitBaseUri the Git endpoint for OrangeForge server.
+	 * @since 2.2.0
+	 */
+	@DataBoundSetter
+	public void setGitBaseUri(String gitBaseUri) {
+		//TODO normalize url
+		this.gitBaseUri = Util.fixEmptyAndTrim(gitBaseUri);
+	}
+
+	/**
 	 * Gets the Id of the project who's repositories will be navigated.
 	 * @return the Idof the project who's repositories will be navigated.
 	 */
@@ -199,15 +234,6 @@ public class OFSCMNavigator extends SCMNavigator {
 	public static class DescriptorImpl extends SCMNavigatorDescriptor {
 
 		private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
-
-		@Deprecated
-		@Restricted(DoNotUse.class)
-		@RestrictedSince("2.2.0")
-		public static final String defaultIncludes = "";
-		@Deprecated
-		@Restricted(DoNotUse.class)
-		@RestrictedSince("2.2.0")
-		public static final String defaultExcludes = "*";
 
 		@Inject private OFSCMSource.DescriptorImpl delegate;
 
@@ -236,11 +262,13 @@ public class OFSCMNavigator extends SCMNavigator {
 		/**
 		 * {@inheritDoc}
 		 */
+		@NonNull
 		@Override
 		public String getDisplayName() {
 			return "OrangeForge Project";
 		}
 
+		@NonNull
 		protected SCMSourceCategory[] createCategories() {
 			return new SCMSourceCategory[]{
 					new UncategorizedSCMSourceCategory(Messages._OFSCMNavigator_DepotSourceCategory())
@@ -274,35 +302,56 @@ public class OFSCMNavigator extends SCMNavigator {
 
 		@RequirePOST
 		@Restricted(NoExternalUse.class) // stapler
-		public FormValidation doCheckCredentialsId( @AncestorInPath Item item, @QueryParameter String value,
-													@CheckForNull @AncestorInPath Item context, @QueryParameter String credentialsId ) {
-			if (item == null) {
-				if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
-					return FormValidation.ok();
-				}
-			} else {
-				if (!item.hasPermission(Item.EXTENDED_READ)
-						&& !item.hasPermission(CredentialsProvider.USE_ITEM)) {
-					return FormValidation.ok();
-				}
-			}
-			// TODO check credential exists, ask orangeforge if credentials are valid credentials and then ok else
-			// invalid
-			/*if (CredentialsProvider.listCredentials(StandardUsernamePasswordCredentials.class,
-			item,
-			item instanceof Queue.Task
-					? Tasks.getAuthenticationOf((Queue.Task)item) : ACL.SYSTEM, URIRequirementBuilder.fromUri(apiUri),
-			null ).isEmpty()) {
-				return FormValidation.error("Cannot find currently selected credentials");
-			}*/
-			return FormValidation.ok();
+		public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
+												   @QueryParameter String apiUri,
+												   @QueryParameter String credentialsId) {
+
+			return checkCredentials(context, apiUri /*,credentialsId*/);
 		}
 
+		/**
+		 * Populates the drop-down list of credentials.
+		 *
+		 * @param context the context.
+		 * @return the drop-down list.
+		 * @since 2.2.0
+		 */
+		@Restricted(NoExternalUse.class) // stapler
+		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
+													 @QueryParameter String apiUri,
+													 @QueryParameter String credentialsId) {
+			return listScanCredentials(context, apiUri, credentialsId);
+		}
 		@SuppressWarnings("unused") // jelly
 		public List<SCMTrait<? extends SCMTrait<?>>> getTraitsDefaults() {
 			List<SCMTrait<? extends SCMTrait<?>>> result = new ArrayList<>();
 			result.addAll(delegate.getTraitsDefaults());
-			//result.add();
+			return result;
+		}
+
+		/**
+		 * Returns the available GitHub endpoint items.
+		 *
+		 * @return the available GitHub endpoint items.
+		 */
+		@Restricted(NoExternalUse.class) // stapler
+		@SuppressWarnings("unused") // stapler
+		public ListBoxModel doFillApiUriItems() {
+			ListBoxModel result = new ListBoxModel();
+			result.add("OrangeForge API", OFConfiguration.get().getApiBaseUrl());
+			return result;
+		}
+
+		/**
+		 * Returns the available GitHub endpoint items.
+		 *
+		 * @return the available GitHub endpoint items.
+		 */
+		@Restricted(NoExternalUse.class) // stapler
+		@SuppressWarnings("unused") // stapler
+		public ListBoxModel doFillGitBaseUriItems() {
+			ListBoxModel result = new ListBoxModel();
+			result.add("OrangeForge Git", OFConfiguration.get().getGitBaseUrl());
 			return result;
 		}
 
@@ -377,34 +426,6 @@ public class OFSCMNavigator extends SCMNavigator {
 		}
 
 		/**
-		 * Populates the drop-down list of credentials.
-		 *
-		 * @param context the context.
-		 * @return the drop-down list.
-		 * @since 2.2.0
-		 */
-		@Restricted(NoExternalUse.class) // stapler
-		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-													 @QueryParameter String credentialsId) {
-			if (context == null
-					? !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)
-					: !context.hasPermission(Item.EXTENDED_READ)) {
-				return new StandardListBoxModel().includeCurrentValue(credentialsId);
-			}
-			return new StandardListBoxModel()
-					.includeEmptyValue()
-					.includeMatchingAs(
-							context instanceof Queue.Task
-									? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
-									: ACL.SYSTEM,
-							context,
-							StandardUsernameCredentials.class,
-							URIRequirementBuilder.fromUri(StringUtils.defaultString("https://www.forge.orange-labs.fr/api")).build(),
-							CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class))
-					);
-		}
-
-		/**
 		 * Returns the {@link SCMTraitDescriptor} instances grouped into categories.
 		 *
 		 * @return the categorized list of {@link SCMTraitDescriptor} instances.
@@ -430,12 +451,7 @@ public class OFSCMNavigator extends SCMNavigator {
 				}
 			}
 			List<NamedArrayList<? extends SCMTraitDescriptor<?>>> result = new ArrayList<>();
-			NamedArrayList.select(all, "Repositories", new NamedArrayList.Predicate<SCMTraitDescriptor<?>>() {
-									  @Override
-									  public boolean test(SCMTraitDescriptor<?> scmTraitDescriptor) {
-										  return scmTraitDescriptor instanceof SCMNavigatorTraitDescriptor;
-									  }
-								  },
+			NamedArrayList.select(all, "Repositories", scmTraitDescriptor -> scmTraitDescriptor instanceof SCMNavigatorTraitDescriptor,
 								  true, result);
 			NamedArrayList.select(all, "Within repository", NamedArrayList.anyOf(NamedArrayList.withAnnotation(Discovery.class), NamedArrayList.withAnnotation(Selection.class)),
 								  true, result);
