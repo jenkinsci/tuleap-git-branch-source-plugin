@@ -67,7 +67,8 @@ public class OFClient {
 					.cache(null)
 					.build();
 		} else {
-			throw new UnsupportedOperationException("TODO implement/contribute");
+			throw new UnsupportedOperationException("Not implemented yet, only StandardUsernamePasswordCredentials " +
+															"is supported");
 		}
 	}
 

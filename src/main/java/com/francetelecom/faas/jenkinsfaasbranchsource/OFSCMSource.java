@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.transport.RefSpec;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
@@ -98,9 +99,9 @@ public class OFSCMSource extends AbstractGitSCMSource {
 				.withTraits(traits)
 				.wantBranches(true)
 				.newRequest(this, listener)) {
-			setRemoteUrl(gitBaseUri+repositoryPath);
 			StandardCredentials credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(), getCredentialsId());
 			setCredentials(credentials);
+			setRemoteUrl(getGitBaseUri() + repositoryPath);
 			if (request.isFetchBranches()) {
 				OFClient client = new OFClient(credentials, getApiBaseUri(), getGitBaseUri());
 				LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
@@ -200,21 +201,17 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	}
 
 	public String getApiBaseUri() {
+		if (StringUtils.isBlank(apiBaseUri)){
+			apiBaseUri = OFConfiguration.get().getApiBaseUrl();
+		}
 		return apiBaseUri;
 	}
 
-	@DataBoundSetter
-	public void setApiBaseUri(String apiBaseUri) {
-		this.apiBaseUri = apiBaseUri;
-	}
-
 	public String getGitBaseUri() {
+		if (StringUtils.isBlank(gitBaseUri)){
+			gitBaseUri = OFConfiguration.get().getGitBaseUrl();
+		}
 		return gitBaseUri;
-	}
-
-	@DataBoundSetter
-	public void setGitBaseUri(String gitBaseUri) {
-		this.gitBaseUri = gitBaseUri;
 	}
 
 	@Symbol("orangeforge")

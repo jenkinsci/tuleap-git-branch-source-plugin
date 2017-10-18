@@ -2,14 +2,12 @@ package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
-
 import javax.inject.Inject;
 
 
@@ -26,6 +24,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
@@ -64,7 +63,6 @@ import jenkins.scm.api.trait.SCMTraitDescriptor;
 import jenkins.scm.impl.UncategorizedSCMSourceCategory;
 import jenkins.scm.impl.form.NamedArrayList;
 import jenkins.scm.impl.trait.Discovery;
-import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import jenkins.scm.impl.trait.Selection;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import net.jcip.annotations.GuardedBy;
@@ -77,10 +75,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	private String apiUri, gitBaseUri;
 
 	@DataBoundConstructor
-	public OFSCMNavigator() {
-		this.traits = Arrays.asList(new WildcardSCMSourceFilterTrait("", "*"),
-			new RegexSCMSourceFilterTrait("^/u/.*$"));
-	}
+	public OFSCMNavigator() {}
 
 	@NonNull
 	@Override
@@ -97,8 +92,8 @@ public class OFSCMNavigator extends SCMNavigator {
 			return;
 		}
 		listener.getLogger().printf("Visit Sources of %s...%n", getprojectId());
-		StandardCredentials cred = OFConnector.lookupScanCredentials((Item) observer, apiUri, credentialsId);
-		OFClient client = new OFClient(cred, apiUri, gitBaseUri);
+		StandardCredentials cred = OFConnector.lookupScanCredentials((Item) observer.getContext(), getApiUri(), credentialsId);
+		OFClient client = new OFClient(cred, getApiUri(), getGitBaseUri());
 
 		try (final OFSCMNavigatorRequest request = new OFSCMNavigatorContext()
 				.withTraits(traits)
@@ -179,19 +174,10 @@ public class OFSCMNavigator extends SCMNavigator {
 	 */
 	@CheckForNull
 	public String getApiUri() {
+		if (StringUtils.isBlank(apiUri)){
+			apiUri = OFConfiguration.get().getApiBaseUrl();
+		}
 		return apiUri;
-	}
-
-	/**
-	 * Sets the API endpoint for the OrangeForge server.
-	 *
-	 * @param apiUri the API endpoint for the OrangeForge server.
-	 * @since 2.2.0
-	 */
-	@DataBoundSetter
-	public void setApiUri(String apiUri) {
-		//TODO normalize url
-		this.apiUri = Util.fixEmptyAndTrim(apiUri);
 	}
 
 	/**
@@ -201,19 +187,10 @@ public class OFSCMNavigator extends SCMNavigator {
 	 */
 	@CheckForNull
 	public String getGitBaseUri() {
+		if (StringUtils.isBlank(gitBaseUri)){
+			gitBaseUri = OFConfiguration.get().getGitBaseUrl();
+		}
 		return gitBaseUri;
-	}
-
-	/**
-	 * Sets the Git endpoint for OrangeForge server.
-	 *
-	 * @param gitBaseUri the Git endpoint for OrangeForge server.
-	 * @since 2.2.0
-	 */
-	@DataBoundSetter
-	public void setGitBaseUri(String gitBaseUri) {
-		//TODO normalize url
-		this.gitBaseUri = Util.fixEmptyAndTrim(gitBaseUri);
 	}
 
 	/**
@@ -339,6 +316,24 @@ public class OFSCMNavigator extends SCMNavigator {
 		public ListBoxModel doFillApiUriItems() {
 			ListBoxModel result = new ListBoxModel();
 			result.add("OrangeForge API", OFConfiguration.get().getApiBaseUrl());
+			return result;
+		}
+
+		@Restricted(NoExternalUse.class) // stapler
+		@SuppressWarnings("unused") // stapler
+		public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
+												@QueryParameter String credentialsId) {
+			String apiUri = OFConfiguration.get().getApiBaseUrl();
+			final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
+			ListBoxModel result = new ListBoxModel();
+			if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials){
+				OFClient client = new OFClient(credentials, apiUri, "");
+				try {
+					client.userProjects().forEach(p -> result.add(p.getShortname(), String.valueOf(p.getId())));
+				} catch (IOException e) {
+
+				}
+			}
 			return result;
 		}
 
