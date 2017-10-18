@@ -39,8 +39,9 @@ public class OFConfiguration extends GlobalConfiguration {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OFConfiguration.class);
 
-	public static final String ORANGEFORGE_API_URL= "https://www.forge.orange-labs.fr/api";
-	public static final String ORANGEFORGE_GIT_HTTPS_URL= "https://www.forge.orange-labs.fr/plugins/git/";
+	public static final String ORANGEFORGE_URL= "https://www.forge.orange-labs.fr";
+	public static final String ORANGEFORGE_API_URL= ORANGEFORGE_URL + "/api";
+	public static final String ORANGEFORGE_GIT_HTTPS_URL= ORANGEFORGE_URL + "/plugins/git/";
 
 	public static OFConfiguration get() {
 		return GlobalConfiguration.all().get(OFConfiguration.class);

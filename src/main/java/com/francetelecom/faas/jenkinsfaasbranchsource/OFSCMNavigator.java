@@ -122,6 +122,8 @@ public class OFSCMNavigator extends SCMNavigator {
 
 		final OFProject project = client.projectById(getprojectId());
 		actions.add(new OFProjectMetadataAction(project));
+		actions.add(new OFProjectLink("icon-orangeforge-logo", OFConfiguration.ORANGEFORGE_URL + "/projects/" +
+				project.getShortname()));
 		return actions;
 	}
 
@@ -369,53 +371,53 @@ public class OFSCMNavigator extends SCMNavigator {
 							 Icon.ICON_XLARGE_STYLE));
 
 			IconSet.icons.addIcon(
-					new Icon("icon-github-logo icon-sm",
-							 "plugin/jenkins-faas-branch-source/images/16x16/git-logo.png",
+					new Icon("icon-orangeforge-logo icon-sm",
+							 "plugin/jenkins-faas-branch-source/images/16x16/orangeforge-logo.png",
 							 Icon.ICON_SMALL_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-logo icon-md",
-							 "plugin/jenkins-faas-branch-source/images/24x24/git-logo.png",
+					new Icon("icon-orangeforge-logo icon-md",
+							 "plugin/jenkins-faas-branch-source/images/24x24/orangeforge-logo.png",
 							 Icon.ICON_MEDIUM_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-logo icon-lg",
-							 "plugin/jenkins-faas-branch-source/images/32x32/git-logo.png",
+					new Icon("icon-orangeforge-logo icon-lg",
+							 "plugin/jenkins-faas-branch-source/images/32x32/orangeforge-logo.png",
 							 Icon.ICON_LARGE_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-logo icon-xlg",
-							 "plugin/jenkins-faas-branch-source/images/48x48/git-logo.png",
+					new Icon("icon-orangeforge-logo icon-xlg",
+							 "plugin/jenkins-faas-branch-source/images/48x48/orangeforge-logo.png",
 							 Icon.ICON_XLARGE_STYLE));
 
 			IconSet.icons.addIcon(
-					new Icon("icon-github-repo icon-sm",
+					new Icon("icon-git-repo icon-sm",
 							 "plugin/jenkins-faas-branch-source/images/16x16/git-repo.png",
 							 Icon.ICON_SMALL_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-repo icon-md",
+					new Icon("icon-git-repo icon-md",
 							 "plugin/jenkins-faas-branch-source/images/24x24/git-repo.png",
 							 Icon.ICON_MEDIUM_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-repo icon-lg",
+					new Icon("icon-git-repo icon-lg",
 							 "plugin/jenkins-faas-branch-source/images/32x32/git-repo.png",
 							 Icon.ICON_LARGE_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-repo icon-xlg",
+					new Icon("icon-git-repo icon-xlg",
 							 "plugin/jenkins-faas-branch-source/images/48x48/git-repo.png",
 							 Icon.ICON_XLARGE_STYLE));
 
 			IconSet.icons.addIcon(
-					new Icon("icon-github-branch icon-sm",
+					new Icon("icon-git-branch icon-sm",
 							 "plugin/jenkins-faas-branch-source/images/16x16/git-branch.png",
 							 Icon.ICON_SMALL_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-branch icon-md",
+					new Icon("icon-git-branch icon-md",
 							 "plugin/jenkins-faas-branch-source/images/24x24/git-branch.png",
 							 Icon.ICON_MEDIUM_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-branch icon-lg",
+					new Icon("icon-git-branch icon-lg",
 							 "plugin/jenkins-faas-branch-source/images/32x32/git-branch.png",
 							 Icon.ICON_LARGE_STYLE));
 			IconSet.icons.addIcon(
-					new Icon("icon-github-branch icon-xlg",
+					new Icon("icon-git-branch icon-xlg",
 							 "plugin/jenkins-faas-branch-source/images/48x48/git-branch.png",
 							 Icon.ICON_XLARGE_STYLE));
 		}
@@ -439,6 +441,7 @@ public class OFSCMNavigator extends SCMNavigator {
 				SCMTraitDescriptor<?> d = iterator.next();
 				if (dedup.contains(d)
 						|| d instanceof GitBrowserSCMSourceTrait.DescriptorImpl) {
+					//FIXME
 					// remove any we have seen already and ban the browser configuration as it will always be github
 					iterator.remove();
 				} else {
