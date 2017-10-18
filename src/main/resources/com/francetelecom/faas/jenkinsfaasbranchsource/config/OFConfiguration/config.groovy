@@ -15,6 +15,7 @@ f.section(title: descriptor.displayName) {
 
         f.entry(title: _("API URL"), field: "apiBaseUrl") {
             f.textbox(default: com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration.ORANGEFORGE_API_URL)
+
         }
 
         f.entry(title: _("GIT HTTPS URL"), field: "gitBaseUrl") {
@@ -30,7 +31,7 @@ f.section(title: descriptor.displayName) {
                     title: _("Test connection"),
                     progress: _("Testing..."),
                     method: "verifyCredentials",
-                    with: "apiUrl,credentialsId"
+                    with: "apiBaseUrl,gitBaseUrl,credentialsId"
             )
         }
     }

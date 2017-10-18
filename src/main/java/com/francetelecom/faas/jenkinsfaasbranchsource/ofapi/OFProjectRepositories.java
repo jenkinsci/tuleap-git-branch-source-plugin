@@ -21,6 +21,6 @@ public class OFProjectRepositories {
 	}
 
 	public void setRepositories(List<OFGitRepository> repositories) {
-		this.repositories = new ArrayList<>(repositories == null ? Collections.<OFGitRepository>emptyList() : repositories);
+		this.repositories = new ArrayList<>(repositories == null ? Collections.emptyList() : repositories);
 	}
 }

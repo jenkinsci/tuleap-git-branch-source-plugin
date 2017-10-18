@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.junit.Assert.assertTrue;
 
 public class OFClientTest {
 
@@ -62,5 +63,17 @@ public class OFClientTest {
 		List<OFGitBranch> response = client.branchByGitRepo("faas/pkg/faas/faas-meta-packages.git");
 		assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/develop"))));
 		assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/master"))));
+	}
+
+	@Test
+	public void given__setup__when__is__credententials__valid__then__return__true () throws IOException {
+		assertTrue("credentials in setup (from src/test/orangeforge.properties) should be valid", client
+				.isCredentialValid());
+	}
+
+	@Test
+	public void given__setup__when__get__users__project__then__return__projects__userIsMemberOf() throws Exception {
+		List<OFProject> projects = client.userProjects();
+		assertThat(projects, hasItems(hasProperty("shortname", equalToIgnoringCase("faas"))));
 	}
 }

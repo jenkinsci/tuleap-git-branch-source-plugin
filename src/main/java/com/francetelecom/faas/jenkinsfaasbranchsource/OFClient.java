@@ -1,6 +1,9 @@
 package com.francetelecom.faas.jenkinsfaasbranchsource;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -13,7 +16,6 @@ import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +27,7 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFUser;
 
-import static com.sun.javafx.font.FontResource.SALT;
-
-import hudson.Util;
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -47,7 +45,7 @@ public class OFClient {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OFClient.class);
 	private static final String API_PROJECT_PATH = "/projects";
-	private static final String API_USER_PATH = "/projects";
+	private static final String API_USER_PATH = "/users";
 	private static final String API_GIT_PATH = "/git";
 	private final String apiBaseUrl, gitBaseUrl;
 	private StandardUsernamePasswordCredentials credentials;
@@ -61,7 +59,6 @@ public class OFClient {
 			this.credentials = (StandardUsernamePasswordCredentials) credentials;
 			final String username = this.credentials.getUsername();
 			final String password = this.credentials.getPassword().getPlainText();
-			final String hash = Util.getDigestOf(password + SALT);
 			this.client = new OkHttpClient.Builder()
 					.addInterceptor(new BasicAuthInterceptor(username, password))
 					.connectTimeout(10, TimeUnit.SECONDS)
@@ -75,9 +72,33 @@ public class OFClient {
 	}
 
 	public boolean isCredentialValid() throws IOException {
-		final String url = "https://www.forge.orange-labs.fr/api/users?query=%7B%22username%22%3A%20%22qsqf2513%22%7D";
+		final String queryObject = "{\"username\":\""+credentials.getUsername()+"\"}";
+		final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
+		final String userApiUrl = apiBaseUrl+ API_USER_PATH + "?query="+urlEncodedQueryObject;
 		Request req = new Request.Builder()
-				.url(url)
+				.url(userApiUrl)
+				.addHeader("content-type", "application/json")
+				.cacheControl(CacheControl.FORCE_NETWORK)
+				.get()
+				.build();
+		try (Response response = client.newCall(req).execute()) {
+			return response.isSuccessful();
+		}
+	}
+
+	/**
+	 * Return current user's projects using param object ?query={"is_member_of": true} of OrangeForge api
+	 * From docs https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve :
+	 * Please note that {"is_member_of": false} is not supported and will result in a 400 Bad Request error.
+	 * @return
+	 * @throws IOException
+	 */
+	public List<OFProject> userProjects() throws IOException {
+		final String queryObject = "{\"is_member_of\":true}";
+		final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
+		final String projectsApiUrl = apiBaseUrl+ API_PROJECT_PATH + "?query="+urlEncodedQueryObject;
+		Request req = new Request.Builder()
+				.url(projectsApiUrl)
 				.addHeader("content-type", "application/json")
 				.cacheControl(CacheControl.FORCE_NETWORK)
 				.get()
@@ -88,13 +109,13 @@ public class OFClient {
 
 			ResponseBody body = response.body();
 			if (body != null) {
-				/*com.fasterxml.jackson.databind.JsonMappingException: Can not deserialize instance of com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFUser out of START_ARRAY token
- at [Source: [{"email":"haja.rambelontsalama@orange.com","status":"A","id":18600,"uri":"users\/18600","user_url":"\/users\/qsqf2513","real_name":"RAMBELONTSALAMA Haja OBS\/OAB","display_name":"RAMBELONTSALAMA Haja OBS\/OAB (qsqf2513)","username":"qsqf2513","ldap_id":"QSQF2513","avatar_url":"https:\/\/www.forge.orange-labs.fr\/themes\/common\/images\/avatar_default.png","is_anonymous":false}]; line: 1, column: 1]*/
-				return StringUtils.isEmptyOrNull(parse(body.string(), OFUser.class).getEmail());
+				ObjectMapper mapper = new ObjectMapper();
+				final OFProject[] projects = mapper.readValue(body.string(), OFProject[].class);
+				return Arrays.asList(projects);
 			}
-			return false;
+			return null;
 		} catch (IOException e) {
-			return false;
+			throw new IOException("Retrieve current user's projects encounter error", e);
 		}
 	}
 
@@ -136,10 +157,6 @@ public class OFClient {
 	 * @throws IOException in case HTTP errors occurs or parsing of response fail
 	 */
 	private OFProjectRepositories projectRepositoriesWrapper(final String  projectId) throws IOException {
-		//TODO Only return projects that current user is member of using ?query={"is_member_of": true}
-		// From docs https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve :
-		// 		Please note that {"is_member_of": false} is not supported and will result in a 400 Bad Request error.
-		// curl -L -u "qsqf2513" -X GET  https://www.forge.orange-labs.fr/api/projects?query=%7B%22is_member_of%22%3A%20true%7D
 		final String apiRepositoriesUrl = apiBaseUrl + API_PROJECT_PATH + "/" + projectId + API_GIT_PATH;
 		//FIXME enable cache later
 		Request req = new Request.Builder()
@@ -164,7 +181,6 @@ public class OFClient {
 			LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
 			final String username = this.credentials.getUsername();
 			final String password = this.credentials.getPassword().getPlainText();
-			final String hash = Util.getDigestOf(password + SALT);
 			return new LsRemoteCommand(null)
 					.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
 					.setRemote(gitBaseUrl+ gitRepoPath)

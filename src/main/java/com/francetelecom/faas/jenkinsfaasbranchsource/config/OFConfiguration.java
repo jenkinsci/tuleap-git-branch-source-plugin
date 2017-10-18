@@ -24,6 +24,7 @@ import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.security.ACL;
@@ -87,6 +88,16 @@ public class OFConfiguration extends GlobalConfiguration {
 		this.name = name;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@NonNull
+	@Override
+	public String getDisplayName() {
+		return "OrangeForge";
+	}
+
+
 	@SuppressWarnings("unused")
 	public ListBoxModel doFillCredentialsIdItems(@QueryParameter String apiUrl,
 												 @QueryParameter String credentialsId) {
@@ -95,7 +106,7 @@ public class OFConfiguration extends GlobalConfiguration {
 
 	@SuppressWarnings("unused")
 	public FormValidation doVerifyCredentials(
-			@QueryParameter String apiUrl, @QueryParameter String gitUrl,
+			@QueryParameter String apiBaseUrl, @QueryParameter String gitBaseUrl,
 			@QueryParameter String credentialsId) throws IOException {
 
 		if (Util.fixEmpty(credentialsId) == null) {
@@ -108,11 +119,11 @@ public class OFConfiguration extends GlobalConfiguration {
 					withId(trimToEmpty(credentialsId))
 			), CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId), allUsernamePasswordMatch()));
 
-			OFClient client = new OFClient(cred, apiUrl, gitUrl);
+			OFClient client = new OFClient(cred, apiBaseUrl, gitBaseUrl);
 
 			try {
 				if (client.isCredentialValid()) {
-					return FormValidation.ok("Credentials verified ");
+					return FormValidation.ok("Credentials verified for user %s", cred.getUsername());
 				} else {
 					return FormValidation.error("Failed to validate the account");
 				}
@@ -123,21 +134,26 @@ public class OFConfiguration extends GlobalConfiguration {
 	}
 
 	@SuppressWarnings("unused")
-	public FormValidation doCheckApiUrl(@QueryParameter String value) {
+	public FormValidation doCheckApiBaseUrl(@QueryParameter String apiBaseUrl) {
+		return validateUrls(apiBaseUrl, ORANGEFORGE_API_URL);
+	}
+
+	@SuppressWarnings("unused")
+	public FormValidation doCheckGitBaseUrl(@QueryParameter String gitBaseUrl) {
+		return validateUrls(gitBaseUrl, ORANGEFORGE_GIT_HTTPS_URL);
+	}
+
+	private FormValidation validateUrls(final String url, final String pattern) {
 		try {
-			new URL(value);
+			new URL(url);
 		} catch (MalformedURLException e) {
-			return FormValidation.error("Malformed GitHub url (%s)", e.getMessage());
+			return FormValidation.error("Malformed OrangeForge url (%s)", e.getMessage());
 		}
 
-		if (ORANGEFORGE_API_URL.equals(value)) {
+		if (pattern.equals(url)) {
 			return FormValidation.ok();
 		}
 
-		if (value.endsWith("/api/v3") || value.endsWith("/api/v3/")) {
-			return FormValidation.ok();
-		}
-
-		return FormValidation.warning("GitHub Enterprise API URL ends with \"/api/v3\"");
+		return FormValidation.warning("OrangeForge Urls are required and should be valid");
 	}
 }
