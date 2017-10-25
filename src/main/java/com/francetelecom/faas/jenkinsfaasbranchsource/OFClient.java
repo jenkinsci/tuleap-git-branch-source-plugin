@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -52,6 +53,9 @@ public class OFClient {
 
 	private final OkHttpClient client;
 
+	//TODO withCredentials as anonymous exists also
+	//withGit avoid NO_GIT_USAGE
+	//with Api by default as there is no use case if no api
 	public OFClient(StandardCredentials credentials, final String apiBaseUrl, final String gitBaseUrl) {
 		if (credentials instanceof StandardUsernamePasswordCredentials) {
 			this.apiBaseUrl = apiBaseUrl;
@@ -176,15 +180,22 @@ public class OFClient {
 		}
 	}
 
-	public List<OFGitBranch> branchByGitRepo (final String gitRepoPath) throws
+	public List<OFGitBranch> branchByGitRepo (String gitRepoPath) throws
 			IOException, NoSingleRepoByPathException, NoSuchElementException {
 		try {
 			LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
 			final String username = this.credentials.getUsername();
 			final String password = this.credentials.getPassword().getPlainText();
+			if (!StringUtils.startsWith(gitRepoPath, "faas/")) {
+				gitRepoPath = "faas/"+gitRepoPath;
+			}
+			if (!StringUtils.endsWith(gitRepoPath, ".git")) {
+				gitRepoPath = gitRepoPath+".git";
+			}
+			final String remote = gitBaseUrl + gitRepoPath;
 			return new LsRemoteCommand(null)
 					.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
-					.setRemote(gitBaseUrl+ gitRepoPath)
+					.setRemote(remote)
 					.setHeads(true)
 					.call()
 					.stream()

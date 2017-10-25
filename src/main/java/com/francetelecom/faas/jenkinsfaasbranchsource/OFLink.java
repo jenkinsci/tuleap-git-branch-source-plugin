@@ -11,7 +11,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.Action;
 import jenkins.model.Jenkins;
 
-public class OFProjectLink implements Action, IconSpec {
+public class OFLink implements Action, IconSpec {
 	/**
 	 * The icon class name to use.
 	 */
@@ -24,7 +24,7 @@ public class OFProjectLink implements Action, IconSpec {
 	@NonNull
 	private final String url;
 
-	public OFProjectLink(@NonNull String iconClassName, @NonNull String url) {
+	public OFLink(@NonNull String iconClassName, @NonNull String url) {
 		this.iconClassName = iconClassName;
 		this.url = url;
 	}
@@ -71,7 +71,7 @@ public class OFProjectLink implements Action, IconSpec {
 			return false;
 		}
 
-		OFProjectLink that = (OFProjectLink) o;
+		OFLink that = (OFLink) o;
 
 		if (!iconClassName.equals(that.iconClassName)) {
 			return false;

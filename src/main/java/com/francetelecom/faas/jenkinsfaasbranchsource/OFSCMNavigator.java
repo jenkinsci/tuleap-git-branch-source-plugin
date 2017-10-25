@@ -3,9 +3,11 @@ package com.francetelecom.faas.jenkinsfaasbranchsource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -73,6 +75,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
 	private String apiUri, gitBaseUri;
+	private Map<String, OFGitRepository> repositories = new HashMap<>();
 
 	@DataBoundConstructor
 	public OFSCMNavigator() {}
@@ -98,10 +101,11 @@ public class OFSCMNavigator extends SCMNavigator {
 		try (final OFSCMNavigatorRequest request = new OFSCMNavigatorContext()
 				.withTraits(traits)
 				.newRequest(this, observer)) {
-			SourceFactory sourceFactory = new SourceFactory(request);
 			WitnessImpl witness = new WitnessImpl(listener);
 			for (OFGitRepository repo : client.projectRepositories(getprojectId())) {
-				if (request.process(repo.getPath(), sourceFactory, null, witness)) {
+				repositories.put(repo.getName(), repo);
+				SourceFactory sourceFactory = new SourceFactory(request, repo);
+				if (request.process(repo.getName(), sourceFactory, null, witness)) {
 					listener.getLogger().format(
 							"%d repositories were processed (query completed)%n", witness.getCount());
 				}
@@ -122,7 +126,7 @@ public class OFSCMNavigator extends SCMNavigator {
 
 		final OFProject project = client.projectById(getprojectId());
 		actions.add(new OFProjectMetadataAction(project));
-		actions.add(new OFProjectLink("icon-orangeforge-logo", OFConfiguration.ORANGEFORGE_URL + "/projects/" +
+		actions.add(new OFLink("icon-orangeforge-logo", OFConfiguration.ORANGEFORGE_URL + "/projects/" +
 				project.getShortname()));
 		return actions;
 	}
@@ -206,6 +210,10 @@ public class OFSCMNavigator extends SCMNavigator {
 	@DataBoundSetter
 	public void setProjectId(final String projectId) {
 		this.projectId = projectId;
+	}
+
+	public Map<String, OFGitRepository> getRepositories() {
+		return repositories;
 	}
 
 	@Symbol("orangeforge")
@@ -461,15 +469,17 @@ public class OFSCMNavigator extends SCMNavigator {
 	private class SourceFactory implements SCMNavigatorRequest.SourceLambda {
 
 		private final OFSCMNavigatorRequest request;
+		private final OFGitRepository repo;
 
-		public SourceFactory(OFSCMNavigatorRequest request) {
+		public SourceFactory(OFSCMNavigatorRequest request, OFGitRepository repo) {
 			this.request = request;
+			this.repo = repo;
 		}
 
 		@NonNull
 		@Override
 		public SCMSource create(@NonNull String repositoryName) throws IOException, InterruptedException {
-			return new OFSCMSourceBuilder(getId()+repositoryName, credentialsId, projectId, repositoryName)
+			return new OFSCMSourceBuilder(getId()+repositoryName, credentialsId, projectId, repo.getPath())
 					.withRequest(request)
 					.build();
 		}

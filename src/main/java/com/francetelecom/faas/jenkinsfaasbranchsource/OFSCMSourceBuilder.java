@@ -9,8 +9,8 @@ public class OFSCMSourceBuilder extends SCMSourceBuilder<OFSCMSourceBuilder, OFS
 	private final String credentialsId;
 	private final String projectId;
 
-	public OFSCMSourceBuilder(String id, String credentialsId, String projectId, String repositoryName) {
-		super(OFSCMSource.class, repositoryName);
+	public OFSCMSourceBuilder(String id, String credentialsId, String projectId, String repositoryPath) {
+		super(OFSCMSource.class, repositoryPath);
 		this.id = id;
 		this.credentialsId = credentialsId;
 		this.projectId = projectId;

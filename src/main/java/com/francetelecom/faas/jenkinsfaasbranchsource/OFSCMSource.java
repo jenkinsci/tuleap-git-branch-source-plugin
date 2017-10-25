@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration;
 import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.trait.BranchDiscoveryTrait;
@@ -33,6 +34,8 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.Action;
+import hudson.model.Actionable;
 import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.scm.SCM;
@@ -47,6 +50,8 @@ import jenkins.scm.api.SCMHeadObserver;
 import jenkins.scm.api.SCMRevision;
 import jenkins.scm.api.SCMSourceCriteria;
 import jenkins.scm.api.SCMSourceDescriptor;
+import jenkins.scm.api.SCMSourceEvent;
+import jenkins.scm.api.SCMSourceOwner;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 
@@ -61,7 +66,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	/**
 	 * OrangeForge project to build URL from.
 	 */
-	private final String projectId;
+	private String projectId;
 
 	private String apiBaseUri;
 	private String gitBaseUri;
@@ -69,7 +74,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	/**
 	 * Git Repository path to build URL from.
 	 */
-	private final String repositoryPath;
+	private String repositoryPath;
 
 	/**
 	 * Git remote URL.
@@ -89,6 +94,31 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		this.projectId = projectId;
 		this.repositoryPath = repositoryPath;
 		traits.add(new BranchDiscoveryTrait());
+	}
+
+
+	@NonNull
+	@Override
+	protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event, @NonNull TaskListener listener) throws IOException, InterruptedException {
+		List<Action> result = new ArrayList<>();
+		SCMSourceOwner owner = getOwner();
+		if (owner instanceof Actionable) {
+			OFLink repoLink = ((Actionable) owner).getAction(OFLink.class);
+			if (repoLink != null) {
+				String canonicalRepoName = repositoryPath.replace("faas/", "");
+				String url = repoLink.getUrl() + "?p="+ canonicalRepoName+ "&a=shortlog&h="+ head.getName();
+				result.add(new OFLink("icon-git-branch", url));
+			}
+		}
+		return result;
+	}
+
+	@NonNull
+	@Override
+	protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener) throws IOException, InterruptedException {
+		List<Action> result = new ArrayList<>();
+		result.add(new OFLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
+		return result;
 	}
 
 	@Override
@@ -200,6 +230,29 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		this.credentialsId = credentialsId;
 	}
 
+	/**
+	 * Gets the Id of the project who's repositories will be navigated.
+	 * @return the Idof the project who's repositories will be navigated.
+	 */
+	public String getprojectId() {
+		return projectId;
+	}
+
+	@DataBoundSetter
+	public void setProjectId(final String projectId) {
+		this.projectId = projectId;
+	}
+
+
+	public String getRepositoryPath() {
+		return repositoryPath;
+	}
+
+	@DataBoundSetter
+	public void setRepositoryPath(String repositoryPath) {
+		this.repositoryPath = repositoryPath;
+	}
+
 	public String getApiBaseUri() {
 		if (StringUtils.isBlank(apiBaseUri)){
 			apiBaseUri = OFConfiguration.get().getApiBaseUrl();
@@ -217,6 +270,8 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	@Symbol("orangeforge")
 	@Extension
 	public static class DescriptorImpl extends SCMSourceDescriptor {
+
+		public static final String NO_NEED_GIT_CALL = "";
 
 		@Override
 		public String getDisplayName() {
@@ -243,15 +298,45 @@ public class OFSCMSource extends AbstractGitSCMSource {
 			return listScanCredentials(context, apiUri, credentialsId);
 		}
 
-		@RequirePOST
-		public ListBoxModel doFillRepositoryItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
-				projectId, @QueryParameter String credentialsId, @QueryParameter String repoOwner) throws IOException {
-			ListBoxModel model = new ListBoxModel();
+		@Restricted(NoExternalUse.class) // stapler
+		@SuppressWarnings("unused") // stapler
+		public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
+				projectId, @QueryParameter String credentialsId) throws IOException {
+			String apiUri = OFConfiguration.get().getApiBaseUrl();
+			final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
+			ListBoxModel result = new ListBoxModel();
+			if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials){
+				OFClient client = new OFClient(credentials, apiUri, NO_NEED_GIT_CALL);
+				client.userProjects().forEach(project -> {
+					boolean selected = false;
+					if (project.getId() == Integer.valueOf(projectId)) {
+						selected = true;
+					}
+					ListBoxModel.Option newItem = new ListBoxModel.Option(project.getShortname(), String.valueOf
+							(project.getId()), selected);
+					result.add(newItem);
+				});
+			}
+			return result;
+		}
+
+		@Restricted(NoExternalUse.class) // stapler
+		public ListBoxModel doFillRepositoryPathItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
+				projectId, @QueryParameter String credentialsId, @QueryParameter String repositoryPath) throws IOException {
+			ListBoxModel result = new ListBoxModel();
 			final String apiBaseUrl = OFConfiguration.get().getApiBaseUrl();
 			StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
-			OFClient client = new OFClient(credentials, apiBaseUrl, OFConfiguration.get().getGitBaseUrl());
-			client.projectRepositories(projectId).stream().distinct().forEach(ofGitRepository -> model.add(ofGitRepository.getName()));
-			return model;
+			final String gitBaseUrl = OFConfiguration.get().getGitBaseUrl();
+			OFClient client = new OFClient(credentials, apiBaseUrl, gitBaseUrl);
+			client.projectRepositories(projectId).stream().distinct().forEach(repo -> {
+				boolean selected = false;
+				if (repo.getPath().equals(repositoryPath)) {
+					selected = true;
+				}
+				final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.getName(), repo.getPath(), selected);
+				result.add(newItem);
+			});
+			return result;
 		}
 	}
 

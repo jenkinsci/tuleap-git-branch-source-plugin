@@ -11,8 +11,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
+import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMNavigator;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMNavigatorContext;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSource;
+import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -31,31 +33,32 @@ import jenkins.scm.impl.trait.Discovery;
 
 public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 
-	private int strategyId;
+	@NonNull
+	private int strategy;
 
 	@DataBoundConstructor
-	public OFUserForkRepositoryTrait(int strategyId) {
-		if (strategyId == 0) {
-			strategyId = 1;
+	public OFUserForkRepositoryTrait(int strategy) {
+		if (strategy == 0) {
+			strategy = 1;
 		}
-		this.strategyId = strategyId;
+		this.strategy = strategy;
 	}
 
-	public int getStrategyId() {
-		return strategyId;
+	public int getStrategy() {
+		return strategy;
 	}
 
 	@DataBoundSetter
-	public void setStrategyId(int strategyId) {
-		this.strategyId = strategyId;
+	public void setStrategy(int strategy) {
+		this.strategy = strategy;
 	}
 
 	@Override
 	protected void decorateContext(SCMNavigatorContext<?, ?> ctx) {
 		OFSCMNavigatorContext context = (OFSCMNavigatorContext) ctx;
 		context.withFilter(new ExcludeNotOwnedRepositoryFilter());
-		context.wantUserFork(strategyId == 1);
-		if (strategyId == 1) {
+		context.wantUserFork(strategy == 1);
+		if (strategy == 1) {
 			context.withPrefilter(new ExcludeUserForkRepositorySCMFilter());
 		} else {
 			//we don't care if it is a userFork or not, we're taking them all, no need to filter
@@ -66,7 +69,9 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 
 		@Override
 		public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
-			return projectName.contains("/u/");
+			OFSCMNavigator navigator= (OFSCMNavigator) source;
+			OFGitRepository repo = navigator.getRepositories().get(projectName);
+			return repo.getPath().contains("/u/");
 		}
 	}
 
@@ -96,7 +101,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		@Nonnull
 		@Override
 		public String getDisplayName() {
-			return "Exclure les fork utilisateurs";
+			return Messages.OFUserForkRepositoryTrait_DisplayName();
 		}
 
 		@Override
@@ -112,7 +117,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		@NonNull
 		@Restricted(NoExternalUse.class)
 		@SuppressWarnings("unused") // stapler
-		public ListBoxModel doFillStrategyIdItems() {
+		public ListBoxModel doFillStrategyItems() {
 			ListBoxModel result = new ListBoxModel();
 			result.add(Messages.OFUserForkRepositoryTrait_excludeUserForkRepositories(), "1");
 			result.add(Messages.OFUserForkRepositoryTrait_allRepositories(), "2");

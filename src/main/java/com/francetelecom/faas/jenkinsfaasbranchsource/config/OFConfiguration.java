@@ -49,8 +49,14 @@ public class OFConfiguration extends GlobalConfiguration {
 
 	@CheckForNull
 	private String name;
-	private String gitBaseUrl = ORANGEFORGE_GIT_HTTPS_URL;
 	private String apiBaseUrl = ORANGEFORGE_API_URL;
+
+	/**
+	 * Git URL as configured in /etc/tuleap/plugins/git/etc/config.inc
+	 * https://tuleap.net/pipermail/tuleap-devel/2015-December/004425.html
+	 * http://tuleap-documentation.readthedocs.io/en/latest/installation-guide/advanced-configuration.html#tuleap-configuration
+	 */
+	private String gitBaseUrl = ORANGEFORGE_GIT_HTTPS_URL;
 
 	public OFConfiguration() throws IOException {
 		load();
