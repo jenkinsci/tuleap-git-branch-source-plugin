@@ -65,7 +65,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		}
 	}
 
-	private class ExcludeUserForkRepositorySCMFilter extends SCMSourcePrefilter {
+	private static class ExcludeUserForkRepositorySCMFilter extends SCMSourcePrefilter {
 
 		@Override
 		public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
@@ -75,7 +75,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		}
 	}
 
-	private class ExcludeNotOwnedRepositoryFilter extends SCMSourceFilter {
+	private static class ExcludeNotOwnedRepositoryFilter extends SCMSourceFilter {
 
 		@Override
 		public boolean isExcluded(@NonNull SCMNavigatorRequest request, @NonNull String projectName) throws
