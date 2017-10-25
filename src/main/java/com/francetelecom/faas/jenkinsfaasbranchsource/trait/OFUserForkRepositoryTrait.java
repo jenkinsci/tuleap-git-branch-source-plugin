@@ -101,7 +101,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		@Nonnull
 		@Override
 		public String getDisplayName() {
-			return Messages.OFUserForkRepositoryTrait_DisplayName();
+			return Messages.OFUserForkRepositoryTrait_displayName();
 		}
 
 		@Override

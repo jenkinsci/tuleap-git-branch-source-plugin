@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFClient;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.filter;
@@ -23,7 +24,6 @@ import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCreden
 import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.allUsernamePasswordMatch;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
@@ -47,8 +47,6 @@ public class OFConfiguration extends GlobalConfiguration {
 		return GlobalConfiguration.all().get(OFConfiguration.class);
 	}
 
-	@CheckForNull
-	private String name;
 	private String apiBaseUrl = ORANGEFORGE_API_URL;
 
 	/**
@@ -86,22 +84,13 @@ public class OFConfiguration extends GlobalConfiguration {
 		this.gitBaseUrl = gitBaseUrl;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	@DataBoundSetter
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	/**
 	 * {@inheritDoc}
 	 */
 	@NonNull
 	@Override
 	public String getDisplayName() {
-		return "OrangeForge";
+		return Messages.OFConfiguration_displayName();
 	}
 
 

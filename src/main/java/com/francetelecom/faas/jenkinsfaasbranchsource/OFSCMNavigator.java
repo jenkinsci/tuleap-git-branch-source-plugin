@@ -230,7 +230,7 @@ public class OFSCMNavigator extends SCMNavigator {
 		 */
 		@Override
 		public String getPronoun() {
-			return Messages.OFSCMNavigator_Pronoun();
+			return Messages.OFSCMNavigator_pronoun();
 		}
 
 		/**
@@ -258,7 +258,7 @@ public class OFSCMNavigator extends SCMNavigator {
 		@NonNull
 		protected SCMSourceCategory[] createCategories() {
 			return new SCMSourceCategory[]{
-					new UncategorizedSCMSourceCategory(Messages._OFSCMNavigator_DepotSourceCategory())
+					new UncategorizedSCMSourceCategory(Messages._OFSCMNavigator_depotSourceCategory())
 			};
 		}
 
@@ -268,7 +268,7 @@ public class OFSCMNavigator extends SCMNavigator {
 		@NonNull
 		@Override
 		public String getDescription() {
-			return Messages.OFSCMNavigator_Description();
+			return Messages.OFSCMNavigator_description();
 		}
 
 		/**

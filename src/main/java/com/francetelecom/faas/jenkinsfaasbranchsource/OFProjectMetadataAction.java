@@ -18,7 +18,7 @@ public class OFProjectMetadataAction extends AvatarMetadataAction {
 	 */
 	@Override
 	public String getAvatarDescription() {
-		return Messages.OFProjectMetadataAction_IconDescription();
+		return Messages.OFProjectMetadataAction_iconDescription();
 	}
 
 	/**

@@ -6,10 +6,6 @@ def c = namespace(lib.CredentialsTagLib)
 
 f.section(title: descriptor.displayName, help: descriptor.getHelpFile()) {
 
-    f.entry(title: _("Name"), field: "name") {
-        f.textbox()
-    }
-
     f.entry(title: _("Api_url"), field: "apiBaseUrl") {
         f.textbox(default: com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration.ORANGEFORGE_API_URL)
 

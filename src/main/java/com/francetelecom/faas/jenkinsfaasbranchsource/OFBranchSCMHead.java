@@ -20,7 +20,7 @@ public class OFBranchSCMHead extends SCMHead{
 	 */
 	@Override
 	public String getPronoun() {
-		return Messages.OFBranchSCMHead_Pronoun();
+		return Messages.OFBranchSCMHead_pronoun();
 	}
 
 }
