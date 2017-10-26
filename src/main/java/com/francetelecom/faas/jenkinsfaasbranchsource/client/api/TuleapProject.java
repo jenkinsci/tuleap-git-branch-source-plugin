@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @see <a href=https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve>https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OFProject {
+public class TuleapProject {
 
 	private int id;
 

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitBranch;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -25,7 +25,7 @@ public class OFSCMSourceRequest extends SCMSourceRequest{
 	 * The branch details or {@code null} if not {@link #isFetchBranches()}.
 	 */
 	@CheckForNull
-	private Iterable<OFGitBranch> branches;
+	private Iterable<TuleapGitBranch> branches;
 
 	/**
 	 * The set of origin branch names that the request is scoped to or {@code null} if the request is not limited.
@@ -57,11 +57,11 @@ public class OFSCMSourceRequest extends SCMSourceRequest{
 		return fetchBranches;
 	}
 
-	public Iterable<OFGitBranch> getBranches() {
+	public Iterable<TuleapGitBranch> getBranches() {
 		return branches;
 	}
 
-	public void setBranches(Iterable<OFGitBranch> branches) {
+	public void setBranches(Iterable<TuleapGitBranch> branches) {
 		this.branches = branches;
 	}
 }

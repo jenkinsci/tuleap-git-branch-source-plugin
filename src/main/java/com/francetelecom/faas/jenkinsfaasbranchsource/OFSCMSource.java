@@ -22,13 +22,17 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientCommandConfigurer;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientRawCmd;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitBranch;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConfiguration;
 import com.francetelecom.faas.jenkinsfaasbranchsource.trait.BranchDiscoveryTrait;
 
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.checkCredentials;
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.listScanCredentials;
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.lookupScanCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.checkCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.listScanCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.lookupScanCredentials;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -133,12 +137,19 @@ public class OFSCMSource extends AbstractGitSCMSource {
 			setCredentials(credentials);
 			setRemoteUrl(getGitBaseUri() + repositoryPath);
 			if (request.isFetchBranches()) {
-				OFClient client = new OFClient(credentials, getApiBaseUri(), getGitBaseUri());
 				LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
-				final List<OFGitBranch> branches = client.branchByGitRepo(repositoryPath);
+				final TuleapClientRawCmd.Command<List<TuleapGitBranch>> allBranchesByGitRepo = new TuleapClientRawCmd().new
+						AllBranchesByGitRepo
+						(repositoryPath);
+				final List<TuleapGitBranch> branches = TuleapClientCommandConfigurer.<List<TuleapGitBranch>>newInstance(getApiBaseUri())
+						.withCredentials(credentials)
+						.withGitUrl(getGitBaseUri())
+						.withCommand(allBranchesByGitRepo)
+						.configure()
+						.call();
 				request.setBranches(branches);
 				int count=0;
-				for (OFGitBranch branch : branches) {
+				for (TuleapGitBranch branch : branches) {
 					count++;
 					request.listener().getLogger().format("Crawling branch %s::%s for repo %s", branch.getName(),
 														 branch.getSha1(), getRemote()).println();
@@ -255,14 +266,14 @@ public class OFSCMSource extends AbstractGitSCMSource {
 
 	public String getApiBaseUri() {
 		if (StringUtils.isBlank(apiBaseUri)){
-			apiBaseUri = OFConfiguration.get().getApiBaseUrl();
+			apiBaseUri = TuleapConfiguration.get().getApiBaseUrl();
 		}
 		return apiBaseUri;
 	}
 
 	public String getGitBaseUri() {
 		if (StringUtils.isBlank(gitBaseUri)){
-			gitBaseUri = OFConfiguration.get().getGitBaseUrl();
+			gitBaseUri = TuleapConfiguration.get().getGitBaseUrl();
 		}
 		return gitBaseUri;
 	}
@@ -270,8 +281,6 @@ public class OFSCMSource extends AbstractGitSCMSource {
 	@Symbol("orangeforge")
 	@Extension
 	public static class DescriptorImpl extends SCMSourceDescriptor {
-
-		public static final String NO_NEED_GIT_CALL = "";
 
 		@Override
 		public String getDisplayName() {
@@ -302,12 +311,18 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		@SuppressWarnings("unused") // stapler
 		public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
 				projectId, @QueryParameter String credentialsId) throws IOException {
-			String apiUri = OFConfiguration.get().getApiBaseUrl();
+			String apiUri = TuleapConfiguration.get().getApiBaseUrl();
 			final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
 			ListBoxModel result = new ListBoxModel();
 			if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials){
-				OFClient client = new OFClient(credentials, apiUri, NO_NEED_GIT_CALL);
-				client.userProjects().forEach(project -> {
+				final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new AllUserProjects();
+
+				TuleapClientCommandConfigurer.<List<TuleapProject>>newInstance(apiUri)
+						.withCredentials(credentials)
+						.withCommand(allUserProjectsRawCmd)
+						.configure()
+						.call()
+						.forEach(project -> {
 					boolean selected = false;
 					if (project.getId() == Integer.valueOf(projectId)) {
 						selected = true;
@@ -324,18 +339,23 @@ public class OFSCMSource extends AbstractGitSCMSource {
 		public ListBoxModel doFillRepositoryPathItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
 				projectId, @QueryParameter String credentialsId, @QueryParameter String repositoryPath) throws IOException {
 			ListBoxModel result = new ListBoxModel();
-			final String apiBaseUrl = OFConfiguration.get().getApiBaseUrl();
+			final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
 			StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
-			final String gitBaseUrl = OFConfiguration.get().getGitBaseUrl();
-			OFClient client = new OFClient(credentials, apiBaseUrl, gitBaseUrl);
-			client.projectRepositories(projectId).stream().distinct().forEach(repo -> {
-				boolean selected = false;
-				if (repo.getPath().equals(repositoryPath)) {
-					selected = true;
-				}
-				final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.getName(), repo.getPath(), selected);
-				result.add(newItem);
-			});
+			final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new TuleapClientRawCmd().new
+					AllRepositoriesByProject(projectId);
+			TuleapClientCommandConfigurer.<List<TuleapGitRepository>>newInstance(apiBaseUrl)
+					.withCredentials(credentials)
+					.withCommand(allRepositoriesByProjectRawCmd)
+					.configure()
+					.call()
+					.stream().distinct().forEach(repo -> {
+						boolean selected = false;
+						if (repo.getPath().equals(repositoryPath)) {
+							selected = true;
+						}
+						final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.getName(), repo.getPath(), selected);
+						result.add(newItem);
+					});
 			return result;
 		}
 	}

@@ -1,9 +1,9 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OFUser {
+public class TuleapUser {
 
 	private String email;
 

@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.api;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,15 +12,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  *  @see <a href=https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit>https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OFProjectRepositories {
+public class TuleapProjectRepositories {
 
-	private List<OFGitRepository> repositories;
+	private List<TuleapGitRepository> repositories;
 
-	public List<OFGitRepository> getRepositories() {
+	public List<TuleapGitRepository> getRepositories() {
 		return Collections.unmodifiableList(repositories);
 	}
 
-	public void setRepositories(List<OFGitRepository> repositories) {
+	public void setRepositories(List<TuleapGitRepository> repositories) {
 		this.repositories = new ArrayList<>(repositories == null ? Collections.emptyList() : repositories);
 	}
 }

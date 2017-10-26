@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  *  @see <a href=https://goo.gl/kbMmwA>GitRepositoryRepresentation</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OFGitRepository {
+public class TuleapGitRepository {
 
 	private int id;
 	private String uri, name, path, description;

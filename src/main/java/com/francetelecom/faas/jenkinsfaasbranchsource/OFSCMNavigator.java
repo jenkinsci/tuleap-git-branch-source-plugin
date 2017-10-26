@@ -27,15 +27,17 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConfiguration;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientCommandConfigurer;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientRawCmd;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConfiguration;
+import com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector;
 import com.francetelecom.faas.jenkinsfaasbranchsource.trait.OFUserForkRepositoryTrait;
 
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.checkCredentials;
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.listScanCredentials;
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.lookupScanCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.checkCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.listScanCredentials;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.lookupScanCredentials;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -75,7 +77,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	private List<SCMTrait<? extends SCMTrait>> traits;
 	private String credentialsId;
 	private String apiUri, gitBaseUri;
-	private Map<String, OFGitRepository> repositories = new HashMap<>();
+	private Map<String, TuleapGitRepository> repositories = new HashMap<>();
 
 	@DataBoundConstructor
 	public OFSCMNavigator() {}
@@ -95,14 +97,21 @@ public class OFSCMNavigator extends SCMNavigator {
 			return;
 		}
 		listener.getLogger().printf("Visit Sources of %s...%n", getprojectId());
-		StandardCredentials cred = OFConnector.lookupScanCredentials((Item) observer.getContext(), getApiUri(), credentialsId);
-		OFClient client = new OFClient(cred, getApiUri(), getGitBaseUri());
+		StandardCredentials credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(), getApiUri(), credentialsId);
 
 		try (final OFSCMNavigatorRequest request = new OFSCMNavigatorContext()
 				.withTraits(traits)
 				.newRequest(this, observer)) {
 			WitnessImpl witness = new WitnessImpl(listener);
-			for (OFGitRepository repo : client.projectRepositories(getprojectId())) {
+			final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new TuleapClientRawCmd().new
+					AllRepositoriesByProject(projectId);
+			final TuleapClientRawCmd.Command<List<TuleapGitRepository>> configuredCmd = TuleapClientCommandConfigurer
+					.<List<TuleapGitRepository>>newInstance(getApiUri())
+					.withCredentials(credentials)
+					.withCommand(allRepositoriesByProjectRawCmd)
+					.configure();
+
+			for (TuleapGitRepository repo : configuredCmd.call()) {
 				repositories.put(repo.getName(), repo);
 				SourceFactory sourceFactory = new SourceFactory(request, repo);
 				if (request.process(repo.getName(), sourceFactory, null, witness)) {
@@ -122,11 +131,15 @@ public class OFSCMNavigator extends SCMNavigator {
 		List<Action> actions = new ArrayList<>();
 
 		final StandardCredentials credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
-		OFClient client = new OFClient(credentials, getApiUri(), getGitBaseUri());
+		final TuleapClientRawCmd.Command<TuleapProject> projectByIdRawCmd = new TuleapClientRawCmd().new ProjectById(projectId);
 
-		final OFProject project = client.projectById(getprojectId());
+		final TuleapProject project = TuleapClientCommandConfigurer.<TuleapProject>newInstance(getApiUri())
+				.withCredentials(credentials)
+				.withCommand(projectByIdRawCmd)
+				.configure()
+				.call();
 		actions.add(new OFProjectMetadataAction(project));
-		actions.add(new OFLink("icon-orangeforge-logo", OFConfiguration.ORANGEFORGE_URL + "/projects/" +
+		actions.add(new OFLink("icon-orangeforge-logo", TuleapConfiguration.ORANGEFORGE_URL + "/projects/" +
 				project.getShortname()));
 		return actions;
 	}
@@ -181,7 +194,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	@CheckForNull
 	public String getApiUri() {
 		if (StringUtils.isBlank(apiUri)){
-			apiUri = OFConfiguration.get().getApiBaseUrl();
+			apiUri = TuleapConfiguration.get().getApiBaseUrl();
 		}
 		return apiUri;
 	}
@@ -194,7 +207,7 @@ public class OFSCMNavigator extends SCMNavigator {
 	@CheckForNull
 	public String getGitBaseUri() {
 		if (StringUtils.isBlank(gitBaseUri)){
-			gitBaseUri = OFConfiguration.get().getGitBaseUrl();
+			gitBaseUri = TuleapConfiguration.get().getGitBaseUrl();
 		}
 		return gitBaseUri;
 	}
@@ -212,7 +225,7 @@ public class OFSCMNavigator extends SCMNavigator {
 		this.projectId = projectId;
 	}
 
-	public Map<String, OFGitRepository> getRepositories() {
+	public Map<String, TuleapGitRepository> getRepositories() {
 		return repositories;
 	}
 
@@ -325,24 +338,26 @@ public class OFSCMNavigator extends SCMNavigator {
 		@SuppressWarnings("unused") // stapler
 		public ListBoxModel doFillApiUriItems() {
 			ListBoxModel result = new ListBoxModel();
-			result.add("OrangeForge API", OFConfiguration.get().getApiBaseUrl());
+			result.add("OrangeForge API", TuleapConfiguration.get().getApiBaseUrl());
 			return result;
 		}
 
 		@Restricted(NoExternalUse.class) // stapler
 		@SuppressWarnings("unused") // stapler
 		public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
-												@QueryParameter String credentialsId) {
-			String apiUri = OFConfiguration.get().getApiBaseUrl();
+												@QueryParameter String credentialsId) throws IOException {
+			String apiUri = TuleapConfiguration.get().getApiBaseUrl();
 			final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
 			ListBoxModel result = new ListBoxModel();
 			if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials){
-				OFClient client = new OFClient(credentials, apiUri, "");
-				try {
-					client.userProjects().forEach(p -> result.add(p.getShortname(), String.valueOf(p.getId())));
-				} catch (IOException e) {
+				final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new AllUserProjects();
 
-				}
+				TuleapClientCommandConfigurer.<List<TuleapProject>>newInstance(apiUri)
+						.withCredentials(credentials)
+						.withCommand(allUserProjectsRawCmd)
+						.configure()
+						.call()
+						.forEach(project ->result.add(project.getShortname(), String.valueOf(project.getId())));
 			}
 			return result;
 		}
@@ -356,7 +371,7 @@ public class OFSCMNavigator extends SCMNavigator {
 		@SuppressWarnings("unused") // stapler
 		public ListBoxModel doFillGitBaseUriItems() {
 			ListBoxModel result = new ListBoxModel();
-			result.add("OrangeForge Git", OFConfiguration.get().getGitBaseUrl());
+			result.add("OrangeForge Git", TuleapConfiguration.get().getGitBaseUrl());
 			return result;
 		}
 
@@ -469,9 +484,9 @@ public class OFSCMNavigator extends SCMNavigator {
 	private class SourceFactory implements SCMNavigatorRequest.SourceLambda {
 
 		private final OFSCMNavigatorRequest request;
-		private final OFGitRepository repo;
+		private final TuleapGitRepository repo;
 
-		public SourceFactory(OFSCMNavigatorRequest request, OFGitRepository repo) {
+		public SourceFactory(OFSCMNavigatorRequest request, TuleapGitRepository repo) {
 			this.request = request;
 			this.repo = repo;
 		}

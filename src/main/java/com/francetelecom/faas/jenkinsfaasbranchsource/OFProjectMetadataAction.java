@@ -1,6 +1,6 @@
 package com.francetelecom.faas.jenkinsfaasbranchsource;
 
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
 
 import jenkins.scm.api.metadata.AvatarMetadataAction;
 
@@ -9,7 +9,7 @@ public class OFProjectMetadataAction extends AvatarMetadataAction {
 
 	private final String avatar;
 
-	public OFProjectMetadataAction(OFProject project) {
+	public OFProjectMetadataAction(TuleapProject project) {
 		this.avatar = project.getShortname();
 	}
 

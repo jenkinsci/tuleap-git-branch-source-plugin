@@ -13,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFClient;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
 
 /**
  * Holds config info to acces OrangeForge.
@@ -106,11 +104,5 @@ public class OrangeForgeSettings {
 			IOUtils.closeQuietly(thePropIn);
 		}
 		return result;
-	}
-
-	//test pûrpose ugly FIXME
-	public OFProject configuredProject(OFClient client) throws IOException {
-		return client.projectById(getFaaSProjectId());
-
 	}
 }

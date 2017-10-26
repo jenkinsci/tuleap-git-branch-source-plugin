@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource;
+package com.francetelecom.faas.jenkinsfaasbranchsource.faas;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -23,11 +23,12 @@ import org.slf4j.LoggerFactory;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClient;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.BasicAuthInterceptor;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitBranch;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProject;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFProjectRepositories;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitBranch;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProjectRepositories;
 
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
@@ -42,20 +43,14 @@ import okhttp3.ResponseBody;
  *  with the SCM api.
  *  @see <a href=https://www.forge.orange-labs.fr/api/explorer/#!/git/retrieve>API OrangeForge</a>
  */
-public class OFClient {
+class OFClient implements TuleapClient {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OFClient.class);
-	private static final String API_PROJECT_PATH = "/projects";
-	private static final String API_USER_PATH = "/users";
-	private static final String API_GIT_PATH = "/git";
 	private final String apiBaseUrl, gitBaseUrl;
 	private StandardUsernamePasswordCredentials credentials;
 
 	private final OkHttpClient client;
 
-	//TODO withCredentials as anonymous exists also
-	//withGit avoid NO_GIT_USAGE
-	//with Api by default as there is no use case if no api
 	public OFClient(StandardCredentials credentials, final String apiBaseUrl, final String gitBaseUrl) {
 		if (credentials instanceof StandardUsernamePasswordCredentials) {
 			this.apiBaseUrl = apiBaseUrl;
@@ -72,14 +67,14 @@ public class OFClient {
 					.build();
 		} else {
 			throw new UnsupportedOperationException("Not implemented yet, only StandardUsernamePasswordCredentials " +
-															"is supported");
+															"is supported ... for the moment");
 		}
 	}
 
-	public boolean isCredentialValid() throws IOException {
+	public final boolean isCredentialValid() throws IOException {
 		final String queryObject = "{\"username\":\""+credentials.getUsername()+"\"}";
 		final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
-		final String userApiUrl = apiBaseUrl+ API_USER_PATH + "?query="+urlEncodedQueryObject;
+		final String userApiUrl = apiBaseUrl+ TULEAP_API_USER_PATH + "?query="+urlEncodedQueryObject;
 		Request req = new Request.Builder()
 				.url(userApiUrl)
 				.addHeader("content-type", "application/json")
@@ -98,10 +93,10 @@ public class OFClient {
 	 * @return
 	 * @throws IOException
 	 */
-	public List<OFProject> userProjects() throws IOException {
+	public final List<TuleapProject> allUserProjects() throws IOException {
 		final String queryObject = "{\"is_member_of\":true}";
 		final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
-		final String projectsApiUrl = apiBaseUrl+ API_PROJECT_PATH + "?query="+urlEncodedQueryObject;
+		final String projectsApiUrl = apiBaseUrl+ TULEAP_API_PROJECT_PATH + "?query="+urlEncodedQueryObject;
 		Request req = new Request.Builder()
 				.url(projectsApiUrl)
 				.addHeader("content-type", "application/json")
@@ -115,7 +110,7 @@ public class OFClient {
 			ResponseBody body = response.body();
 			if (body != null) {
 				ObjectMapper mapper = new ObjectMapper();
-				final OFProject[] projects = mapper.readValue(body.string(), OFProject[].class);
+				final TuleapProject[] projects = mapper.readValue(body.string(), TuleapProject[].class);
 				return Arrays.asList(projects);
 			}
 			return null;
@@ -124,8 +119,8 @@ public class OFClient {
 		}
 	}
 
-	public OFProject projectById(final String  projectId) throws IOException {
-		final String apiProjectsUrl = apiBaseUrl + API_PROJECT_PATH + "/" + projectId;
+	public final TuleapProject projectById(final String  projectId) throws IOException {
+		final String apiProjectsUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId;
 		//FIXME enable cache later
 		Request req = new Request.Builder()
 				.url(apiProjectsUrl)
@@ -139,7 +134,7 @@ public class OFClient {
 
 			ResponseBody body = response.body();
 			if (body != null) {
-				return parse(body.string(), OFProject.class);
+				return parse(body.string(), TuleapProject.class);
 			}
 			return null;
 		} catch (IOException e) {
@@ -152,7 +147,7 @@ public class OFClient {
 	 * @return the list of repositories
 	 * @throws IOException in case HTTP errors occurs or parsing of response fail
 	 */
-	public List<OFGitRepository> projectRepositories(final String  projectId) throws IOException {
+	public final List<TuleapGitRepository> allProjectRepositories(final String  projectId) throws IOException {
 		return projectRepositoriesWrapper(projectId).getRepositories();
 	}
 
@@ -161,8 +156,8 @@ public class OFClient {
 	 * @return the repositories wrapper {@see OFProjectRepositories}
 	 * @throws IOException in case HTTP errors occurs or parsing of response fail
 	 */
-	private OFProjectRepositories projectRepositoriesWrapper(final String  projectId) throws IOException {
-		final String apiRepositoriesUrl = apiBaseUrl + API_PROJECT_PATH + "/" + projectId + API_GIT_PATH;
+	private TuleapProjectRepositories projectRepositoriesWrapper(final String  projectId) throws IOException {
+		final String apiRepositoriesUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId + TULEAP_API_GIT_PATH;
 		//FIXME enable cache later
 		Request req = new Request.Builder()
 				.url(HttpUrl.parse(apiRepositoriesUrl).newBuilder()
@@ -174,13 +169,13 @@ public class OFClient {
 		try (Response response = client.newCall(req).execute()) {
 			if (!response.isSuccessful()) throw new IOException("HTTP call error at url: "+req.url().toString()+" " +
 																		"with code: "+response.code());
-			return parse(response.body().string(), OFProjectRepositories.class);
+			return parse(response.body().string(), TuleapProjectRepositories.class);
 		} catch (IOException e) {
 			throw new IOException("GetProjectRepositories encounter error", e);
 		}
 	}
 
-	public List<OFGitBranch> branchByGitRepo (String gitRepoPath) throws
+	public final List<TuleapGitBranch> branchByGitRepo (String gitRepoPath) throws
 			IOException, NoSingleRepoByPathException, NoSuchElementException {
 		try {
 			LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
@@ -202,22 +197,22 @@ public class OFClient {
 					.map(refToOFGitBranch())
 					.collect(Collectors.toList());
 		} catch (GitAPIException e) {
-			throw new OFGitException(gitBaseUrl, gitRepoPath, e);
+			throw new TuleapGitException(gitBaseUrl, gitRepoPath, e);
 		}
 	}
 
-	private Optional<OFGitRepository> gitRepoByPath(final String projectId, final String gitRepoPath) throws
+	private Optional<TuleapGitRepository> gitRepoByPath(final String projectId, final String gitRepoPath) throws
 			IOException,
 			NoSingleRepoByPathException {
-		return projectRepositories(projectId).stream()
-					.filter(ofGitRepository -> gitRepoPath.equals(ofGitRepository.getPath()))
-					.reduce((a,b) -> {
+		return allProjectRepositories(projectId).stream()
+												.filter(ofGitRepository -> gitRepoPath.equals(ofGitRepository.getPath()))
+												.reduce((a,b) -> {
 						throw new NoSingleRepoByPathException(gitRepoPath, a.getUri(), b.getUri());
 					});
 	}
 
-	private Function<Ref, OFGitBranch> refToOFGitBranch() {
-		return ref -> new OFGitBranch(ref.getName(), ref.getObjectId().getName());
+	private Function<Ref, TuleapGitBranch> refToOFGitBranch() {
+		return ref -> new TuleapGitBranch(ref.getName(), ref.getObjectId().getName());
 	}
 
 	private <T> T parse (final String  input, Class<T> clazz) throws IOException {
@@ -226,19 +221,6 @@ public class OFClient {
 			return mapper.readValue(input, clazz);
 		} catch (IOException e) {
 			throw new IOException("Parsing class pbm", e);
-		}
-	}
-
-	private static class NoSingleRepoByPathException extends RuntimeException {
-
-		private NoSingleRepoByPathException(final String path, final String  doublonUri, final String  anotherDoublonUri) {
-			super("Multiple repository with path '"+path+"' :"+doublonUri+" and "+anotherDoublonUri);
-		}
-	}
-
-	private static class OFGitException extends RuntimeException {
-		private OFGitException(final String uri, final String  path, Throwable t) {
-			super("Unable to communicate to OrangeForge git at "+uri+"/"+path, t);
 		}
 	}
 }

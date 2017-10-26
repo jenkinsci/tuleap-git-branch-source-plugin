@@ -17,6 +17,8 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConfiguration.ORANGEFORGE_API_URL;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Util;
 import hudson.model.Item;
@@ -30,7 +32,7 @@ import jenkins.model.Jenkins;
 /**
  * Created by qsqf2513 on 10/16/17.
  */
-public class OFConnector {
+public class TuleapConnector {
 
 	public static ListBoxModel listScanCredentials(@CheckForNull @AncestorInPath Item context, @QueryParameter String
 			apiUri, @QueryParameter String credentialsId) {
@@ -97,7 +99,7 @@ public class OFConnector {
 	}
 
 	private static List<DomainRequirement> OFDomainRequirements(@CheckForNull String apiUri) {
-		return URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, "https://www.forge.orange-labs.fr/api"))
+		return URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, ORANGEFORGE_API_URL))
 									.build();
 	}
 

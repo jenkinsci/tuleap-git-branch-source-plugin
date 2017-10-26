@@ -16,12 +16,13 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFClient;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientCommandConfigurer;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientRawCmd;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.filter;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.francetelecom.faas.jenkinsfaasbranchsource.config.OFConnector.allUsernamePasswordMatch;
+import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.allUsernamePasswordMatch;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -35,16 +36,16 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 @Extension
-public class OFConfiguration extends GlobalConfiguration {
+public class TuleapConfiguration extends GlobalConfiguration {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OFConfiguration.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TuleapConfiguration.class);
 
 	public static final String ORANGEFORGE_URL= "https://www.forge.orange-labs.fr";
 	public static final String ORANGEFORGE_API_URL= ORANGEFORGE_URL + "/api";
 	public static final String ORANGEFORGE_GIT_HTTPS_URL= ORANGEFORGE_URL + "/plugins/git/";
 
-	public static OFConfiguration get() {
-		return GlobalConfiguration.all().get(OFConfiguration.class);
+	public static TuleapConfiguration get() {
+		return GlobalConfiguration.all().get(TuleapConfiguration.class);
 	}
 
 	private String apiBaseUrl = ORANGEFORGE_API_URL;
@@ -56,7 +57,7 @@ public class OFConfiguration extends GlobalConfiguration {
 	 */
 	private String gitBaseUrl = ORANGEFORGE_GIT_HTTPS_URL;
 
-	public OFConfiguration() throws IOException {
+	public TuleapConfiguration() throws IOException {
 		load();
 	}
 
@@ -97,7 +98,7 @@ public class OFConfiguration extends GlobalConfiguration {
 	@SuppressWarnings("unused")
 	public ListBoxModel doFillCredentialsIdItems(@QueryParameter String apiUrl,
 												 @QueryParameter String credentialsId) {
-		return OFConnector.listScanCredentials(null, apiUrl, credentialsId);
+		return TuleapConnector.listScanCredentials(null, apiUrl, credentialsId);
 	}
 
 	@SuppressWarnings("unused")
@@ -115,10 +116,16 @@ public class OFConfiguration extends GlobalConfiguration {
 					withId(trimToEmpty(credentialsId))
 			), CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId), allUsernamePasswordMatch()));
 
-			OFClient client = new OFClient(cred, apiBaseUrl, gitBaseUrl);
-
+			//TODO isValidTuleapUrl no need authentication go anonynous
+			final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd()
+					.new IsTuleapServerUrl();
+			TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean>newInstance
+					(apiBaseUrl)
+					.withCredentials(cred)
+					.withCommand(isCredentialValidRawCmd)
+					.configure();
 			try {
-				if (client.isCredentialValid()) {
+				if (configuredCmd.call()) {
 					return FormValidation.ok("Credentials verified for user %s", cred.getUsername());
 				} else {
 					return FormValidation.error("Failed to validate the account");

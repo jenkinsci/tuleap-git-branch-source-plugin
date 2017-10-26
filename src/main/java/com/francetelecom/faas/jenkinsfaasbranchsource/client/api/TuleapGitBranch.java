@@ -1,10 +1,10 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.api;
 
-public class OFGitBranch {
+public class TuleapGitBranch {
 
 	private final String name, sha1;
 
-	public OFGitBranch(String name, String sha1) {
+	public TuleapGitBranch(String name, String sha1) {
 		this.name = name;
 		this.sha1 = sha1;
 	}

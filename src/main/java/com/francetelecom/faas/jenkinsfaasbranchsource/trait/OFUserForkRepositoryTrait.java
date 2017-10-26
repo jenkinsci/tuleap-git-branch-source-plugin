@@ -14,7 +14,7 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMNavigator;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMNavigatorContext;
 import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSource;
-import com.francetelecom.faas.jenkinsfaasbranchsource.ofapi.OFGitRepository;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -70,7 +70,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		@Override
 		public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
 			OFSCMNavigator navigator= (OFSCMNavigator) source;
-			OFGitRepository repo = navigator.getRepositories().get(projectName);
+			TuleapGitRepository repo = navigator.getRepositories().get(projectName);
 			return repo.getPath().contains("/u/");
 		}
 	}
@@ -81,7 +81,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 		public boolean isExcluded(@NonNull SCMNavigatorRequest request, @NonNull String projectName) throws
 				IOException, InterruptedException {
 			//TODO either ask orangeforge if authenticated user can read repo = projectName
-			//or better when OFClient.projectRepositories only return projeect that we can access
+			//or better when OFClient.allProjectRepositories only return projeect that we can access
 			return false;
 		}
 	}

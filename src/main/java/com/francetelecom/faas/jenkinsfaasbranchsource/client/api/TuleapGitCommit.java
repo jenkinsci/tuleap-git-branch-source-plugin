@@ -1,11 +1,11 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.ofapi;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.api;
 
-public class OFGitCommit {
+public class TuleapGitCommit {
 
 	private final String message, hash;
 	private long dateMillis;
 
-	public OFGitCommit(String message, String hash, long dateMillis) {
+	public TuleapGitCommit(String message, String hash, long dateMillis) {
 		this.message = message;
 		this.hash = hash;
 		this.dateMillis = dateMillis;
