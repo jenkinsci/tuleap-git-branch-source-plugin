@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.trait.OFUserForkRepositoryTrait
+package com.francetelecom.faas.jenkinsfaasbranchsource.trait.UserForkRepositoryTrait
 
 def f = namespace(lib.FormTagLib)
 

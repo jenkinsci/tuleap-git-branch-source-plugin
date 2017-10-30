@@ -5,7 +5,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSourceContext;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMSourceContext;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -19,7 +19,7 @@ public class BranchDiscoveryTraitTest {
 
 	@Test
 	public void given__discoverAll__when__appliedToContext__then__noFilter() throws Exception {
-		OFSCMSourceContext ctx = new OFSCMSourceContext(null, SCMHeadObserver.none());
+		TuleapSCMSourceContext ctx = new TuleapSCMSourceContext(null, SCMHeadObserver.none());
 		assertThat(ctx.wantBranches(), is(false));
 		BranchDiscoveryTrait instance = new BranchDiscoveryTrait();
 		instance.decorateContext(ctx);

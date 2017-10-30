@@ -6,10 +6,10 @@ import java.io.IOException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFBranchSCMHead;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSource;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSourceContext;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSourceRequest;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapBranchSCMHead;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMSource;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMSourceContext;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMSourceRequest;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -31,7 +31,7 @@ public class BranchDiscoveryTrait extends SCMSourceTrait {
 
     @Override
     protected void decorateContext(SCMSourceContext<?, ?> context) {
-        OFSCMSourceContext ctx = (OFSCMSourceContext) context;
+        TuleapSCMSourceContext ctx = (TuleapSCMSourceContext) context;
         ctx.wantBranches(true);
         // ctx.withAuthority(new OFBranchSCMHeadAuthority());
     }
@@ -57,24 +57,24 @@ public class BranchDiscoveryTrait extends SCMSourceTrait {
 
         @Override
         public Class<? extends SCMSourceContext> getContextClass() {
-            return OFSCMSourceContext.class;
+            return TuleapSCMSourceContext.class;
         }
 
         @Override
         public Class<? extends SCMSource> getSourceClass() {
-            return OFSCMSource.class;
+            return TuleapSCMSource.class;
         }
     }
 
     public static class OFBranchSCMHeadAuthority
-        extends SCMHeadAuthority<OFSCMSourceRequest, OFBranchSCMHead, SCMRevision> {
+        extends SCMHeadAuthority<TuleapSCMSourceRequest, TuleapBranchSCMHead, SCMRevision> {
 
         /**
          * {@inheritDoc}
          */
         @Override
-        protected boolean checkTrusted(@NonNull OFSCMSourceRequest ofscmSourceRequest,
-            @NonNull OFBranchSCMHead ofBranchSCMHead) throws IOException, InterruptedException {
+        protected boolean checkTrusted(@NonNull TuleapSCMSourceRequest tuleapSCMSourceRequest,
+            @NonNull TuleapBranchSCMHead tuleapBranchSCMHead) throws IOException, InterruptedException {
             return true;
         }
     }

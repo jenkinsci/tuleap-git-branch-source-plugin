@@ -14,7 +14,7 @@ import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.trait.SCMSourceRequest;
 
-public class OFSCMSourceRequest extends SCMSourceRequest {
+public class TuleapSCMSourceRequest extends SCMSourceRequest {
 
     /**
      * {@code true} if branch details need to be fetched.
@@ -33,8 +33,8 @@ public class OFSCMSourceRequest extends SCMSourceRequest {
     @CheckForNull
     private Iterable<TuleapGitBranch> branches;
 
-    protected OFSCMSourceRequest(@NonNull SCMSource source, @NonNull OFSCMSourceContext context,
-        @CheckForNull TaskListener listener) {
+    protected TuleapSCMSourceRequest(@NonNull SCMSource source, @NonNull TuleapSCMSourceContext context,
+                                     @CheckForNull TaskListener listener) {
         super(source, context, listener);
 
         fetchBranches = context.wantBranches();
@@ -42,7 +42,7 @@ public class OFSCMSourceRequest extends SCMSourceRequest {
         if (includes != null) {
             Set<String> branchNames = new HashSet<>(includes.size());
             for (SCMHead head : includes) {
-                if (head instanceof OFBranchSCMHead) {
+                if (head instanceof TuleapBranchSCMHead) {
                     branchNames.add(head.getName());
                 }
             }

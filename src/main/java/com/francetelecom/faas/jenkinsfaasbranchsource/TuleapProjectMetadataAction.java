@@ -4,11 +4,11 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
 
 import jenkins.scm.api.metadata.AvatarMetadataAction;
 
-public class OFProjectMetadataAction extends AvatarMetadataAction {
+public class TuleapProjectMetadataAction extends AvatarMetadataAction {
 
     private final String avatar;
 
-    public OFProjectMetadataAction(TuleapProject project) {
+    public TuleapProjectMetadataAction(TuleapProject project) {
         this.avatar = project.getShortname();
     }
 
@@ -32,8 +32,8 @@ public class OFProjectMetadataAction extends AvatarMetadataAction {
             return false;
         }
 
-        if (o instanceof OFProjectMetadataAction) {
-            OFProjectMetadataAction that = (OFProjectMetadataAction) o;
+        if (o instanceof TuleapProjectMetadataAction) {
+            TuleapProjectMetadataAction that = (TuleapProjectMetadataAction) o;
             return avatar != null ? avatar.equals(that.avatar) : that.avatar == null;
         }
         return false;

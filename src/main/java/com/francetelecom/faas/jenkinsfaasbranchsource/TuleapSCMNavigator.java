@@ -33,7 +33,7 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitReposi
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConfiguration;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector;
-import com.francetelecom.faas.jenkinsfaasbranchsource.trait.OFUserForkRepositoryTrait;
+import com.francetelecom.faas.jenkinsfaasbranchsource.trait.UserForkRepositoryTrait;
 
 import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.checkCredentials;
 import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConnector.listScanCredentials;
@@ -71,7 +71,7 @@ import jenkins.scm.impl.trait.Selection;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import net.jcip.annotations.GuardedBy;
 
-public class OFSCMNavigator extends SCMNavigator {
+public class TuleapSCMNavigator extends SCMNavigator {
 
     private String projectId;
     private List<SCMTrait<? extends SCMTrait>> traits;
@@ -80,7 +80,7 @@ public class OFSCMNavigator extends SCMNavigator {
     private Map<String, TuleapGitRepository> repositories = new HashMap<>();
 
     @DataBoundConstructor
-    public OFSCMNavigator() {
+    public TuleapSCMNavigator() {
     }
 
     @NonNull
@@ -101,7 +101,7 @@ public class OFSCMNavigator extends SCMNavigator {
         StandardCredentials credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
             getApiUri(), credentialsId);
 
-        try (final OFSCMNavigatorRequest request = new OFSCMNavigatorContext()
+        try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener);
             final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new
@@ -140,9 +140,9 @@ public class OFSCMNavigator extends SCMNavigator {
 			.withCredentials(credentials).withCommand(projectByIdRawCmd)
             .configure();
         final TuleapProject project = configuredCmd.call();
-        actions.add(new OFProjectMetadataAction(project));
-        actions.add(new OFLink("icon-orangeforge-logo",
-            TuleapConfiguration.ORANGEFORGE_URL + "/projects/" + project.getShortname()));
+        actions.add(new TuleapProjectMetadataAction(project));
+        actions.add(new TuleapLink("icon-orangeforge-logo",
+                                   TuleapConfiguration.ORANGEFORGE_URL + "/projects/" + project.getShortname()));
         return actions;
     }
 
@@ -151,7 +151,7 @@ public class OFSCMNavigator extends SCMNavigator {
     }
 
     /**
-     * Sets the behavioural traits that are applied to this navigator and any {@link OFSCMSource} instances it
+     * Sets the behavioural traits that are applied to this navigator and any {@link TuleapSCMSource} instances it
      * discovers. The new traits will take affect on the next navigation through any of the
      * {@link #visitSources(SCMSourceObserver)} overloads or {@link #visitSource(String, SCMSourceObserver)}.
      *
@@ -279,7 +279,7 @@ public class OFSCMNavigator extends SCMNavigator {
         }
 
         @Inject
-        private OFSCMSource.DescriptorImpl delegate;
+        private TuleapSCMSource.DescriptorImpl delegate;
 
         /**
          * {@inheritDoc}
@@ -294,9 +294,9 @@ public class OFSCMNavigator extends SCMNavigator {
          */
         @Override
         public SCMNavigator newInstance(@CheckForNull String projectId) {
-            OFSCMNavigator navigator = new OFSCMNavigator();
+            TuleapSCMNavigator navigator = new TuleapSCMNavigator();
             List<SCMTrait<? extends SCMTrait<?>>> someTraits = getTraitsDefaults();
-            someTraits.add(new OFUserForkRepositoryTrait(1));
+            someTraits.add(new UserForkRepositoryTrait(1));
             someTraits.add(new WildcardSCMSourceFilterTrait("", "*"));
             navigator.setTraits(someTraits);
             return navigator;
@@ -425,11 +425,11 @@ public class OFSCMNavigator extends SCMNavigator {
          */
         @SuppressWarnings("unused") // jelly
         public List<NamedArrayList<? extends SCMTraitDescriptor<?>>> getTraitsDescriptorLists() {
-            OFSCMSource.DescriptorImpl sourceDescriptor = Jenkins.getActiveInstance()
-                .getDescriptorByType(OFSCMSource.DescriptorImpl.class);
+            TuleapSCMSource.DescriptorImpl sourceDescriptor = Jenkins.getActiveInstance()
+                                                                     .getDescriptorByType(TuleapSCMSource.DescriptorImpl.class);
             List<SCMTraitDescriptor<?>> all = new ArrayList<>();
-            all.addAll(SCMNavigatorTrait._for(this, OFSCMNavigatorContext.class, OFSCMSourceBuilder.class));
-            all.addAll(SCMSourceTrait._for(sourceDescriptor, OFSCMSourceContext.class, null));
+            all.addAll(SCMNavigatorTrait._for(this, TuleapSCMNavigatorContext.class, TuleapSCMSourceBuilder.class));
+            all.addAll(SCMSourceTrait._for(sourceDescriptor, TuleapSCMSourceContext.class, null));
             all.addAll(SCMSourceTrait._for(sourceDescriptor, null, GitSCMBuilder.class));
             Set<SCMTraitDescriptor<?>> dedup = new HashSet<>();
             for (Iterator<SCMTraitDescriptor<?>> iterator = all.iterator(); iterator.hasNext();) {
@@ -495,10 +495,10 @@ public class OFSCMNavigator extends SCMNavigator {
 
     private class SourceFactory implements SCMNavigatorRequest.SourceLambda {
 
-        private final OFSCMNavigatorRequest request;
+        private final TuleapSCMNavigatorRequest request;
         private final TuleapGitRepository repo;
 
-        public SourceFactory(OFSCMNavigatorRequest request, TuleapGitRepository repo) {
+        public SourceFactory(TuleapSCMNavigatorRequest request, TuleapGitRepository repo) {
             this.request = request;
             this.repo = repo;
         }
@@ -506,7 +506,7 @@ public class OFSCMNavigator extends SCMNavigator {
         @NonNull
         @Override
         public SCMSource create(@NonNull String repositoryName) throws IOException, InterruptedException {
-            return new OFSCMSourceBuilder(getId() + repositoryName, credentialsId, projectId, repo.getPath())
+            return new TuleapSCMSourceBuilder(getId() + repositoryName, credentialsId, projectId, repo.getPath())
                 .withRequest(request).build();
         }
     }

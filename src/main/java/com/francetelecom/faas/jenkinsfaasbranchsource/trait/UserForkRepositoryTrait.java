@@ -11,9 +11,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.Messages;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMNavigator;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMNavigatorContext;
-import com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSource;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMNavigator;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMNavigatorContext;
+import com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMSource;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -30,13 +30,13 @@ import jenkins.scm.api.trait.SCMSourceFilter;
 import jenkins.scm.api.trait.SCMSourcePrefilter;
 import jenkins.scm.impl.trait.Discovery;
 
-public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
+public class UserForkRepositoryTrait extends SCMNavigatorTrait {
 
     @NonNull
     private int strategy;
 
     @DataBoundConstructor
-    public OFUserForkRepositoryTrait(int strategy) {
+    public UserForkRepositoryTrait(int strategy) {
         if (strategy == 0) {
             strategy = 1;
         }
@@ -54,7 +54,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 
     @Override
     protected void decorateContext(SCMNavigatorContext<?, ?> ctx) {
-        OFSCMNavigatorContext context = (OFSCMNavigatorContext) ctx;
+        TuleapSCMNavigatorContext context = (TuleapSCMNavigatorContext) ctx;
         context.withFilter(new ExcludeNotOwnedRepositoryFilter());
         context.wantUserFork(strategy == 1);
         if (strategy == 1) {
@@ -76,7 +76,7 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 
         @Override
         public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
-            OFSCMNavigator navigator = (OFSCMNavigator) source;
+            TuleapSCMNavigator navigator = (TuleapSCMNavigator) source;
             TuleapGitRepository repo = navigator.getRepositories().get(projectName);
             return repo.getPath().contains("/u/");
         }
@@ -104,12 +104,12 @@ public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 
         @Override
         public Class<? extends SCMNavigatorContext> getContextClass() {
-            return OFSCMNavigatorContext.class;
+            return TuleapSCMNavigatorContext.class;
         }
 
         @Override
         public Class<? extends SCMSource> getSourceClass() {
-            return OFSCMSource.class;
+            return TuleapSCMSource.class;
         }
 
         @NonNull

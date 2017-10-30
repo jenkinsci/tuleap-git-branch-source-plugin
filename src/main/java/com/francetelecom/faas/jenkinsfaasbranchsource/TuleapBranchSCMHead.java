@@ -6,12 +6,12 @@ import jenkins.scm.api.SCMHead;
 /**
  * Head corresponding to a branch of an OrangeForge git repository.
  */
-public class OFBranchSCMHead extends SCMHead {
+public class TuleapBranchSCMHead extends SCMHead {
 
     /**
      * {@inheritDoc}
      */
-    public OFBranchSCMHead(@NonNull String name) {
+    public TuleapBranchSCMHead(@NonNull String name) {
         super(name);
     }
 

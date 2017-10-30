@@ -3,13 +3,13 @@ package com.francetelecom.faas.jenkinsfaasbranchsource;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.scm.api.trait.SCMSourceBuilder;
 
-public class OFSCMSourceBuilder extends SCMSourceBuilder<OFSCMSourceBuilder, OFSCMSource> {
+public class TuleapSCMSourceBuilder extends SCMSourceBuilder<TuleapSCMSourceBuilder, TuleapSCMSource> {
     private final String id;
     private final String credentialsId;
     private final String projectId;
 
-    public OFSCMSourceBuilder(String id, String credentialsId, String projectId, String repositoryPath) {
-        super(OFSCMSource.class, repositoryPath);
+    public TuleapSCMSourceBuilder(String id, String credentialsId, String projectId, String repositoryPath) {
+        super(TuleapSCMSource.class, repositoryPath);
         this.id = id;
         this.credentialsId = credentialsId;
         this.projectId = projectId;
@@ -30,8 +30,8 @@ public class OFSCMSourceBuilder extends SCMSourceBuilder<OFSCMSourceBuilder, OFS
     // projectName is the representation of a repo git in the context of a SCM
     @NonNull
     @Override
-    public OFSCMSource build() {
-        OFSCMSource result = new OFSCMSource(projectId(), projectName());
+    public TuleapSCMSource build() {
+        TuleapSCMSource result = new TuleapSCMSource(projectId(), projectName());
         result.setId(id());
         result.setTraits(traits());
         result.setCredentialsId(credentialsId());

@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.OFSCMSource
+package com.francetelecom.faas.jenkinsfaasbranchsource.TuleapSCMSource
 
 
 def f = namespace(lib.FormTagLib)

@@ -62,9 +62,9 @@ import jenkins.scm.api.trait.SCMSourceTrait;
 /**
  * SCM source implementation for OrangeForge discover branch af a repo
  */
-public class OFSCMSource extends AbstractGitSCMSource {
+public class TuleapSCMSource extends AbstractGitSCMSource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OFSCMSource.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TuleapSCMSource.class);
 
     /**
      * OrangeForge project to build URL from.
@@ -92,7 +92,7 @@ public class OFSCMSource extends AbstractGitSCMSource {
     private StandardCredentials credentials;
 
     @DataBoundConstructor
-    public OFSCMSource(final String projectId, final String repositoryPath) {
+    public TuleapSCMSource(final String projectId, final String repositoryPath) {
         this.projectId = projectId;
         this.repositoryPath = repositoryPath;
         traits.add(new BranchDiscoveryTrait());
@@ -105,11 +105,12 @@ public class OFSCMSource extends AbstractGitSCMSource {
         List<Action> result = new ArrayList<>();
         SCMSourceOwner owner = getOwner();
         if (owner instanceof Actionable) {
-            OFLink repoLink = ((Actionable) owner).getAction(OFLink.class);
+            TuleapLink repoLink = ((Actionable) owner).getAction(TuleapLink.class);
             if (repoLink != null) {
+                //TODO replace with OFPRoject and ProjectId
                 String canonicalRepoName = repositoryPath.replace("faas/", "");
                 String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
-                result.add(new OFLink("icon-git-branch", url));
+                result.add(new TuleapLink("icon-git-branch", url));
             }
         }
         return result;
@@ -120,14 +121,14 @@ public class OFSCMSource extends AbstractGitSCMSource {
     protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener)
         throws IOException, InterruptedException {
         List<Action> result = new ArrayList<>();
-        result.add(new OFLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
+        result.add(new TuleapLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
         return result;
     }
 
     @Override
     protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
         @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
-        try (final OFSCMSourceRequest request = new OFSCMSourceContext(criteria, observer)
+        try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer)
                 .withTraits(traits).wantBranches(true)
                 .newRequest(this, listener)) {
             StandardCredentials credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
@@ -150,9 +151,9 @@ public class OFSCMSource extends AbstractGitSCMSource {
                     request.listener().getLogger()
                         .format("Crawling branch %s::%s for repo %s", branch.getName(), branch.getSha1(), getRemote())
                         .println();
-                    OFBranchSCMHead head = new OFBranchSCMHead(branch.getName());
+                    TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
                     if (request.process(head, new SCMRevisionImpl(head, branch.getSha1()),
-                        OFSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
+                                        TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
                         request.listener().getLogger()
                             .format("%n  %d branches were processed (query completed)%n", count).println();
                     }

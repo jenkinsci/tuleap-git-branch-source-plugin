@@ -8,34 +8,34 @@ import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.SCMSourceCriteria;
 import jenkins.scm.api.trait.SCMSourceContext;
 
-public class OFSCMSourceContext extends SCMSourceContext<OFSCMSourceContext, OFSCMSourceRequest> {
+public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceContext, TuleapSCMSourceRequest> {
 
     /**
-     * {@code true} if the {@link OFSCMSourceRequest} will need information about branches.
+     * {@code true} if the {@link TuleapSCMSourceRequest} will need information about branches.
      */
     private boolean wantBranches = false;
 
-    public OFSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer) {
+    public TuleapSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer) {
         super(criteria, observer);
     }
 
     @NonNull
     @Override
-    public OFSCMSourceRequest newRequest(@NonNull SCMSource scmSource, @CheckForNull TaskListener taskListener) {
-        return new OFSCMSourceRequest(scmSource, this, taskListener);
+    public TuleapSCMSourceRequest newRequest(@NonNull SCMSource scmSource, @CheckForNull TaskListener taskListener) {
+        return new TuleapSCMSourceRequest(scmSource, this, taskListener);
     }
 
     /**
-     * Returns {@code true} if the {@link OFSCMSourceRequest} will need information about branches.
+     * Returns {@code true} if the {@link TuleapSCMSourceRequest} will need information about branches.
      *
-     * @return {@code true} if the {@link OFSCMSourceRequest} will need information about branches.
+     * @return {@code true} if the {@link TuleapSCMSourceRequest} will need information about branches.
      */
     public final boolean wantBranches() {
         return wantBranches;
     }
 
     /**
-     * Adds a requirement for branch details to any {@link OFSCMSourceContext} for this context.
+     * Adds a requirement for branch details to any {@link TuleapSCMSourceContext} for this context.
      *
      * @param include
      *            {@code true} to add the requirement or {@code false} to leave the requirement as is (makes simpler
@@ -43,7 +43,7 @@ public class OFSCMSourceContext extends SCMSourceContext<OFSCMSourceContext, OFS
      * @return {@code this} for method chaining.
      */
     @NonNull
-    public OFSCMSourceContext wantBranches(boolean include) {
+    public TuleapSCMSourceContext wantBranches(boolean include) {
         wantBranches = wantBranches || include;
         return this;
     }
