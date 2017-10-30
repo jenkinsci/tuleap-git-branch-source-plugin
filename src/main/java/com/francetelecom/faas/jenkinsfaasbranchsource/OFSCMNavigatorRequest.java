@@ -8,8 +8,8 @@ import jenkins.scm.api.trait.SCMNavigatorRequest;
 
 public class OFSCMNavigatorRequest extends SCMNavigatorRequest {
 
-
-	protected OFSCMNavigatorRequest(@NonNull SCMNavigator source, @NonNull SCMNavigatorContext<?, ?> context, @NonNull SCMSourceObserver observer) {
-		super(source, context, observer);
-	}
+    protected OFSCMNavigatorRequest(@NonNull SCMNavigator source, @NonNull SCMNavigatorContext<?, ?> context,
+        @NonNull SCMSourceObserver observer) {
+        super(source, context, observer);
+    }
 }

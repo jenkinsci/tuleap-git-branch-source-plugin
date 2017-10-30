@@ -30,98 +30,96 @@ import jenkins.scm.api.trait.SCMSourceFilter;
 import jenkins.scm.api.trait.SCMSourcePrefilter;
 import jenkins.scm.impl.trait.Discovery;
 
-
 public class OFUserForkRepositoryTrait extends SCMNavigatorTrait {
 
-	@NonNull
-	private int strategy;
+    @NonNull
+    private int strategy;
 
-	@DataBoundConstructor
-	public OFUserForkRepositoryTrait(int strategy) {
-		if (strategy == 0) {
-			strategy = 1;
-		}
-		this.strategy = strategy;
-	}
+    @DataBoundConstructor
+    public OFUserForkRepositoryTrait(int strategy) {
+        if (strategy == 0) {
+            strategy = 1;
+        }
+        this.strategy = strategy;
+    }
 
-	public int getStrategy() {
-		return strategy;
-	}
+    public int getStrategy() {
+        return strategy;
+    }
 
-	@DataBoundSetter
-	public void setStrategy(int strategy) {
-		this.strategy = strategy;
-	}
+    @DataBoundSetter
+    public void setStrategy(int strategy) {
+        this.strategy = strategy;
+    }
 
-	@Override
-	protected void decorateContext(SCMNavigatorContext<?, ?> ctx) {
-		OFSCMNavigatorContext context = (OFSCMNavigatorContext) ctx;
-		context.withFilter(new ExcludeNotOwnedRepositoryFilter());
-		context.wantUserFork(strategy == 1);
-		if (strategy == 1) {
-			context.withPrefilter(new ExcludeUserForkRepositorySCMFilter());
-		} else {
-			//we don't care if it is a userFork or not, we're taking them all, no need to filter
-		}
-	}
+    @Override
+    protected void decorateContext(SCMNavigatorContext<?, ?> ctx) {
+        OFSCMNavigatorContext context = (OFSCMNavigatorContext) ctx;
+        context.withFilter(new ExcludeNotOwnedRepositoryFilter());
+        context.wantUserFork(strategy == 1);
+        if (strategy == 1) {
+            context.withPrefilter(new ExcludeUserForkRepositorySCMFilter());
+        } else {
+            // we don't care if it is a userFork or not, we're taking them all, no need to filter
+        }
+    }
 
-	private static class ExcludeUserForkRepositorySCMFilter extends SCMSourcePrefilter {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean includeCategory(@NonNull SCMHeadCategory category) {
+        return category.isUncategorized();
+    }
 
-		@Override
-		public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
-			OFSCMNavigator navigator= (OFSCMNavigator) source;
-			TuleapGitRepository repo = navigator.getRepositories().get(projectName);
-			return repo.getPath().contains("/u/");
-		}
-	}
+    private static class ExcludeUserForkRepositorySCMFilter extends SCMSourcePrefilter {
 
-	private static class ExcludeNotOwnedRepositoryFilter extends SCMSourceFilter {
+        @Override
+        public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
+            OFSCMNavigator navigator = (OFSCMNavigator) source;
+            TuleapGitRepository repo = navigator.getRepositories().get(projectName);
+            return repo.getPath().contains("/u/");
+        }
+    }
 
-		@Override
-		public boolean isExcluded(@NonNull SCMNavigatorRequest request, @NonNull String projectName) throws
-				IOException, InterruptedException {
-			//TODO either ask orangeforge if authenticated user can read repo = projectName
-			//or better when OFClient.allProjectRepositories only return projeect that we can access
-			return false;
-		}
-	}
+    private static class ExcludeNotOwnedRepositoryFilter extends SCMSourceFilter {
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean includeCategory(@NonNull SCMHeadCategory category) {
-		return category.isUncategorized();
-	}
+        @Override
+        public boolean isExcluded(@NonNull SCMNavigatorRequest request, @NonNull String projectName)
+            throws IOException, InterruptedException {
+            // TODO either ask orangeforge if authenticated user can read repo = projectName
+            // or better when OFClient.allProjectRepositories only return projeect that we can access
+            return false;
+        }
+    }
 
+    @Extension
+    @Discovery
+    public static class DescriptorImpl extends SCMNavigatorTraitDescriptor {
+        @Nonnull
+        @Override
+        public String getDisplayName() {
+            return Messages.OFUserForkRepositoryTrait_displayName();
+        }
 
-	@Extension
-	@Discovery
-	public static class DescriptorImpl extends SCMNavigatorTraitDescriptor {
-		@Nonnull
-		@Override
-		public String getDisplayName() {
-			return Messages.OFUserForkRepositoryTrait_displayName();
-		}
+        @Override
+        public Class<? extends SCMNavigatorContext> getContextClass() {
+            return OFSCMNavigatorContext.class;
+        }
 
-		@Override
-		public Class<? extends SCMNavigatorContext> getContextClass() {
-			return OFSCMNavigatorContext.class;
-		}
+        @Override
+        public Class<? extends SCMSource> getSourceClass() {
+            return OFSCMSource.class;
+        }
 
-		@Override
-		public Class<? extends SCMSource> getSourceClass() {
-			return OFSCMSource.class;
-		}
-
-		@NonNull
-		@Restricted(NoExternalUse.class)
-		@SuppressWarnings("unused") // stapler
-		public ListBoxModel doFillStrategyItems() {
-			ListBoxModel result = new ListBoxModel();
-			result.add(Messages.OFUserForkRepositoryTrait_excludeUserForkRepositories(), "1");
-			result.add(Messages.OFUserForkRepositoryTrait_allRepositories(), "2");
-			return result;
-		}
-	}
+        @NonNull
+        @Restricted(NoExternalUse.class)
+        @SuppressWarnings("unused") // stapler
+        public ListBoxModel doFillStrategyItems() {
+            ListBoxModel result = new ListBoxModel();
+            result.add(Messages.OFUserForkRepositoryTrait_excludeUserForkRepositories(), "1");
+            result.add(Messages.OFUserForkRepositoryTrait_allRepositories(), "2");
+            return result;
+        }
+    }
 }

@@ -14,38 +14,38 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
  */
 public interface TuleapClient {
 
-	String TULEAP_API_PROJECT_PATH = "/projects";
+    String TULEAP_API_PROJECT_PATH = "/projects";
 
-	String TULEAP_API_USER_PATH = "/users";
+    String TULEAP_API_USER_PATH = "/users";
 
-	String TULEAP_API_GIT_PATH = "/git";
+    String TULEAP_API_GIT_PATH = "/git";
 
-	/**
-	 * A means to tell we http call a Tuleap server with correct registered credentials
-	 * @return true(false) if http call is (un)successful
-	 */
-	boolean isCredentialValid() throws IOException;
+    /**
+     * A means to tell we http call a Tuleap server with correct registered credentials
+     *
+     * @return true(false) if http call is (un)successful
+     */
+    boolean isCredentialValid() throws IOException;
 
-	List<TuleapProject> allUserProjects() throws IOException;
+    List<TuleapProject> allUserProjects() throws IOException;
 
-	List<TuleapGitRepository> allProjectRepositories(final String  projectId) throws IOException;
+    List<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException;
 
-	TuleapProject projectById(final String  projectId) throws IOException;
+    TuleapProject projectById(final String projectId) throws IOException;
 
-	List<TuleapGitBranch> branchByGitRepo (String gitRepoPath) throws
-			IOException, NoSingleRepoByPathException, NoSuchElementException;
+    List<TuleapGitBranch> branchByGitRepo(String gitRepoPath)
+        throws IOException, NoSingleRepoByPathException, NoSuchElementException;
 
-	class NoSingleRepoByPathException extends RuntimeException {
+    class NoSingleRepoByPathException extends RuntimeException {
 
-		public NoSingleRepoByPathException(final String path, final String doublonUri, final String
-				anotherDoublonUri) {
-			super("Multiple repository with path '"+path+"' :"+doublonUri+" and "+anotherDoublonUri);
-		}
-	}
+        public NoSingleRepoByPathException(final String path, final String doublonUri, final String anotherDoublonUri) {
+            super("Multiple repository with path '" + path + "' :" + doublonUri + " and " + anotherDoublonUri);
+        }
+    }
 
-	class TuleapGitException extends RuntimeException {
-		public TuleapGitException(final String uri, final String  path, Throwable t) {
-			super("Unable to communicate to OrangeForge git at "+uri+"/"+path, t);
-		}
-	}
+    class TuleapGitException extends RuntimeException {
+        public TuleapGitException(final String uri, final String path, Throwable t) {
+            super("Unable to communicate to OrangeForge git at " + uri + "/" + path, t);
+        }
+    }
 }

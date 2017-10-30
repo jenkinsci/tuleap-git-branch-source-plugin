@@ -14,54 +14,53 @@ import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.trait.SCMSourceRequest;
 
-public class OFSCMSourceRequest extends SCMSourceRequest{
+public class OFSCMSourceRequest extends SCMSourceRequest {
 
-	/**
-	 * {@code true} if branch details need to be fetched.
-	 */
-	private final boolean fetchBranches;
+    /**
+     * {@code true} if branch details need to be fetched.
+     */
+    private final boolean fetchBranches;
 
-	/**
-	 * The branch details or {@code null} if not {@link #isFetchBranches()}.
-	 */
-	@CheckForNull
-	private Iterable<TuleapGitBranch> branches;
+    /**
+     * The set of origin branch names that the request is scoped to or {@code null} if the request is not limited.
+     */
+    @CheckForNull
+    private final Set<String> requestBranchNames;
 
-	/**
-	 * The set of origin branch names that the request is scoped to or {@code null} if the request is not limited.
-	 */
-	@CheckForNull
-	private final Set<String> requestBranchNames;
+    /**
+     * The branch details or {@code null} if not {@link #isFetchBranches()}.
+     */
+    @CheckForNull
+    private Iterable<TuleapGitBranch> branches;
 
-	protected OFSCMSourceRequest(@NonNull SCMSource source,
-								 @NonNull OFSCMSourceContext context,
-								 @CheckForNull TaskListener listener) {
-		super(source, context, listener);
+    protected OFSCMSourceRequest(@NonNull SCMSource source, @NonNull OFSCMSourceContext context,
+        @CheckForNull TaskListener listener) {
+        super(source, context, listener);
 
-		fetchBranches = context.wantBranches();
-		Set<SCMHead> includes = context.observer().getIncludes();
-		if (includes != null) {
-			Set<String> branchNames = new HashSet<>(includes.size());
-			for (SCMHead head : includes) {
-				if (head instanceof OFBranchSCMHead) {
-					branchNames.add(head.getName());
-				}
-			}
-			this.requestBranchNames = Collections.unmodifiableSet(branchNames);
-		} else {
-			this.requestBranchNames = new HashSet<>();
-		}
-	}
+        fetchBranches = context.wantBranches();
+        Set<SCMHead> includes = context.observer().getIncludes();
+        if (includes != null) {
+            Set<String> branchNames = new HashSet<>(includes.size());
+            for (SCMHead head : includes) {
+                if (head instanceof OFBranchSCMHead) {
+                    branchNames.add(head.getName());
+                }
+            }
+            this.requestBranchNames = Collections.unmodifiableSet(branchNames);
+        } else {
+            this.requestBranchNames = new HashSet<>();
+        }
+    }
 
-	public boolean isFetchBranches() {
-		return fetchBranches;
-	}
+    public boolean isFetchBranches() {
+        return fetchBranches;
+    }
 
-	public Iterable<TuleapGitBranch> getBranches() {
-		return branches;
-	}
+    public Iterable<TuleapGitBranch> getBranches() {
+        return branches;
+    }
 
-	public void setBranches(Iterable<TuleapGitBranch> branches) {
-		this.branches = branches;
-	}
+    public void setBranches(Iterable<TuleapGitBranch> branches) {
+        this.branches = branches;
+    }
 }

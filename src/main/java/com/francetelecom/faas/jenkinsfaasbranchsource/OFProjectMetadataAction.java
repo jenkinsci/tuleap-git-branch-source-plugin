@@ -4,57 +4,54 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
 
 import jenkins.scm.api.metadata.AvatarMetadataAction;
 
-
 public class OFProjectMetadataAction extends AvatarMetadataAction {
 
-	private final String avatar;
+    private final String avatar;
 
-	public OFProjectMetadataAction(TuleapProject project) {
-		this.avatar = project.getShortname();
-	}
+    public OFProjectMetadataAction(TuleapProject project) {
+        this.avatar = project.getShortname();
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getAvatarDescription() {
-		return Messages.OFProjectMetadataAction_iconDescription();
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getAvatarDescription() {
+        return Messages.OFProjectMetadataAction_iconDescription();
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean equals(Object o) {
-		if (this ==o ){
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-		if (o instanceof OFProjectMetadataAction) {
-			OFProjectMetadataAction that = (OFProjectMetadataAction) o;
-			return avatar != null ? avatar.equals(that.avatar) : that.avatar == null;
-		}
-		return false;
-	}
+        if (o instanceof OFProjectMetadataAction) {
+            OFProjectMetadataAction that = (OFProjectMetadataAction) o;
+            return avatar != null ? avatar.equals(that.avatar) : that.avatar == null;
+        }
+        return false;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int hashCode() {
-		return (avatar != null ? avatar.hashCode() : 0);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        return (avatar != null ? avatar.hashCode() : 0);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String toString() {
-		return "OFProjectMetadataAction {"+
-				"avatar= " +avatar+
-				"}";
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+        return "OFProjectMetadataAction {" + "avatar= " + avatar + "}";
+    }
 }

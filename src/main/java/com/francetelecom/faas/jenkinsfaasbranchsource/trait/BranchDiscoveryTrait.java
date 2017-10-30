@@ -24,66 +24,65 @@ import jenkins.scm.impl.trait.Discovery;
 
 public class BranchDiscoveryTrait extends SCMSourceTrait {
 
-	@DataBoundConstructor
-	public BranchDiscoveryTrait() {
+    @DataBoundConstructor
+    public BranchDiscoveryTrait() {
 
-	}
+    }
 
-	@Override
-	protected void decorateContext(SCMSourceContext<?, ?> context) {
-		OFSCMSourceContext ctx = (OFSCMSourceContext) context;
-		ctx.wantBranches(true);
-		//ctx.withAuthority(new OFBranchSCMHeadAuthority());
-	}
+    @Override
+    protected void decorateContext(SCMSourceContext<?, ?> context) {
+        OFSCMSourceContext ctx = (OFSCMSourceContext) context;
+        ctx.wantBranches(true);
+        // ctx.withAuthority(new OFBranchSCMHeadAuthority());
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean includeCategory(@NonNull SCMHeadCategory category) {
-		return category.isUncategorized();
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean includeCategory(@NonNull SCMHeadCategory category) {
+        return category.isUncategorized();
+    }
 
-	/**
-	 * The descriptor.
-	 */
-	@Extension
-	@Discovery
-	public static class DescriptorImpl extends SCMSourceTraitDescriptor {
-		@Override
-		public String getDisplayName() {
-			return Messages.OFBranchDiscoveryTrait_displayName();
-		}
+    /**
+     * The descriptor.
+     */
+    @Extension
+    @Discovery
+    public static class DescriptorImpl extends SCMSourceTraitDescriptor {
+        @Override
+        public String getDisplayName() {
+            return Messages.OFBranchDiscoveryTrait_displayName();
+        }
 
-		@Override
-		public Class<? extends SCMSourceContext> getContextClass() {
-			return OFSCMSourceContext.class;
-		}
+        @Override
+        public Class<? extends SCMSourceContext> getContextClass() {
+            return OFSCMSourceContext.class;
+        }
 
-		@Override
-		public Class<? extends SCMSource> getSourceClass() {
-			return OFSCMSource.class;
-		}
-	}
+        @Override
+        public Class<? extends SCMSource> getSourceClass() {
+            return OFSCMSource.class;
+        }
+    }
 
-	public static class OFBranchSCMHeadAuthority extends SCMHeadAuthority<OFSCMSourceRequest, OFBranchSCMHead,
-			SCMRevision> {
+    public static class OFBranchSCMHeadAuthority
+        extends SCMHeadAuthority<OFSCMSourceRequest, OFBranchSCMHead, SCMRevision> {
 
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		protected boolean checkTrusted(@NonNull OFSCMSourceRequest ofscmSourceRequest, @NonNull OFBranchSCMHead
-				ofBranchSCMHead) throws IOException, InterruptedException {
-			return true;
-		}
-	}
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        protected boolean checkTrusted(@NonNull OFSCMSourceRequest ofscmSourceRequest,
+            @NonNull OFBranchSCMHead ofBranchSCMHead) throws IOException, InterruptedException {
+            return true;
+        }
+    }
 
-	/*private class ExcludeBranchesSCMHeadFilter extends SCMHeadFilter {
-		@Override
-		public boolean isExcluded(@NonNull SCMSourceRequest request, @NonNull SCMHead head) throws IOException,
-				InterruptedException {
-			return false;
-		}
-	}*/
+    /*
+     * private class ExcludeBranchesSCMHeadFilter extends SCMHeadFilter {
+     *
+     * @Override public boolean isExcluded(@NonNull SCMSourceRequest request, @NonNull SCMHead head) throws IOException,
+     * InterruptedException { return false; } }
+     */
 }

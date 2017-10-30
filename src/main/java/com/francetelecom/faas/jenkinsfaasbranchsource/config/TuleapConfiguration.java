@@ -38,125 +38,116 @@ import net.sf.json.JSONObject;
 @Extension
 public class TuleapConfiguration extends GlobalConfiguration {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(TuleapConfiguration.class);
+    public static final String ORANGEFORGE_URL = "https://www.forge.orange-labs.fr";
+    public static final String ORANGEFORGE_API_URL = ORANGEFORGE_URL + "/api";
+    public static final String ORANGEFORGE_GIT_HTTPS_URL = ORANGEFORGE_URL + "/plugins/git/";
+    private static final Logger LOGGER = LoggerFactory.getLogger(TuleapConfiguration.class);
+    private String apiBaseUrl = ORANGEFORGE_API_URL;
+    /**
+     * Git URL as configured in /etc/tuleap/plugins/git/etc/config.inc
+     * https://tuleap.net/pipermail/tuleap-devel/2015-December/004425.html
+     * http://tuleap-documentation.readthedocs.io/en/latest/installation-guide/advanced-configuration.html#tuleap-configuration
+     */
+    private String gitBaseUrl = ORANGEFORGE_GIT_HTTPS_URL;
 
-	public static final String ORANGEFORGE_URL= "https://www.forge.orange-labs.fr";
-	public static final String ORANGEFORGE_API_URL= ORANGEFORGE_URL + "/api";
-	public static final String ORANGEFORGE_GIT_HTTPS_URL= ORANGEFORGE_URL + "/plugins/git/";
+    public TuleapConfiguration() throws IOException {
+        load();
+    }
 
-	public static TuleapConfiguration get() {
-		return GlobalConfiguration.all().get(TuleapConfiguration.class);
-	}
+    public static TuleapConfiguration get() {
+        return GlobalConfiguration.all().get(TuleapConfiguration.class);
+    }
 
-	private String apiBaseUrl = ORANGEFORGE_API_URL;
+    @Override
+    public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+        req.bindJSON(this, json);
+        return true;
+    }
 
-	/**
-	 * Git URL as configured in /etc/tuleap/plugins/git/etc/config.inc
-	 * https://tuleap.net/pipermail/tuleap-devel/2015-December/004425.html
-	 * http://tuleap-documentation.readthedocs.io/en/latest/installation-guide/advanced-configuration.html#tuleap-configuration
-	 */
-	private String gitBaseUrl = ORANGEFORGE_GIT_HTTPS_URL;
+    public String getApiBaseUrl() {
+        return apiBaseUrl;
+    }
 
-	public TuleapConfiguration() throws IOException {
-		load();
-	}
+    @DataBoundSetter
+    public void setApiBaseUrl(String apiBaseUrl) {
+        this.apiBaseUrl = apiBaseUrl;
+    }
 
-	@Override
-	public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-		req.bindJSON(this, json);
-		return true;
-	}
+    public String getGitBaseUrl() {
+        return gitBaseUrl;
+    }
 
-	public String getApiBaseUrl() {
-		return apiBaseUrl;
-	}
+    @DataBoundSetter
+    public void setGitBaseUrl(String gitBaseUrl) {
+        this.gitBaseUrl = gitBaseUrl;
+    }
 
-	@DataBoundSetter
-	public void setApiBaseUrl(String apiBaseUrl) {
-		this.apiBaseUrl = apiBaseUrl;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @NonNull
+    @Override
+    public String getDisplayName() {
+        return Messages.OFConfiguration_displayName();
+    }
 
-	public String getGitBaseUrl() {
-		return gitBaseUrl;
-	}
+    @SuppressWarnings("unused")
+    public ListBoxModel doFillCredentialsIdItems(@QueryParameter String apiUrl, @QueryParameter String credentialsId) {
+        return TuleapConnector.listScanCredentials(null, apiUrl, credentialsId);
+    }
 
-	@DataBoundSetter
-	public void setGitBaseUrl(String gitBaseUrl) {
-		this.gitBaseUrl = gitBaseUrl;
-	}
+    @SuppressWarnings("unused")
+    public FormValidation doVerifyCredentials(@QueryParameter String apiBaseUrl, @QueryParameter String gitBaseUrl,
+        @QueryParameter String credentialsId) throws IOException {
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@NonNull
-	@Override
-	public String getDisplayName() {
-		return Messages.OFConfiguration_displayName();
-	}
+        if (Util.fixEmpty(credentialsId) == null) {
+            return FormValidation.error("Username Password credential is required");
+        } else {
+            StandardUsernamePasswordCredentials cred = CredentialsMatchers
+                .firstOrNull(
+                    filter(lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
+                        Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
+                    CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId), allUsernamePasswordMatch()));
 
+            // TODO isValidTuleapUrl no need authentication go anonynous
+            final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd().new IsTuleapServerUrl();
+            TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean> newInstance(apiBaseUrl)
+                .withCredentials(cred)
+                .withCommand(isCredentialValidRawCmd)
+                .configure();
+            try {
+                if (configuredCmd.call()) {
+                    return FormValidation.ok("Credentials verified for user %s", cred.getUsername());
+                } else {
+                    return FormValidation.error("Failed to validate the account");
+                }
+            } catch (IOException e) {
+                return FormValidation.error(e, "Failed to validate the account");
+            }
+        }
+    }
 
-	@SuppressWarnings("unused")
-	public ListBoxModel doFillCredentialsIdItems(@QueryParameter String apiUrl,
-												 @QueryParameter String credentialsId) {
-		return TuleapConnector.listScanCredentials(null, apiUrl, credentialsId);
-	}
+    @SuppressWarnings("unused")
+    public FormValidation doCheckApiBaseUrl(@QueryParameter String apiBaseUrl) {
+        return validateUrls(apiBaseUrl, ORANGEFORGE_API_URL);
+    }
 
-	@SuppressWarnings("unused")
-	public FormValidation doVerifyCredentials(
-			@QueryParameter String apiBaseUrl, @QueryParameter String gitBaseUrl,
-			@QueryParameter String credentialsId) throws IOException {
+    @SuppressWarnings("unused")
+    public FormValidation doCheckGitBaseUrl(@QueryParameter String gitBaseUrl) {
+        return validateUrls(gitBaseUrl, ORANGEFORGE_GIT_HTTPS_URL);
+    }
 
-		if (Util.fixEmpty(credentialsId) == null) {
-			return FormValidation.error("Username Password credential is required");
-		} else {
-			StandardUsernamePasswordCredentials cred = CredentialsMatchers.firstOrNull(filter(
-					lookupCredentials(StandardUsernamePasswordCredentials.class,
-									  Jenkins.getInstance(), ACL.SYSTEM,
-									  Collections.<DomainRequirement>emptyList()),
-					withId(trimToEmpty(credentialsId))
-			), CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId), allUsernamePasswordMatch()));
+    private FormValidation validateUrls(final String url, final String pattern) {
+        try {
+            new URL(url);
+        } catch (MalformedURLException e) {
+            return FormValidation.error("Malformed OrangeForge url (%s)", e.getMessage());
+        }
 
-			//TODO isValidTuleapUrl no need authentication go anonynous
-			final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd()
-					.new IsTuleapServerUrl();
-			TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean>newInstance
-					(apiBaseUrl)
-					.withCredentials(cred)
-					.withCommand(isCredentialValidRawCmd)
-					.configure();
-			try {
-				if (configuredCmd.call()) {
-					return FormValidation.ok("Credentials verified for user %s", cred.getUsername());
-				} else {
-					return FormValidation.error("Failed to validate the account");
-				}
-			} catch (IOException e) {
-				return FormValidation.error(e, "Failed to validate the account");
-			}
-		}
-	}
+        if (pattern.equals(url)) {
+            return FormValidation.ok();
+        }
 
-	@SuppressWarnings("unused")
-	public FormValidation doCheckApiBaseUrl(@QueryParameter String apiBaseUrl) {
-		return validateUrls(apiBaseUrl, ORANGEFORGE_API_URL);
-	}
-
-	@SuppressWarnings("unused")
-	public FormValidation doCheckGitBaseUrl(@QueryParameter String gitBaseUrl) {
-		return validateUrls(gitBaseUrl, ORANGEFORGE_GIT_HTTPS_URL);
-	}
-
-	private FormValidation validateUrls(final String url, final String pattern) {
-		try {
-			new URL(url);
-		} catch (MalformedURLException e) {
-			return FormValidation.error("Malformed OrangeForge url (%s)", e.getMessage());
-		}
-
-		if (pattern.equals(url)) {
-			return FormValidation.ok();
-		}
-
-		return FormValidation.warning("OrangeForge Urls are required and should be valid");
-	}
+        return FormValidation.warning("OrangeForge Urls are required and should be valid");
+    }
 }

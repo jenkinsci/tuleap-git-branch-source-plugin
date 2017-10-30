@@ -12,52 +12,52 @@ import hudson.Extension;
 @Extension
 public class OFClientCommandConfigurer<T> extends TuleapClientCommandConfigurer {
 
-	private String apiUrl;
-	private String gitUrl;
-	private TuleapClientRawCmd.Command command;
-	private StandardCredentials credentials;
+    private String apiUrl;
+    private String gitUrl;
+    private TuleapClientRawCmd.Command command;
+    private StandardCredentials credentials;
 
-	public OFClientCommandConfigurer(){
-	}
+    public OFClientCommandConfigurer() {
+    }
 
-	private OFClientCommandConfigurer(String apiUrl) {
-		this.apiUrl = apiUrl;
-	}
+    private OFClientCommandConfigurer(String apiUrl) {
+        this.apiUrl = apiUrl;
+    }
 
-	@Override
-	protected boolean isMatch(String apiUrl) {
-		//FIXME now just returns true :(
-		return apiUrl.equals(TuleapConfiguration.get().getApiBaseUrl());
-	}
+    @Override
+    protected boolean isMatch(String apiUrl) {
+        // FIXME now just returns true :(
+        return apiUrl.equals(TuleapConfiguration.get().getApiBaseUrl());
+    }
 
-	@Override
-	protected OFClientCommandConfigurer<T> create(String apiUrl) {
-		return new OFClientCommandConfigurer<>(apiUrl);
-	}
+    @Override
+    protected OFClientCommandConfigurer<T> create(String apiUrl) {
+        return new OFClientCommandConfigurer<>(apiUrl);
+    }
 
-	@Override
-	public OFClientCommandConfigurer<T> withCommand(TuleapClientRawCmd.Command command) {
-		this.command = command;
-		return this;
-	}
+    @Override
+    public OFClientCommandConfigurer<T> withCommand(TuleapClientRawCmd.Command command) {
+        this.command = command;
+        return this;
+    }
 
-	@Override
-	public OFClientCommandConfigurer<T> withCredentials(StandardCredentials credentials) {
-		this.credentials = credentials;
-		return this;
-	}
+    @Override
+    public OFClientCommandConfigurer<T> withCredentials(StandardCredentials credentials) {
+        this.credentials = credentials;
+        return this;
+    }
 
-	@Override
-	public OFClientCommandConfigurer<T> withGitUrl(String gitUrl) {
-		this.gitUrl = gitUrl;
-		return this;
-	}
+    @Override
+    public OFClientCommandConfigurer<T> withGitUrl(String gitUrl) {
+        this.gitUrl = gitUrl;
+        return this;
+    }
 
-	@Override
-	public TuleapClientRawCmd.Command<T> configure() {
-		OFClient client = new OFClient(credentials != null? credentials: null, StringUtils.defaultString(apiUrl),
-									   StringUtils.defaultString(gitUrl));
-		((TuleapClientRawCmd)command).setClient(client);
-		return command;
-	}
+    @Override
+    public TuleapClientRawCmd.Command<T> configure() {
+        OFClient client = new OFClient(credentials != null ? credentials : null, StringUtils.defaultString(apiUrl),
+            StringUtils.defaultString(gitUrl));
+        ((TuleapClientRawCmd) command).setClient(client);
+        return command;
+    }
 }

@@ -60,321 +60,304 @@ import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 
 /**
- * SCM source implementation for OrangeForge
- * discover branch af a repo
+ * SCM source implementation for OrangeForge discover branch af a repo
  */
 public class OFSCMSource extends AbstractGitSCMSource {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OFSCMSource.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OFSCMSource.class);
 
-	/**
-	 * OrangeForge project to build URL from.
-	 */
-	private String projectId;
+    /**
+     * OrangeForge project to build URL from.
+     */
+    private String projectId;
 
-	private String apiBaseUri;
-	private String gitBaseUri;
+    private String apiBaseUri;
+    private String gitBaseUri;
 
-	/**
-	 * Git Repository path to build URL from.
-	 */
-	private String repositoryPath;
+    /**
+     * Git Repository path to build URL from.
+     */
+    private String repositoryPath;
 
-	/**
-	 * Git remote URL.
-	 */
-	private String remoteUrl;
+    /**
+     * Git remote URL.
+     */
+    private String remoteUrl;
 
-	/**
-	 * The behaviours to apply to this source.
-	 */
-	private List<SCMSourceTrait> traits = new ArrayList<>();
-	private String credentialsId;
-	private StandardCredentials credentials;
+    /**
+     * The behaviours to apply to this source.
+     */
+    private List<SCMSourceTrait> traits = new ArrayList<>();
+    private String credentialsId;
+    private StandardCredentials credentials;
 
-	@DataBoundConstructor
-	public OFSCMSource(final String projectId, final String
-			repositoryPath) {
-		this.projectId = projectId;
-		this.repositoryPath = repositoryPath;
-		traits.add(new BranchDiscoveryTrait());
-	}
+    @DataBoundConstructor
+    public OFSCMSource(final String projectId, final String repositoryPath) {
+        this.projectId = projectId;
+        this.repositoryPath = repositoryPath;
+        traits.add(new BranchDiscoveryTrait());
+    }
 
+    @NonNull
+    @Override
+    protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event,
+        @NonNull TaskListener listener) throws IOException, InterruptedException {
+        List<Action> result = new ArrayList<>();
+        SCMSourceOwner owner = getOwner();
+        if (owner instanceof Actionable) {
+            OFLink repoLink = ((Actionable) owner).getAction(OFLink.class);
+            if (repoLink != null) {
+                String canonicalRepoName = repositoryPath.replace("faas/", "");
+                String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
+                result.add(new OFLink("icon-git-branch", url));
+            }
+        }
+        return result;
+    }
 
-	@NonNull
-	@Override
-	protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event, @NonNull TaskListener listener) throws IOException, InterruptedException {
-		List<Action> result = new ArrayList<>();
-		SCMSourceOwner owner = getOwner();
-		if (owner instanceof Actionable) {
-			OFLink repoLink = ((Actionable) owner).getAction(OFLink.class);
-			if (repoLink != null) {
-				String canonicalRepoName = repositoryPath.replace("faas/", "");
-				String url = repoLink.getUrl() + "?p="+ canonicalRepoName+ "&a=shortlog&h="+ head.getName();
-				result.add(new OFLink("icon-git-branch", url));
-			}
-		}
-		return result;
-	}
+    @NonNull
+    @Override
+    protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener)
+        throws IOException, InterruptedException {
+        List<Action> result = new ArrayList<>();
+        result.add(new OFLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
+        return result;
+    }
 
-	@NonNull
-	@Override
-	protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener) throws IOException, InterruptedException {
-		List<Action> result = new ArrayList<>();
-		result.add(new OFLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
-		return result;
-	}
+    @Override
+    protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
+        @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
+        try (final OFSCMSourceRequest request = new OFSCMSourceContext(criteria, observer)
+                .withTraits(traits).wantBranches(true)
+                .newRequest(this, listener)) {
+            StandardCredentials credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
+                getCredentialsId());
+            setCredentials(credentials);
+            setRemoteUrl(getGitBaseUri() + repositoryPath);
+            if (request.isFetchBranches()) {
+                LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
+                final TuleapClientRawCmd.Command<List<TuleapGitBranch>> allBranchesByGitRepo = new TuleapClientRawCmd().new AllBranchesByGitRepo(
+                    repositoryPath);
+                TuleapClientRawCmd.Command<List<TuleapGitBranch>> configuredCmd = TuleapClientCommandConfigurer
+                        .<List<TuleapGitBranch>> newInstance(getApiBaseUri())
+                        .withCredentials(credentials).withGitUrl(getGitBaseUri()).withCommand(allBranchesByGitRepo)
+                        .configure();
+                List<TuleapGitBranch> branches = configuredCmd.call();
+                request.setBranches(branches);
+                int count = 0;
+                for (TuleapGitBranch branch : branches) {
+                    count++;
+                    request.listener().getLogger()
+                        .format("Crawling branch %s::%s for repo %s", branch.getName(), branch.getSha1(), getRemote())
+                        .println();
+                    OFBranchSCMHead head = new OFBranchSCMHead(branch.getName());
+                    if (request.process(head, new SCMRevisionImpl(head, branch.getSha1()),
+                        OFSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
+                        request.listener().getLogger()
+                            .format("%n  %d branches were processed (query completed)%n", count).println();
+                    }
 
-	@Override
-	protected void retrieve(@CheckForNull SCMSourceCriteria criteria,@NonNull SCMHeadObserver observer,
-							@CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener)
-			throws IOException, InterruptedException {
-		try (final OFSCMSourceRequest request = new OFSCMSourceContext(criteria, observer)
-				.withTraits(traits)
-				.wantBranches(true)
-				.newRequest(this, listener)) {
-			StandardCredentials credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(), getCredentialsId());
-			setCredentials(credentials);
-			setRemoteUrl(getGitBaseUri() + repositoryPath);
-			if (request.isFetchBranches()) {
-				LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
-				final TuleapClientRawCmd.Command<List<TuleapGitBranch>> allBranchesByGitRepo = new TuleapClientRawCmd().new
-						AllBranchesByGitRepo
-						(repositoryPath);
-				final List<TuleapGitBranch> branches = TuleapClientCommandConfigurer.<List<TuleapGitBranch>>newInstance(getApiBaseUri())
-						.withCredentials(credentials)
-						.withGitUrl(getGitBaseUri())
-						.withCommand(allBranchesByGitRepo)
-						.configure()
-						.call();
-				request.setBranches(branches);
-				int count=0;
-				for (TuleapGitBranch branch : branches) {
-					count++;
-					request.listener().getLogger().format("Crawling branch %s::%s for repo %s", branch.getName(),
-														 branch.getSha1(), getRemote()).println();
-					OFBranchSCMHead head = new OFBranchSCMHead(branch.getName());
-					if (request.process(head, new SCMRevisionImpl(head, branch.getSha1()),
-										OFSCMSource.this::fromSCMFileSystem,
-										new OFWitness(listener))) {
-						request.listener().getLogger().format("%n  %d branches were processed (query completed)%n",
-															  count).println();
-					}
+                }
 
-				}
+            }
+        }
+    }
 
-			}
-		}
-	}
+    @Override
+    protected List<RefSpec> getRefSpecs() {
+        return Arrays.asList(new RefSpec("+refs/heads/*:refs/remotes/origin/*", RefSpec.WildcardMode.ALLOW_MISMATCH));
+    }
 
-	@Override
-	protected List<RefSpec> getRefSpecs() {
-		return Arrays.asList(new RefSpec("+refs/heads/*:refs/remotes/origin/*", RefSpec.WildcardMode.ALLOW_MISMATCH));
-	}
+    /**
+     * {@inheritDoc}
+     */
+    protected boolean isCategoryEnabled(@NonNull SCMHeadCategory category) {
+        if (super.isCategoryEnabled(category)) {
+            for (SCMSourceTrait trait : traits) {
+                if (trait.isCategoryEnabled(category)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected boolean isCategoryEnabled(@NonNull SCMHeadCategory category) {
-		if (super.isCategoryEnabled(category)) {
-			for (SCMSourceTrait trait : traits) {
-				if (trait.isCategoryEnabled(category)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+    public void setCredentials(StandardCredentials credentials) {
+        this.credentials = credentials;
+    }
 
-	public void setCredentials(StandardCredentials credentials) {
-		this.credentials = credentials;
-	}
+    @Override
+    public SCM build(@NonNull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
+        // TODO check credentialsId is propagated from Navigator to here and to GtiSCM so it can perform clone
+        return new GitSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId).withTraits(traits).build();
+    }
 
-	@Override
-	public SCM build(@NonNull SCMHead scmHead,
-					 @CheckForNull SCMRevision scmRevision) {
-		//TODO check credentialsId is propagated from Navigator to here and to GtiSCM so it can perform clone
-		return new GitSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId).withTraits(traits).build();
-	}
+    public List<SCMSourceTrait> getTraits() {
+        return Collections.unmodifiableList(traits);
+    }
 
-	public List<SCMSourceTrait> getTraits() {
-		return Collections.unmodifiableList(traits);
-	}
+    @DataBoundSetter
+    public void setTraits(List<SCMSourceTrait> traits) {
+        this.traits = new ArrayList<>(Util.fixNull(traits));
+    }
 
-	@DataBoundSetter
-	public void setTraits(List<SCMSourceTrait> traits) {
-		this.traits = new ArrayList<>(Util.fixNull(traits));
-	}
+    @Override
+    public String getRemote() {
+        return remoteUrl;
+    }
 
-	@Override
-	public String getRemote() {
-		return remoteUrl;
-	}
+    public void setRemoteUrl(String remoteUrl) {
+        this.remoteUrl = remoteUrl;
+    }
 
+    /**
+     * Gets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking
+     * out sources.
+     *
+     * @return the credentials used to access the OrangeForge REST API
+     */
+    @Override
+    @CheckForNull
+    public String getCredentialsId() {
+        return credentialsId;
+    }
 
-	public void setRemoteUrl(String remoteUrl) {
-		this.remoteUrl = remoteUrl;
-	}
+    /**
+     * Sets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking
+     * out sources.
+     *
+     * @param credentialsId
+     *            the credentials used to access the OrangeForge REST API
+     * @since 2.2.0
+     */
+    @DataBoundSetter
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
+    }
 
-	/**
-	 * Gets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking
-	 * out
-	 * sources.
-	 * @return the credentials used to access the OrangeForge REST API
-	 */
-	@Override
-	@CheckForNull
-	public String getCredentialsId() {
-		return credentialsId;
-	}
+    /**
+     * Gets the Id of the project who's repositories will be navigated.
+     *
+     * @return the Idof the project who's repositories will be navigated.
+     */
+    public String getprojectId() {
+        return projectId;
+    }
 
+    @DataBoundSetter
+    public void setProjectId(final String projectId) {
+        this.projectId = projectId;
+    }
 
-	/**
-	 * Sets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking out
-	 * sources.
-	 *
-	 * @param credentialsId the credentials used to access the OrangeForge REST API
-	 * @since 2.2.0
-	 */
-	@DataBoundSetter
-	public void setCredentialsId(String credentialsId) {
-		this.credentialsId = credentialsId;
-	}
+    public String getRepositoryPath() {
+        return repositoryPath;
+    }
 
-	/**
-	 * Gets the Id of the project who's repositories will be navigated.
-	 * @return the Idof the project who's repositories will be navigated.
-	 */
-	public String getprojectId() {
-		return projectId;
-	}
+    @DataBoundSetter
+    public void setRepositoryPath(String repositoryPath) {
+        this.repositoryPath = repositoryPath;
+    }
 
-	@DataBoundSetter
-	public void setProjectId(final String projectId) {
-		this.projectId = projectId;
-	}
+    public String getApiBaseUri() {
+        if (StringUtils.isBlank(apiBaseUri)) {
+            apiBaseUri = TuleapConfiguration.get().getApiBaseUrl();
+        }
+        return apiBaseUri;
+    }
 
+    public String getGitBaseUri() {
+        if (StringUtils.isBlank(gitBaseUri)) {
+            gitBaseUri = TuleapConfiguration.get().getGitBaseUrl();
+        }
+        return gitBaseUri;
+    }
 
-	public String getRepositoryPath() {
-		return repositoryPath;
-	}
+    @Symbol("orangeforge")
+    @Extension
+    public static class DescriptorImpl extends SCMSourceDescriptor {
 
-	@DataBoundSetter
-	public void setRepositoryPath(String repositoryPath) {
-		this.repositoryPath = repositoryPath;
-	}
+        @Override
+        public String getDisplayName() {
+            return "OrangeForge";
+        }
 
-	public String getApiBaseUri() {
-		if (StringUtils.isBlank(apiBaseUri)){
-			apiBaseUri = TuleapConfiguration.get().getApiBaseUrl();
-		}
-		return apiBaseUri;
-	}
+        public List<SCMSourceTrait> getTraitsDefaults() {
+            return Arrays.asList(new BranchDiscoveryTrait());
+        }
 
-	public String getGitBaseUri() {
-		if (StringUtils.isBlank(gitBaseUri)){
-			gitBaseUri = TuleapConfiguration.get().getGitBaseUrl();
-		}
-		return gitBaseUri;
-	}
+        @RequirePOST
+        @Restricted(NoExternalUse.class) // stapler
+        public FormValidation doCheckCredentialsId(@AncestorInPath Item item, @QueryParameter String value,
+            @CheckForNull @AncestorInPath Item context, @QueryParameter String apiUri,
+            @QueryParameter String credentialsId) {
+            return checkCredentials(item, apiUri);
+        }
 
-	@Symbol("orangeforge")
-	@Extension
-	public static class DescriptorImpl extends SCMSourceDescriptor {
+        public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
+            @QueryParameter String apiUri, @QueryParameter String credentialsId) {
+            return listScanCredentials(context, apiUri, credentialsId);
+        }
 
-		@Override
-		public String getDisplayName() {
-			return "OrangeForge";
-		}
+        @Restricted(NoExternalUse.class) // stapler
+        @SuppressWarnings("unused") // stapler
+        public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
+            @QueryParameter String projectId, @QueryParameter String credentialsId) throws IOException {
+            String apiUri = TuleapConfiguration.get().getApiBaseUrl();
+            final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
+            ListBoxModel result = new ListBoxModel();
+            if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
+                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new AllUserProjects();
+                final TuleapClientRawCmd.Command<List<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
+                    .<List<TuleapProject>> newInstance(apiUri)
+					.withCredentials(credentials).withCommand(allUserProjectsRawCmd)
+                    .configure();
 
-		public List<SCMSourceTrait> getTraitsDefaults() {
-			return Arrays.asList(new BranchDiscoveryTrait());
-		}
+                configuredCmd.call().forEach(project -> {
+                    ListBoxModel.Option newItem = new ListBoxModel.Option(project.getShortname(),
+                        String.valueOf(project.getId()), project.getId() == Integer.valueOf(projectId));
+                    result.add(newItem);
+                });
+            }
+            return result;
+        }
 
+        @Restricted(NoExternalUse.class) // stapler
+        public ListBoxModel doFillRepositoryPathItems(@CheckForNull @AncestorInPath Item context,
+            @QueryParameter String projectId, @QueryParameter String credentialsId,
+            @QueryParameter String repositoryPath) throws IOException {
+            ListBoxModel result = new ListBoxModel();
+            final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
+            StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
+            final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new TuleapClientRawCmd().new AllRepositoriesByProject(
+                projectId);
+            TuleapClientCommandConfigurer.<List<TuleapGitRepository>> newInstance(apiBaseUrl)
+                .withCredentials(credentials).withCommand(allRepositoriesByProjectRawCmd)
+                .configure()
+                .call()
+                .stream().distinct().forEach(repo -> {
+                    final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.getName(), repo.getPath(),
+                        repo.getPath().equals(repositoryPath));
+                    result.add(newItem);
+                });
+            return result;
+        }
+    }
 
+    private static class OFWitness implements SCMSourceRequest.Witness {
+        private final TaskListener listener;
 
-		@RequirePOST
-		@Restricted(NoExternalUse.class) // stapler
-		public FormValidation doCheckCredentialsId( @AncestorInPath Item item, @QueryParameter String value,
-													@CheckForNull @AncestorInPath Item context,  @QueryParameter
-															String apiUri, @QueryParameter String credentialsId ) {
-			return checkCredentials(item, apiUri);
-		}
+        public OFWitness(TaskListener listener) {
+            this.listener = listener;
+        }
 
-		public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-													 @QueryParameter String apiUri,
-													 @QueryParameter String credentialsId) {
-			return listScanCredentials(context, apiUri, credentialsId);
-		}
-
-		@Restricted(NoExternalUse.class) // stapler
-		@SuppressWarnings("unused") // stapler
-		public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
-				projectId, @QueryParameter String credentialsId) throws IOException {
-			String apiUri = TuleapConfiguration.get().getApiBaseUrl();
-			final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
-			ListBoxModel result = new ListBoxModel();
-			if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials){
-				final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new AllUserProjects();
-
-				TuleapClientCommandConfigurer.<List<TuleapProject>>newInstance(apiUri)
-						.withCredentials(credentials)
-						.withCommand(allUserProjectsRawCmd)
-						.configure()
-						.call()
-						.forEach(project -> {
-					boolean selected = false;
-					if (project.getId() == Integer.valueOf(projectId)) {
-						selected = true;
-					}
-					ListBoxModel.Option newItem = new ListBoxModel.Option(project.getShortname(), String.valueOf
-							(project.getId()), selected);
-					result.add(newItem);
-				});
-			}
-			return result;
-		}
-
-		@Restricted(NoExternalUse.class) // stapler
-		public ListBoxModel doFillRepositoryPathItems(@CheckForNull @AncestorInPath Item context, @QueryParameter String
-				projectId, @QueryParameter String credentialsId, @QueryParameter String repositoryPath) throws IOException {
-			ListBoxModel result = new ListBoxModel();
-			final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
-			StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
-			final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new TuleapClientRawCmd().new
-					AllRepositoriesByProject(projectId);
-			TuleapClientCommandConfigurer.<List<TuleapGitRepository>>newInstance(apiBaseUrl)
-					.withCredentials(credentials)
-					.withCommand(allRepositoriesByProjectRawCmd)
-					.configure()
-					.call()
-					.stream().distinct().forEach(repo -> {
-						boolean selected = false;
-						if (repo.getPath().equals(repositoryPath)) {
-							selected = true;
-						}
-						final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.getName(), repo.getPath(), selected);
-						result.add(newItem);
-					});
-			return result;
-		}
-	}
-
-	private static class OFWitness implements SCMSourceRequest.Witness {
-		private final TaskListener listener;
-
-		public OFWitness(TaskListener listener) {
-			this.listener = listener;
-		}
-
-		@Override
-		public void record(@NonNull SCMHead scmHead, @CheckForNull SCMRevision revision, boolean isMatch) {
-			if (isMatch) {
-				listener.getLogger().format("    Met criteria%n");
-			} else {
-				listener.getLogger().format("    Does not meet criteria%n");
-			}
-		}
-	}
+        @Override
+        public void record(@NonNull SCMHead scmHead, @CheckForNull SCMRevision revision, boolean isMatch) {
+            if (isMatch) {
+                listener.getLogger().format("    Met criteria%n");
+            } else {
+                listener.getLogger().format("    Does not meet criteria%n");
+            }
+        }
+    }
 
 }

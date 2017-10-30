@@ -6,21 +6,21 @@ import jenkins.scm.api.SCMHead;
 /**
  * Head corresponding to a branch of an OrangeForge git repository.
  */
-public class OFBranchSCMHead extends SCMHead{
+public class OFBranchSCMHead extends SCMHead {
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public OFBranchSCMHead(@NonNull String name) {
-		super(name);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public OFBranchSCMHead(@NonNull String name) {
+        super(name);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getPronoun() {
-		return Messages.OFBranchSCMHead_pronoun();
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPronoun() {
+        return Messages.OFBranchSCMHead_pronoun();
+    }
 
 }
