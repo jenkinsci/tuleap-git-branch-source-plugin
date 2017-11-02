@@ -2,40 +2,117 @@ package com.francetelecom.faas.jenkinsfaasbranchsource.client;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitBranch;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapUser;
 
 /**
- * Defines a Tuleap client behaviours
+ * Defines a Tuleap REST client and its behaviours given some configurations.
+ * Translates Tuleap api response from api php object to api java object and populate these objects to be used by the
+ * SCM api.
+ *
+ * source https://www.forge.orange-labs.fr/api/explorer/resources.json and it represent the v1
+ * @see <a href= https://www.forge.orange-labs.fr/api/explorer/>API OrangeForge</a>
  */
 public interface TuleapClient {
 
+    /**
+     * The projects api path according to api v1
+     */
     String TULEAP_API_PROJECT_PATH = "/projects";
 
+    /**
+     * The users api path according to api v1
+     */
     String TULEAP_API_USER_PATH = "/users";
 
+    /**
+     * The git api path according to api v1
+     */
     String TULEAP_API_GIT_PATH = "/git";
 
     /**
-     * A means to tell we http call a Tuleap server with correct registered credentials
-     *
-     * @return true(false) if http call is (un)successful
+     * The query param syntax according to api v1
+     */
+    String QUERY_OBJECT_PARAM = "?query=";
+
+    /**
+     * The query object to fetch users by username according to api v1
+     */
+    String BY_USERNAME_QUERY_OBJECT_PATTERN = "{\"username\":\"%s\"}";
+
+    /**
+     * The query object to fetch projects current user is member of according to api v1
+     */
+    String IS_MEMBER_OF_QUERY_OBJECT_PATTERN = "{\"is_member_of\":true}";
+
+    /**
+     * A means to tell we did a successful http call to a Tuleap server with correct registered credentials
+     * From Tuleap docs : Note that when accessing this route without authentication certain properties will not be
+     * returned in the response.
+     * @return true(false) if http call is (un)successful and (does not )contains appropriate user data i.e. email +
+     * status
      */
     boolean isCredentialValid() throws IOException;
 
-    List<TuleapProject> allUserProjects() throws IOException;
+    /**
+     * A means to tell we did a successful http call to a Tuleap server
+     * From Tuleap docs : Note that when accessing this route without authentication certain properties will not be
+     * returned in the response.
+     * @return true(false) if http call is (un)successful and (does not )contains appropriate user data
+     */
+    boolean isServerUrlValid() throws IOException ;
 
+    /**
+     * Return projects current user has access. Using param object ?query={"is_member_of": true} of OrangeForge api
+     * it returns only projects user is member of
+     * From docs
+     * https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve : Please note that {"is_member_of": false} is
+     * not supported and will result in a 400 Bad Request error.
+     *
+     * @param isMemberOf if return only projects user is member of
+     * @return list of projects current user has access
+     * @throws IOException in case HTTP errors occurs or parsing of response fail
+     */
+    List<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException ;
+
+    /**
+     * Get a list of git repositories of the project identified by a projectIf
+     *
+     * @param projectId the id of project to inspect
+     * @return the list of repositories
+     * @throws IOException in case HTTP errors occurs or parsing of response fail
+     */
     List<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException;
 
-    TuleapProject projectById(final String projectId) throws IOException;
+    /**
+     * Get the project identified by the projectId
+     *
+     * @param projectId the id of the requested project
+     * @return An optional wrapper of the project
+     * @throws IOException in case HTTP errors occurs or parsing of response fail
+     */
+    Optional<TuleapProject> projectById(final String projectId) throws IOException;
 
+    /**
+     * Get all head refs of a git repository define by its path
+     *
+     * @param gitRepoPath the  git repo path to inspect
+     * @return all head refs
+     * @throws IOException in case git connexion pbm
+     * @throws NoSingleRepoByPathException in case multiple git repo are represented by a path, this is blocking
+     */
     List<TuleapGitBranch> branchByGitRepo(String gitRepoPath)
-        throws IOException, NoSingleRepoByPathException, NoSuchElementException;
+        throws IOException, NoSingleRepoByPathException;
 
+    /**
+     * If multpile git repo are represented by a path it is a show stopper as in Tuleap the discriminant is the git
+     * repo path
+     */
     class NoSingleRepoByPathException extends RuntimeException {
 
         public NoSingleRepoByPathException(final String path, final String doublonUri, final String anotherDoublonUri) {
@@ -43,9 +120,23 @@ public interface TuleapClient {
         }
     }
 
-    class TuleapGitException extends RuntimeException {
+    /**
+     * Multiple user represented by a given username passxord credentials is clearly a showstopper
+     */
+    class MultipleUserMatchingCredentialsException extends RuntimeException {
+
+        public MultipleUserMatchingCredentialsException(List<TuleapUser> users) {
+            super("Some username"+ users.stream().map(TuleapUser::getEmail).reduce("", (x, y) -> x+y));
+        }
+    }
+
+    /**
+     * If some git errors occurs, it is not a showstopper though as it may be just temporary. No retry mechanism is yet
+     * implemented
+     */
+    class TuleapGitException extends IOException {
         public TuleapGitException(final String uri, final String path, Throwable t) {
-            super("Unable to communicate to OrangeForge git at " + uri + "/" + path, t);
+            super("Unable to communicate to Tuleap git at " + uri + "/" + path, t);
         }
     }
 }

@@ -1,11 +1,11 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.faas;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.impl;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -28,6 +28,7 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitBranch
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitRepository;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProjectRepositories;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapUser;
 import com.francetelecom.faas.jenkinsfaasbranchsource.config.BasicAuthInterceptor;
 
 import okhttp3.CacheControl;
@@ -38,40 +39,50 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * OrangeForge REST client in charge of establishing connexion given some configuration. Translates OrangeForge api from
- * api php object to api java object and populate api objects to prepare their usage with the SCM api.
- *
- * @see <a href= https://www.forge.orange-labs.fr/api/explorer/#!/git/retrieve>API OrangeForge</a>
+ * A default implementation of a Tuleap Client
  */
-class OFClient implements TuleapClient {
+class DefaultClient implements TuleapClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OFClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClient.class);
     private final String apiBaseUrl, gitBaseUrl;
     private final OkHttpClient client;
-    private StandardUsernamePasswordCredentials credentials;
+    private Optional<StandardCredentials> credentials;
 
-    public OFClient(StandardCredentials credentials, final String apiBaseUrl, final String gitBaseUrl) {
-        if (credentials instanceof StandardUsernamePasswordCredentials) {
-            this.apiBaseUrl = apiBaseUrl;
-            this.gitBaseUrl = gitBaseUrl;
-            this.credentials = (StandardUsernamePasswordCredentials) credentials;
-            final String username = this.credentials.getUsername();
-            final String password = this.credentials.getPassword().getPlainText();
-            this.client = new OkHttpClient.Builder()
-                .addInterceptor(new BasicAuthInterceptor(username, password))
-                .connectTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS)
-                .cache(null)
-                .build();
-        } else {
-            throw new UnsupportedOperationException(
-                "Not implemented yet, only StandardUsernamePasswordCredentials " + "is supported ... for the moment");
+    public DefaultClient(Optional<StandardCredentials> credentials, final String apiBaseUrl, final String gitBaseUrl) {
+        this.apiBaseUrl = apiBaseUrl;
+        this.gitBaseUrl = gitBaseUrl;
+        this.credentials = credentials;
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit
+                .SECONDS).cache(null);
+        if (this.credentials.isPresent()) {
+            final StandardCredentials c = this.credentials.get();
+            if (c instanceof StandardUsernamePasswordCredentials) {
+                final String username = ((StandardUsernamePasswordCredentials) c).getUsername();
+                final String password = ((StandardUsernamePasswordCredentials) c).getPassword().getPlainText();
+                builder.addInterceptor(new BasicAuthInterceptor(username, password));
+            } else {
+                throw new UnsupportedOperationException(
+                    "Not implemented yet, only StandardUsernamePasswordCredentials " + "is supported ... for the moment");
+            }
         }
+        this.client = builder.build();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public final boolean isCredentialValid() throws IOException {
-        final String queryObject = "{\"username\":\"" + credentials.getUsername() + "\"}";
+        // If credential is present then it should be StandardUsernamePasswordCredentials otherwise it should have
+        // exploded in constructor
+        // If not present it's weird as it is clearly not anonymous call so showstopper
+        if (!credentials.isPresent()) {
+            throw new IllegalArgumentException("Want to check credential though no credentials info provided ..weird");
+        }
+        final String username = ((StandardUsernamePasswordCredentials) credentials.get()).getUsername();
+        final String queryObject = String.format(BY_USERNAME_QUERY_OBJECT_PATTERN, username);
         final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
-        final String userApiUrl = apiBaseUrl + TULEAP_API_USER_PATH + "?query=" + urlEncodedQueryObject;
+        final String userApiUrl = apiBaseUrl + TULEAP_API_USER_PATH + QUERY_OBJECT_PARAM + urlEncodedQueryObject;
         Request req = new Request.Builder()
             .url(userApiUrl)
             .addHeader("content-type", "application/json")
@@ -79,22 +90,42 @@ class OFClient implements TuleapClient {
             .get()
             .build();
         try (Response response = client.newCall(req).execute()) {
-            return response.isSuccessful();
+            if (response.isSuccessful()) {
+                ResponseBody body = response.body();
+                if (body != null) {
+                    List<TuleapUser> users = Arrays.asList((parse(body.string(), TuleapUser[].class)));
+                    if (users.size() > 1){
+                        throw new MultipleUserMatchingCredentialsException(users);
+                    }
+                    return StringUtils.isNotBlank(users.get(0).getEmail()) && StringUtils.isNotBlank(users.get(0)
+                        .getStatus());
+                }
+            } else {
+                throw new IOException(
+                    "HTTP call error at url: " + req.url().toString() + " " + "with code: " + response.code());
+            }
+            return false;
         }
     }
 
     /**
-     * Return current user's projects using param object ?query={"is_member_of": true} of OrangeForge api From docs
-     * https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve : Please note that {"is_member_of": false} is
-     * not supported and will result in a 400 Bad Request error.
-     *
-     * @return
-     * @throws IOException
+     * {@inheritDoc}
      */
-    public final List<TuleapProject> allUserProjects() throws IOException {
-        final String queryObject = "{\"is_member_of\":true}";
-        final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
-        final String projectsApiUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "?query=" + urlEncodedQueryObject;
+    @Override
+    public boolean isServerUrlValid() throws IOException {
+        return !allUserProjects(false).isEmpty();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public final List<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException {
+        String projectsApiUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH ;
+        //If property is_member_of is not defined, api will respond with all projects in read-only mode
+        if (isMemberOf) {
+            final String urlEncodedQueryObject = URLEncoder.encode(IS_MEMBER_OF_QUERY_OBJECT_PATTERN, StandardCharsets.UTF_8.displayName());
+            projectsApiUrl += QUERY_OBJECT_PARAM + urlEncodedQueryObject;
+        }
         Request req = new Request.Builder()
             .url(projectsApiUrl)
             .addHeader("content-type", "application/json")
@@ -108,17 +139,18 @@ class OFClient implements TuleapClient {
 
             ResponseBody body = response.body();
             if (body != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                final TuleapProject[] projects = mapper.readValue(body.string(), TuleapProject[].class);
-                return Arrays.asList(projects);
+                return Arrays.asList(parse(body.string(), TuleapProject[].class));
             }
-            return null;
+            return new ArrayList<>();
         } catch (IOException e) {
             throw new IOException("Retrieve current user's projects encounter error", e);
         }
     }
 
-    public final TuleapProject projectById(final String projectId) throws IOException {
+    /**
+     * {@inheritDoc}
+     */
+    public final Optional<TuleapProject> projectById(final String projectId) throws IOException {
         final String apiProjectsUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId;
         // FIXME enable cache later
         Request req = new Request.Builder()
@@ -134,31 +166,27 @@ class OFClient implements TuleapClient {
 
             ResponseBody body = response.body();
             if (body != null) {
-                return parse(body.string(), TuleapProject.class);
+                return Optional.ofNullable(parse(body.string(), TuleapProject.class));
             }
-            return null;
+            return Optional.empty();
         } catch (IOException e) {
             throw new IOException("GetProject encounter error", e);
         }
     }
 
     /**
-     * Get a list of repositories in the configured orangeForge.properties project
-     *
-     * @return the list of repositories
-     * @throws IOException
-     *             in case HTTP errors occurs or parsing of response fail
+     * {@inheritDoc}
      */
     public final List<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException {
         return projectRepositoriesWrapper(projectId).getRepositories();
     }
 
     /**
-     * Get repositories wrapper of the configured orangeForge.properties project from OrangeForge api
+     * Get git repositories wrapper per api contract.
      *
+     * @param projectId the project id to inspect
      * @return the repositories wrapper {@see OFProjectRepositories}
-     * @throws IOException
-     *             in case HTTP errors occurs or parsing of response fail
+     * @throws IOException in case HTTP errors occurs or parsing of response fail
      */
     private TuleapProjectRepositories projectRepositoriesWrapper(final String projectId) throws IOException {
         final String apiRepositoriesUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId + TULEAP_API_GIT_PATH;
@@ -179,12 +207,19 @@ class OFClient implements TuleapClient {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public final List<TuleapGitBranch> branchByGitRepo(String gitRepoPath)
-        throws IOException, NoSingleRepoByPathException, NoSuchElementException {
+        throws IOException, NoSingleRepoByPathException {
+        // If not present it's weird as it is clearly not anonymous call so showstopper
+        if (!credentials.isPresent()) {
+            throw new IllegalArgumentException("Want to check credential though no credentials info provided ..weird");
+        }
         try {
             LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
-            final String username = this.credentials.getUsername();
-            final String password = this.credentials.getPassword().getPlainText();
+            final String username = ((StandardUsernamePasswordCredentials)credentials.get()).getUsername();
+            final String password = ((StandardUsernamePasswordCredentials)credentials.get()).getPassword().getPlainText();
             if (!StringUtils.startsWith(gitRepoPath, "faas/")) {
                 gitRepoPath = "faas/" + gitRepoPath;
             }

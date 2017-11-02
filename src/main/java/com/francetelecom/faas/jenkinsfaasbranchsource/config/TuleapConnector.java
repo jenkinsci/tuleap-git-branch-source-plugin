@@ -1,5 +1,7 @@
 package com.francetelecom.faas.jenkinsfaasbranchsource.config;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -16,8 +18,14 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientCommandConfigurer;
+import com.francetelecom.faas.jenkinsfaasbranchsource.client.TuleapClientRawCmd;
 
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.filter;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConfiguration.ORANGEFORGE_API_URL;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Util;
@@ -29,9 +37,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
-/**
- * Created by qsqf2513 on 10/16/17.
- */
 public class TuleapConnector {
 
     public static ListBoxModel listScanCredentials(@CheckForNull @AncestorInPath Item context,
@@ -46,7 +51,7 @@ public class TuleapConnector {
             context, StandardUsernameCredentials.class, OFDomainRequirements(apiUri), allUsernamePasswordMatch());
     }
 
-    public static FormValidation checkCredentials(@AncestorInPath Item item, String apiUri) {
+    public static FormValidation checkCredentials(@AncestorInPath Item item, String apiUri, String credentialsId) {
         if (item == null) {
             if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
                 return FormValidation.ok();
@@ -56,14 +61,28 @@ public class TuleapConnector {
                 return FormValidation.ok();
             }
         }
-        // TODO check credential exists, ask orangeforge if credentials are valid credentials and then ok else
-        // invalid
-        if (CredentialsProvider.listCredentials(StandardUsernamePasswordCredentials.class, item,
-            item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM,
-            OFDomainRequirements(apiUri), null).isEmpty()) {
-            return FormValidation.error("Cannot find currently selected credentials");
+        if (Util.fixEmpty(credentialsId) == null) {
+            return FormValidation.error("Username Password credential is required");
+        } else {
+            StandardUsernamePasswordCredentials cred = CredentialsMatchers.firstOrNull(
+                filter(lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
+                    Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
+                CredentialsMatchers.allOf(withId(credentialsId), allUsernamePasswordMatch()));
+
+            final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd().new IsTuleapServerUrlValid();
+            TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer
+                .<Boolean> newInstance(StringUtils.isEmpty(apiUri) ? TuleapConfiguration.get().getApiBaseUrl() : apiUri)
+                .withCredentials(cred).withCommand(isCredentialValidRawCmd).configure();
+            try {
+                if (configuredCmd.call()) {
+                    return FormValidation.ok();
+                } else {
+                    return FormValidation.error("Failed to validate the provided credentials");
+                }
+            } catch (IOException e) {
+                return FormValidation.error(e, "Failed to validate the provided credentials");
+            }
         }
-        return FormValidation.ok();
     }
 
     @CheckForNull
@@ -78,8 +97,8 @@ public class TuleapConnector {
                         context instanceof Queue.Task ? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
                             : ACL.SYSTEM,
                         OFDomainRequirements(apiUri)),
-                    CredentialsMatchers.allOf(CredentialsMatchers.withId(scanCredentialsId),
-                        allUsernamePasswordMatch()));
+                    CredentialsMatchers.allOf(withId(scanCredentialsId),
+                                              allUsernamePasswordMatch()));
         }
     }
 

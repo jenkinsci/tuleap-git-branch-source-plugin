@@ -189,7 +189,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
     @Override
     public SCM build(@NonNull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
-        // TODO check credentialsId is propagated from Navigator to here and to GtiSCM so it can perform clone
         return new GitSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId).withTraits(traits).build();
     }
 
@@ -288,10 +287,10 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
         @RequirePOST
         @Restricted(NoExternalUse.class) // stapler
-        public FormValidation doCheckCredentialsId(@AncestorInPath Item item, @QueryParameter String value,
-            @CheckForNull @AncestorInPath Item context, @QueryParameter String apiUri,
+        public FormValidation doCheckCredentialsId(@AncestorInPath Item item, @QueryParameter String apiUri,
             @QueryParameter String credentialsId) {
-            return checkCredentials(item, apiUri);
+
+            return checkCredentials(item, apiUri, credentialsId);
         }
 
         public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
@@ -307,7 +306,8 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new AllUserProjects();
+                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new
+                    AllUserProjects(true);
                 final TuleapClientRawCmd.Command<List<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
                     .<List<TuleapProject>> newInstance(apiUri)
 					.withCredentials(credentials).withCommand(allUserProjectsRawCmd)

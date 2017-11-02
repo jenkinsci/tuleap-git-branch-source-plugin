@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -132,17 +133,19 @@ public class TuleapSCMNavigator extends SCMNavigator {
         List<Action> actions = new ArrayList<>();
 
         final StandardCredentials credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
-        final TuleapClientRawCmd.Command<TuleapProject> projectByIdRawCmd = new TuleapClientRawCmd().new ProjectById(
-            projectId);
+        final TuleapClientRawCmd.Command<Optional<TuleapProject>> projectByIdRawCmd = new TuleapClientRawCmd().new
+            ProjectById(projectId);
 
-        final TuleapClientRawCmd.Command<TuleapProject> configuredCmd = TuleapClientCommandConfigurer
-            .<TuleapProject> newInstance(getApiUri())
+        final TuleapClientRawCmd.Command<Optional<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
+            .<Optional<TuleapProject>> newInstance(getApiUri())
 			.withCredentials(credentials).withCommand(projectByIdRawCmd)
             .configure();
-        final TuleapProject project = configuredCmd.call();
-        actions.add(new TuleapProjectMetadataAction(project));
-        actions.add(new TuleapLink("icon-orangeforge-logo",
-                                   TuleapConfiguration.ORANGEFORGE_URL + "/projects/" + project.getShortname()));
+        final Optional<TuleapProject> project = configuredCmd.call();
+        if (project.isPresent()) {
+            actions.add(new TuleapProjectMetadataAction(project.get()));
+            actions.add(new TuleapLink("icon-orangeforge-logo",TuleapConfiguration.ORANGEFORGE_URL + "/projects/" +
+                project.get().getShortname()));
+        }
         return actions;
     }
 
@@ -347,7 +350,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
             @QueryParameter String apiUri, @QueryParameter String credentialsId) {
 
-            return checkCredentials(context, apiUri /* ,credentialsId */);
+            return checkCredentials(context, apiUri ,credentialsId);
         }
 
         /**
@@ -392,7 +395,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new AllUserProjects();
+                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new
+                    AllUserProjects(true);
                 final TuleapClientRawCmd.Command<List<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
                     .<List<TuleapProject>> newInstance(apiUri)
 					.withCredentials(credentials).withCommand(allUserProjectsRawCmd)

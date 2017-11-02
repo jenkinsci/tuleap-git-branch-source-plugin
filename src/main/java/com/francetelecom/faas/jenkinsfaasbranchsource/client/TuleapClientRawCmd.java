@@ -2,6 +2,7 @@ package com.francetelecom.faas.jenkinsfaasbranchsource.client;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitBranch;
@@ -23,9 +24,15 @@ public class TuleapClientRawCmd {
 
     public class AllUserProjects extends TuleapClientRawCmd implements Command<List<TuleapProject>> {
 
+        private final boolean fetchProjectsUserIsMemberOf;
+
+        public AllUserProjects(boolean fetchProjectsUserIsMemberOf) {
+            this.fetchProjectsUserIsMemberOf = fetchProjectsUserIsMemberOf;
+        }
+
         @Override
         public List<TuleapProject> call() throws IOException {
-            return client.allUserProjects();
+            return client.allUserProjects(fetchProjectsUserIsMemberOf);
         }
     }
 
@@ -43,7 +50,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class ProjectById extends TuleapClientRawCmd implements Command<TuleapProject> {
+    public class ProjectById extends TuleapClientRawCmd implements Command<Optional<TuleapProject>> {
 
         private final String projectId;
 
@@ -52,7 +59,7 @@ public class TuleapClientRawCmd {
         }
 
         @Override
-        public TuleapProject call() throws IOException {
+        public Optional<TuleapProject> call() throws IOException {
             return client.projectById(projectId);
         }
     }
@@ -71,11 +78,18 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class IsTuleapServerUrl extends TuleapClientRawCmd implements Command<Boolean> {
+    public class IsTuleapServerUrlValid extends TuleapClientRawCmd implements Command<Boolean> {
 
         @Override
         public Boolean call() throws IOException {
-            // TODO isUrlValid no need cred
+            return client.isServerUrlValid();
+        }
+    }
+
+    public class IsCredentialsValid extends TuleapClientRawCmd implements Command<Boolean> {
+
+        @Override
+        public Boolean call() throws IOException {
             return client.isCredentialValid();
         }
     }

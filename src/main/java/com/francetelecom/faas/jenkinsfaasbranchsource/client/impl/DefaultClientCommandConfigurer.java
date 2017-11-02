@@ -1,4 +1,7 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.faas;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.impl;
+
+import java.util.Optional;
+
 
 import org.apache.commons.lang.StringUtils;
 
@@ -10,53 +13,53 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.config.TuleapConfiguration
 import hudson.Extension;
 
 @Extension
-public class OFClientCommandConfigurer<T> extends TuleapClientCommandConfigurer {
+public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandConfigurer {
 
     private String apiUrl;
     private String gitUrl;
     private TuleapClientRawCmd.Command command;
     private StandardCredentials credentials;
 
-    public OFClientCommandConfigurer() {
+    public DefaultClientCommandConfigurer() {
     }
 
-    private OFClientCommandConfigurer(String apiUrl) {
+    private DefaultClientCommandConfigurer(String apiUrl) {
         this.apiUrl = apiUrl;
     }
 
     @Override
-    protected boolean isMatch(String apiUrl) {
+    public final boolean isMatch(String apiUrl) {
         // FIXME now just returns true :(
         return apiUrl.equals(TuleapConfiguration.get().getApiBaseUrl());
     }
 
     @Override
-    protected OFClientCommandConfigurer<T> create(String apiUrl) {
-        return new OFClientCommandConfigurer<>(apiUrl);
+    public final DefaultClientCommandConfigurer<T> create(String apiUrl) {
+        return new DefaultClientCommandConfigurer<>(apiUrl);
     }
 
     @Override
-    public OFClientCommandConfigurer<T> withCommand(TuleapClientRawCmd.Command command) {
+    public final DefaultClientCommandConfigurer<T> withCommand(TuleapClientRawCmd.Command command) {
         this.command = command;
         return this;
     }
 
     @Override
-    public OFClientCommandConfigurer<T> withCredentials(StandardCredentials credentials) {
+    public final DefaultClientCommandConfigurer<T> withCredentials(StandardCredentials credentials) {
         this.credentials = credentials;
         return this;
     }
 
     @Override
-    public OFClientCommandConfigurer<T> withGitUrl(String gitUrl) {
+    public final DefaultClientCommandConfigurer<T> withGitUrl(String gitUrl) {
         this.gitUrl = gitUrl;
         return this;
     }
 
     @Override
-    public TuleapClientRawCmd.Command<T> configure() {
-        OFClient client = new OFClient(credentials != null ? credentials : null, StringUtils.defaultString(apiUrl),
-            StringUtils.defaultString(gitUrl));
+    public final TuleapClientRawCmd.Command<T> configure() {
+        DefaultClient client = new DefaultClient(Optional.ofNullable(credentials), StringUtils
+            .defaultString(apiUrl), StringUtils.defaultString(gitUrl));
         ((TuleapClientRawCmd) command).setClient(client);
         return command;
     }
