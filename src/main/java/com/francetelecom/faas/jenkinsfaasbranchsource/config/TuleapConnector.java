@@ -40,13 +40,17 @@ import jenkins.model.Jenkins;
 public class TuleapConnector {
 
     public static ListBoxModel listScanCredentials(@CheckForNull @AncestorInPath Item context,
-        @QueryParameter String apiUri, @QueryParameter String credentialsId) {
+        @QueryParameter String apiUri, @QueryParameter String credentialsId, boolean includeEmpty) {
         if (context == null ?
                 !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER) :
                 !context.hasPermission(Item.EXTENDED_READ)) {
             return new StandardListBoxModel().includeCurrentValue(credentialsId);
         }
-        return new StandardListBoxModel().includeEmptyValue().includeMatchingAs(
+        final StandardListBoxModel model = new StandardListBoxModel();
+        if (includeEmpty) {
+            model.includeEmptyValue();
+        }
+        return model.includeMatchingAs(
             context instanceof Queue.Task ? Tasks.getDefaultAuthenticationOf((Queue.Task) context) : ACL.SYSTEM,
             context, StandardUsernameCredentials.class, OFDomainRequirements(apiUri), allUsernamePasswordMatch());
     }

@@ -376,7 +376,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @Restricted(NoExternalUse.class) // stapler
         public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
             @QueryParameter String apiUri, @QueryParameter String credentialsId) {
-            return listScanCredentials(context, apiUri, credentialsId);
+            return listScanCredentials(context, apiUri, credentialsId, true);
         }
 
         @SuppressWarnings("unused") // jelly

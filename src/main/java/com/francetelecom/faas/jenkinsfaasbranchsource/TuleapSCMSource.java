@@ -304,7 +304,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
         public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
             @QueryParameter String apiUri, @QueryParameter String credentialsId) {
-            return listScanCredentials(context, apiUri, credentialsId);
+            return listScanCredentials(context, apiUri, credentialsId, false);
         }
 
         @Restricted(NoExternalUse.class) // stapler
