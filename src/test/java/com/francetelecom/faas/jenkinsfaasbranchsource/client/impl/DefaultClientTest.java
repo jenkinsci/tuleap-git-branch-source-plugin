@@ -59,7 +59,7 @@ public class DefaultClientTest {
 
     @Test
     public void given__setup__when__get__project_gitBranch__then__return__git__branches() throws IOException {
-        List<TuleapGitBranch> response = client.branchByGitRepo("faas/pkg/faas/faas-meta-packages.git");
+        List<TuleapGitBranch> response = client.branchByGitRepo("faas/pkg/faas/faas-meta-packages.git", "faas");
         assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/develop"))));
         assertThat(response, hasItems(hasProperty("name", equalToIgnoringCase("refs/heads/master"))));
     }

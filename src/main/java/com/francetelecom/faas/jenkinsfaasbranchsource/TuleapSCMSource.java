@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 
 import org.apache.commons.lang.StringUtils;
@@ -67,15 +68,22 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(TuleapSCMSource.class);
 
     /**
-     * OrangeForge project to build URL from.
+     * Project Id of the source to be manipulated
      */
     private String projectId;
+
+    /**
+     * Tuleap repository to be manipulated (build URL from, build repoId, ...).
+     */
+    private TuleapGitRepository repository;
+
+    private TuleapProject project;
 
     private String apiBaseUri;
     private String gitBaseUri;
 
     /**
-     * Git Repository path to build URL from.
+     * Git Repository of the source to be manipulated
      */
     private String repositoryPath;
 
@@ -92,9 +100,11 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     private StandardCredentials credentials;
 
     @DataBoundConstructor
-    public TuleapSCMSource(final String projectId, final String repositoryPath) {
-        this.projectId = projectId;
-        this.repositoryPath = repositoryPath;
+    public TuleapSCMSource(TuleapProject project, TuleapGitRepository repository) {
+        this.repository = repository;
+        this.project = project;
+        this.projectId = String.valueOf(project.getId());
+        this.repositoryPath = repository.getPath();
         traits.add(new BranchDiscoveryTrait());
     }
 
@@ -107,8 +117,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         if (owner instanceof Actionable) {
             TuleapLink repoLink = ((Actionable) owner).getAction(TuleapLink.class);
             if (repoLink != null) {
-                //TODO replace with OFPRoject and ProjectId
-                String canonicalRepoName = repositoryPath.replace("faas/", "");
+                String canonicalRepoName = repositoryPath.replace(project.getShortname()+"/", "");
                 String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
                 result.add(new TuleapLink("icon-git-branch", url));
             }
@@ -138,7 +147,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             if (request.isFetchBranches()) {
                 LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
                 final TuleapClientRawCmd.Command<List<TuleapGitBranch>> allBranchesByGitRepo = new TuleapClientRawCmd().new AllBranchesByGitRepo(
-                    repositoryPath);
+                    repositoryPath, project.getShortname());
                 TuleapClientRawCmd.Command<List<TuleapGitBranch>> configuredCmd = TuleapClientCommandConfigurer
                         .<List<TuleapGitBranch>> newInstance(getApiBaseUri())
                         .withCredentials(credentials).withGitUrl(getGitBaseUri()).withCommand(allBranchesByGitRepo)
@@ -306,18 +315,19 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new
-                    AllUserProjects(true);
-                final TuleapClientRawCmd.Command<List<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
-                    .<List<TuleapProject>> newInstance(apiUri)
-					.withCredentials(credentials).withCommand(allUserProjectsRawCmd)
+                final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd().new
+                    ProjectById(projectId);
+                final TuleapClientRawCmd.Command<Optional<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
+                    .<Optional<TuleapProject>> newInstance(apiUri)
+					.withCredentials(credentials).withCommand(projectByIdRawCmd)
                     .configure();
 
-                configuredCmd.call().forEach(project -> {
-                    ListBoxModel.Option newItem = new ListBoxModel.Option(project.getShortname(),
-                        String.valueOf(project.getId()), project.getId() == Integer.valueOf(projectId));
+                Optional<TuleapProject> p = configuredCmd.call();
+                if (p.isPresent()) {
+                    ListBoxModel.Option newItem = new ListBoxModel.Option(p.get().getShortname(),
+                        String.valueOf(p.get().getId()));
                     result.add(newItem);
-                });
+                }
             }
             return result;
         }
@@ -331,15 +341,16 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
             final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new TuleapClientRawCmd().new AllRepositoriesByProject(
                 projectId);
-            TuleapClientCommandConfigurer.<List<TuleapGitRepository>> newInstance(apiBaseUrl)
+            Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
+                .<List<TuleapGitRepository>>newInstance(apiBaseUrl)
                 .withCredentials(credentials).withCommand(allRepositoriesByProjectRawCmd)
                 .configure()
                 .call()
-                .stream().distinct().forEach(repo -> {
-                    final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.getName(), repo.getPath(),
-                        repo.getPath().equals(repositoryPath));
-                    result.add(newItem);
-                });
+                .stream().distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
+            if (repo.isPresent()) {
+                final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.get().getName(), repo.get().getPath());
+                result.add(newItem);
+            }
             return result;
         }
     }

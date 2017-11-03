@@ -79,6 +79,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
     private String credentialsId;
     private String apiUri, gitBaseUri;
     private Map<String, TuleapGitRepository> repositories = new HashMap<>();
+    private TuleapProject project;
 
     @DataBoundConstructor
     public TuleapSCMNavigator() {
@@ -105,9 +106,20 @@ public class TuleapSCMNavigator extends SCMNavigator {
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener);
+            final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd().new ProjectById(projectId);
+            Optional<TuleapProject> project = TuleapClientCommandConfigurer
+                .<Optional<TuleapProject>>newInstance(getApiUri())
+                .withCredentials(credentials).withCommand(projectByIdRawCmd)
+                .configure().call();
+            if (project.isPresent()) {
+                this.project = project.get();
+            } else {
+                //Should never happen though
+                listener.getLogger().format("No project match projectId "+ projectId +"... it's weird%n");
+                return;
+            }
             final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new
-					TuleapClientRawCmd().new AllRepositoriesByProject(
-                projectId);
+					TuleapClientRawCmd().new AllRepositoriesByProject(projectId);
             final TuleapClientRawCmd.Command<List<TuleapGitRepository>> configuredCmd = TuleapClientCommandConfigurer
                 .<List<TuleapGitRepository>> newInstance(getApiUri())
 				.withCredentials(credentials).withCommand(allRepositoriesByProjectRawCmd)
@@ -115,7 +127,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
             for (TuleapGitRepository repo : configuredCmd.call()) {
                 repositories.put(repo.getName(), repo);
-                SourceFactory sourceFactory = new SourceFactory(request, repo);
+                SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
                 if (request.process(repo.getName(), sourceFactory, null, witness)) {
                     listener.getLogger().format("%d repositories were processed (query completed)%n",
                         witness.getCount());
@@ -501,16 +513,18 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
         private final TuleapSCMNavigatorRequest request;
         private final TuleapGitRepository repo;
+        private final TuleapProject project;
 
-        public SourceFactory(TuleapSCMNavigatorRequest request, TuleapGitRepository repo) {
+        public SourceFactory(TuleapSCMNavigatorRequest request, TuleapProject project, TuleapGitRepository repo) {
             this.request = request;
             this.repo = repo;
+            this.project = project;
         }
 
         @NonNull
         @Override
         public SCMSource create(@NonNull String repositoryName) throws IOException, InterruptedException {
-            return new TuleapSCMSourceBuilder(getId() + repositoryName, credentialsId, projectId, repo.getPath())
+            return new TuleapSCMSourceBuilder(getId() + repositoryName, credentialsId, project, repo)
                 .withRequest(request).build();
         }
     }

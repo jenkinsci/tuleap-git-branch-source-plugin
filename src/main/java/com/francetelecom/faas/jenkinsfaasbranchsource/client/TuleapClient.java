@@ -102,11 +102,12 @@ public interface TuleapClient {
      * Get all head refs of a git repository define by its path
      *
      * @param gitRepoPath the  git repo path to inspect
+     * @param projectName the  project name corresponding to the git repo path to inspect
      * @return all head refs
      * @throws IOException in case git connexion pbm
      * @throws NoSingleRepoByPathException in case multiple git repo are represented by a path, this is blocking
      */
-    List<TuleapGitBranch> branchByGitRepo(String gitRepoPath)
+    List<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
         throws IOException, NoSingleRepoByPathException;
 
     /**

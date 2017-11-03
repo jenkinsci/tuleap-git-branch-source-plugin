@@ -210,7 +210,7 @@ class DefaultClient implements TuleapClient {
     /**
      * {@inheritDoc}
      */
-    public final List<TuleapGitBranch> branchByGitRepo(String gitRepoPath)
+    public final List<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
         throws IOException, NoSingleRepoByPathException {
         // If not present it's weird as it is clearly not anonymous call so showstopper
         if (!credentials.isPresent()) {
@@ -220,8 +220,8 @@ class DefaultClient implements TuleapClient {
             LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
             final String username = ((StandardUsernamePasswordCredentials)credentials.get()).getUsername();
             final String password = ((StandardUsernamePasswordCredentials)credentials.get()).getPassword().getPlainText();
-            if (!StringUtils.startsWith(gitRepoPath, "faas/")) {
-                gitRepoPath = "faas/" + gitRepoPath;
+            if (!StringUtils.startsWith(gitRepoPath, projectName+"/")) {
+                gitRepoPath = projectName+"/" + gitRepoPath;
             }
             if (!StringUtils.endsWith(gitRepoPath, ".git")) {
                 gitRepoPath = gitRepoPath + ".git";

@@ -66,15 +66,16 @@ public class TuleapClientRawCmd {
 
     public class AllBranchesByGitRepo extends TuleapClientRawCmd implements Command<List<TuleapGitBranch>> {
 
-        private final String gitRepoPath;
+        private final String gitRepoPath, projectName;
 
-        public AllBranchesByGitRepo(String gitRepoPath) {
+        public AllBranchesByGitRepo(String gitRepoPath, String projectName) {
             this.gitRepoPath = gitRepoPath;
+            this.projectName = projectName;
         }
 
         @Override
         public List<TuleapGitBranch> call() throws IOException {
-            return client.branchByGitRepo(gitRepoPath);
+            return client.branchByGitRepo(gitRepoPath, projectName);
         }
     }
 
