@@ -29,7 +29,6 @@ import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapGitReposi
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProject;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapProjectRepositories;
 import com.francetelecom.faas.jenkinsfaasbranchsource.client.api.TuleapUser;
-import com.francetelecom.faas.jenkinsfaasbranchsource.config.BasicAuthInterceptor;
 
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
@@ -48,7 +47,7 @@ class DefaultClient implements TuleapClient {
     private final OkHttpClient client;
     private Optional<StandardCredentials> credentials;
 
-    public DefaultClient(Optional<StandardCredentials> credentials, final String apiBaseUrl, final String gitBaseUrl) {
+    DefaultClient(Optional<StandardCredentials> credentials, final String apiBaseUrl, final String gitBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
         this.gitBaseUrl = gitBaseUrl;
         this.credentials = credentials;

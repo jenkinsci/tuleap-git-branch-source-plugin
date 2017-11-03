@@ -1,4 +1,4 @@
-package com.francetelecom.faas.jenkinsfaasbranchsource.config;
+package com.francetelecom.faas.jenkinsfaasbranchsource.client.impl;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,11 +13,11 @@ import okhttp3.Response;
 /**
  * An alternative OKHttp mechanism to add authentication. Other alternative is via .authenticator() method
  */
-public class BasicAuthInterceptor implements Interceptor {
+class BasicAuthInterceptor implements Interceptor {
 
     private String credentials;
 
-    public BasicAuthInterceptor(final String login, final String password) {
+    BasicAuthInterceptor(final String login, final String password) {
         this.credentials = Credentials.basic(login, password, StandardCharsets.UTF_8);
     }
 
