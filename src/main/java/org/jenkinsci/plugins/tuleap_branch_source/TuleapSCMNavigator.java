@@ -82,7 +82,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
     private TuleapProject project;
 
     @DataBoundConstructor
-    public TuleapSCMNavigator() {
+    public TuleapSCMNavigator(String projectId) {
+        this.projectId = projectId;
     }
 
     @NonNull
@@ -309,7 +310,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
          */
         @Override
         public SCMNavigator newInstance(@CheckForNull String projectId) {
-            TuleapSCMNavigator navigator = new TuleapSCMNavigator();
+            TuleapSCMNavigator navigator = new TuleapSCMNavigator(projectId);
             List<SCMTrait<? extends SCMTrait<?>>> someTraits = getTraitsDefaults();
             someTraits.add(new UserForkRepositoryTrait(1));
             someTraits.add(new WildcardSCMSourceFilterTrait("", "*"));
