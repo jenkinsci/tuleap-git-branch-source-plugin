@@ -73,7 +73,8 @@ public class TuleapConnector {
                     Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
                 CredentialsMatchers.allOf(withId(credentialsId), allUsernamePasswordMatch()));
 
-            final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd().new IsTuleapServerUrlValid();
+            final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd
+                .IsTuleapServerUrlValid();
             TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer
                 .<Boolean> newInstance(StringUtils.isEmpty(apiUri) ? TuleapConfiguration.get().getApiBaseUrl() : apiUri)
                 .withCredentials(cred).withCommand(isCredentialValidRawCmd).configure();

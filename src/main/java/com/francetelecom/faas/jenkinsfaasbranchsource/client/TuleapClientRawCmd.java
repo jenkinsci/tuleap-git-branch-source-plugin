@@ -22,7 +22,7 @@ public class TuleapClientRawCmd {
         T call() throws IOException;
     }
 
-    public class AllUserProjects extends TuleapClientRawCmd implements Command<List<TuleapProject>> {
+    public static class AllUserProjects extends TuleapClientRawCmd implements Command<List<TuleapProject>> {
 
         private final boolean fetchProjectsUserIsMemberOf;
 
@@ -36,7 +36,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class AllRepositoriesByProject extends TuleapClientRawCmd implements Command<List<TuleapGitRepository>> {
+    public static class AllRepositoriesByProject extends TuleapClientRawCmd implements Command<List<TuleapGitRepository>> {
 
         private final String projectId;
 
@@ -50,7 +50,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class ProjectById extends TuleapClientRawCmd implements Command<Optional<TuleapProject>> {
+    public static class ProjectById extends TuleapClientRawCmd implements Command<Optional<TuleapProject>> {
 
         private final String projectId;
 
@@ -64,7 +64,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class AllBranchesByGitRepo extends TuleapClientRawCmd implements Command<List<TuleapGitBranch>> {
+    public static class AllBranchesByGitRepo extends TuleapClientRawCmd implements Command<List<TuleapGitBranch>> {
 
         private final String gitRepoPath, projectName;
 
@@ -79,7 +79,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class IsTuleapServerUrlValid extends TuleapClientRawCmd implements Command<Boolean> {
+    public static class IsTuleapServerUrlValid extends TuleapClientRawCmd implements Command<Boolean> {
 
         @Override
         public Boolean call() throws IOException {
@@ -87,7 +87,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public class IsCredentialsValid extends TuleapClientRawCmd implements Command<Boolean> {
+    public static class IsCredentialsValid extends TuleapClientRawCmd implements Command<Boolean> {
 
         @Override
         public Boolean call() throws IOException {

@@ -146,8 +146,8 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             setRemoteUrl(getGitBaseUri() + repositoryPath);
             if (request.isFetchBranches()) {
                 LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
-                final TuleapClientRawCmd.Command<List<TuleapGitBranch>> allBranchesByGitRepo = new TuleapClientRawCmd().new AllBranchesByGitRepo(
-                    repositoryPath, project.getShortname());
+                final TuleapClientRawCmd.Command<List<TuleapGitBranch>> allBranchesByGitRepo = new TuleapClientRawCmd
+                    .AllBranchesByGitRepo(repositoryPath, project.getShortname());
                 TuleapClientRawCmd.Command<List<TuleapGitBranch>> configuredCmd = TuleapClientCommandConfigurer
                         .<List<TuleapGitBranch>> newInstance(getApiBaseUri())
                         .withCredentials(credentials).withGitUrl(getGitBaseUri()).withCommand(allBranchesByGitRepo)
@@ -315,8 +315,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd().new
-                    ProjectById(projectId);
+                final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd.ProjectById(projectId);
                 final TuleapClientRawCmd.Command<Optional<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
                     .<Optional<TuleapProject>> newInstance(apiUri)
 					.withCredentials(credentials).withCommand(projectByIdRawCmd)
@@ -339,8 +338,8 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             ListBoxModel result = new ListBoxModel();
             final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
             StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
-            final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new TuleapClientRawCmd().new AllRepositoriesByProject(
-                projectId);
+            final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new
+                TuleapClientRawCmd.AllRepositoriesByProject(projectId);
             Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
                 .<List<TuleapGitRepository>>newInstance(apiBaseUrl)
                 .withCredentials(credentials).withCommand(allRepositoriesByProjectRawCmd)

@@ -106,7 +106,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener);
-            final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd().new ProjectById(projectId);
+            final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd.ProjectById(projectId);
             Optional<TuleapProject> project = TuleapClientCommandConfigurer
                 .<Optional<TuleapProject>>newInstance(getApiUri())
                 .withCredentials(credentials).withCommand(projectByIdRawCmd)
@@ -119,7 +119,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 return;
             }
             final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new
-					TuleapClientRawCmd().new AllRepositoriesByProject(projectId);
+					TuleapClientRawCmd.AllRepositoriesByProject(projectId);
             final TuleapClientRawCmd.Command<List<TuleapGitRepository>> configuredCmd = TuleapClientCommandConfigurer
                 .<List<TuleapGitRepository>> newInstance(getApiUri())
 				.withCredentials(credentials).withCommand(allRepositoriesByProjectRawCmd)
@@ -145,8 +145,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
         List<Action> actions = new ArrayList<>();
 
         final StandardCredentials credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
-        final TuleapClientRawCmd.Command<Optional<TuleapProject>> projectByIdRawCmd = new TuleapClientRawCmd().new
-            ProjectById(projectId);
+        final TuleapClientRawCmd.Command<Optional<TuleapProject>> projectByIdRawCmd = new TuleapClientRawCmd
+            .ProjectById(projectId);
 
         final TuleapClientRawCmd.Command<Optional<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
             .<Optional<TuleapProject>> newInstance(getApiUri())
@@ -407,8 +407,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd = new TuleapClientRawCmd().new
-                    AllUserProjects(true);
+                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd =  new TuleapClientRawCmd.AllUserProjects
+                    (true);
                 final TuleapClientRawCmd.Command<List<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
                     .<List<TuleapProject>> newInstance(apiUri)
 					.withCredentials(credentials).withCommand(allUserProjectsRawCmd)

@@ -81,7 +81,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
     public FormValidation doVerifyUrls(@QueryParameter String apiBaseUrl, @QueryParameter String gitBaseUrl,
         @QueryParameter String credentialsId) throws IOException {
 
-        final TuleapClientRawCmd.Command<Boolean> isUrlValidRawCmd = new TuleapClientRawCmd().new IsTuleapServerUrlValid();
+        final TuleapClientRawCmd.Command<Boolean> isUrlValidRawCmd = new TuleapClientRawCmd.IsTuleapServerUrlValid();
         TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean> newInstance(apiBaseUrl)
             .withCommand(isUrlValidRawCmd)
             .configure();
