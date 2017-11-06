@@ -26,15 +26,28 @@ public class OrangeForgeSettings {
     private String apiBaseUrl, gitBaseUrl;
     private String FaaSProjectId;
 
-    public OrangeForgeSettings() throws IOException {
+    /*public OrangeForgeSettings() throws IOException {
         this(fromHomeDir());
     }
 
     public OrangeForgeSettings(String propPath) throws IOException {
         this(fromPath(propPath));
-    }
+    }*/
 
-    public OrangeForgeSettings(Properties props) {
+    public OrangeForgeSettings()throws IOException  {
+        Properties props = new Properties();
+        FileInputStream thePropIn = null;
+        try {
+            ClassLoader classLoader = getClass().getClassLoader();
+            File propFile = new File(classLoader.getResource("orangeForge.properties").getFile());
+            //File propFile = new File(homeDir, "orangeForge.properties");
+            String propPath =  propFile.getPath();
+            LOGGER.info("Fetch config in orangeForge.properties from path : {}", propPath);
+            thePropIn = new FileInputStream(propPath);
+            props.load(thePropIn);
+        } finally {
+            IOUtils.closeQuietly(thePropIn);
+        }
         this.username = props.getProperty("orangeforge.username");
         this.password = props.getProperty("orangeforge.password");
         this.apiBaseUrl = props.getProperty("orangeforge.api-base-url");
@@ -43,9 +56,9 @@ public class OrangeForgeSettings {
     }
 
     public Optional<StandardCredentials> credentials(){
-		return Optional.of(new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "orangeForge", "FaaS-viewer",
+        return Optional.of(new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "orangeForge", "FaaS-viewer",
                                                                getUsername(), getPassword()));
-	}
+    }
 
     public String getUsername() {
         return username;
@@ -87,10 +100,11 @@ public class OrangeForgeSettings {
         this.gitBaseUrl = gitBaseUrl;
     }
 
-    private static String fromHomeDir() {
+    private String fromHomeDir() {
         LOGGER.info("Fetch config in .jenkinsfaasbranchsource/orangeForge.properties from user.home property system");
-        File homeDir = new File(System.getProperty("user.home"));
-        File propFile = new File(homeDir, ".jenkinsfaasbranchsource/orangeForge.properties");
+        ClassLoader classLoader = getClass().getClassLoader();
+        File propFile = new File(classLoader.getResource("orangeForge.properties").getFile());
+        //File propFile = new File(homeDir, "orangeForge.properties");
         return propFile.getPath();
     }
 
