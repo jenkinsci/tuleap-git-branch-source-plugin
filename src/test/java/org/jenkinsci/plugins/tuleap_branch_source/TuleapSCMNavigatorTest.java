@@ -6,12 +6,7 @@ import java.util.Collections;
 import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.tuleap_branch_source.trait.BranchDiscoveryTrait;
 import org.jenkinsci.plugins.tuleap_branch_source.trait.UserForkRepositoryTrait;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
-import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -21,32 +16,11 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
-import jenkins.model.Jenkins;
 import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 
-public class TuleapSCMNavigatorTest {
-
-    @ClassRule
-    public static JenkinsRule r = new JenkinsRule();
-    @Rule
-    public TestName currentTestName = new TestName();
-    private TuleapSCMNavigator instance;
-
-    public TuleapSCMNavigator load() {
-        return load(currentTestName.getMethodName());
-    }
-
-    private TuleapSCMNavigator load(String dataSet) {
-        return (TuleapSCMNavigator) Jenkins.XSTREAM2.fromXML(
-            getClass().getResource(getClass().getSimpleName()+ "/" + dataSet + ".xml"));
-    }
-
-    @Before
-    public void setup(){
-        this.instance = load();
-    }
+public class TuleapSCMNavigatorTest extends TuleapBranchSourceTest<TuleapSCMNavigator>{
 
     @Test
     public void new_project_by_default(){

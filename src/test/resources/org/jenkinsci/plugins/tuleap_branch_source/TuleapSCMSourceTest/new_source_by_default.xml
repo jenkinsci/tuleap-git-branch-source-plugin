@@ -1,0 +1,33 @@
+<source class="org.jenkinsci.plugins.tuleap_branch_source.TuleapSCMSource" plugin="tuleap-branch-source@1.0.0-SNAPSHOT">
+	<id>https://www.forge.orange-labs.fr/projects::3280sample-simpleproject</id>
+	<projectId>3280</projectId>
+	<repository>
+		<id>449</id>
+		<uri>git/449</uri>
+		<name>sample-simpleproject</name>
+		<path>faas/sample-simpleproject.git</path>
+		<description>-- Default description --</description>
+	</repository>
+	<project>
+		<id>3280</id>
+		<uri>projects/3280</uri>
+		<label>Forge as a Service</label>
+		<shortname>faas</shortname>
+	</project>
+	<apiBaseUri>https://www.forge.orange-labs.fr/api</apiBaseUri>
+	<gitBaseUri>https://www.forge.orange-labs.fr/plugins/git/</gitBaseUri>
+	<repositoryPath>faas/sample-simpleproject.git</repositoryPath>
+	<remoteUrl>https://www.forge.orange-labs.fr/plugins/git/faas/sample-simpleproject.git</remoteUrl>
+	<traits>
+		<org.jenkinsci.plugins.tuleap__branch__source.trait.BranchDiscoveryTrait/>
+	</traits>
+	<credentialsId>fe09fd0e-7287-44a1-b0b5-746accd227c1</credentialsId>
+	<credentials class="com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
+				 plugin="credentials@2.1.16">
+		<scope>GLOBAL</scope>
+		<id>fe09fd0e-7287-44a1-b0b5-746accd227c1</id>
+		<description></description>
+		<username>someone</username>
+		<password>{AQAAsomewherehWT5Tw7z5CkCEXKlWIhf4MA==h}</password>
+	</credentials>
+</source>
