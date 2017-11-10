@@ -1,0 +1,14 @@
+Source: jenkins-tuleap-branch-source-plugin
+Section: devel
+Priority: extra
+Maintainer: Haja Rambelontsalama <haja.rambelontsalama@orange.com>
+Build-Depends: debhelper (>= 8.0.0), openjdk-8-jdk-headless, maven3
+Standards-Version: 3.9.3
+Homepage: https://faas.forge.orange-labs.fr
+Vcs-Git: gitolite@www.forge.orange-labs.fr:faas/pkg/jenkins/jenkins-tuleap-branch-source-plugin.git
+
+Package: jenkins-tuleap-branch-source-plugin
+Architecture: all
+Depends: ${misc:Depends}, jenkins-common (>= 2.60.3), jenkins-base-plugins (>= 3.1.31)
+Description: Plugin integrating OrangeForge Tuleap jenkins plugin to the Jenkins's Forge as a Service
+  infrastructure
