@@ -104,6 +104,12 @@ public class TuleapSCMNavigator extends SCMNavigator {
         StandardCredentials credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
             getApiUri(), credentialsId);
 
+        //TODO wrap from here DefaultClientCommandConfigurer.java:61
+        if (credentials == null) {
+            listener.getLogger().format("Must provide a Username Password credentials to continue Id%n");
+            return;
+        }
+
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener);
