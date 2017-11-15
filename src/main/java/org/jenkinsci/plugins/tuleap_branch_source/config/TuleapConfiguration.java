@@ -14,10 +14,11 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient.DEFAULT_GIT_HTTPS_PATH;
 import static org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient.DEFAULT_TULEAP_API_PATH;
+import static org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient.DEFAULT_TULEAP_DOMAIN_URL;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -47,7 +48,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
 
 
     public String getDomainUrl() {
-        return domainUrl;
+        return defaultIfEmpty(domainUrl, DEFAULT_TULEAP_DOMAIN_URL);
     }
 
     @DataBoundSetter
@@ -56,11 +57,11 @@ public class TuleapConfiguration extends GlobalConfiguration {
     }
 
     public String getApiBaseUrl() {
-        return domainUrl + DEFAULT_TULEAP_API_PATH;
+        return getDomainUrl() + DEFAULT_TULEAP_API_PATH;
     }
 
     public String getGitBaseUrl() {
-        return domainUrl + DEFAULT_GIT_HTTPS_PATH;
+        return getDomainUrl() + DEFAULT_GIT_HTTPS_PATH;
     }
 
     /**
@@ -75,7 +76,11 @@ public class TuleapConfiguration extends GlobalConfiguration {
     @SuppressWarnings("unused")
     public FormValidation doVerifyUrls(@QueryParameter String domainUrl) throws
         IOException {
-        setDomainUrl(defaultString(domainUrl));
+        final FormValidation validation = doCheckDomainUrl(domainUrl);
+        if (!FormValidation.Kind.OK.equals(validation.kind)){
+            return validation;
+        }
+        setDomainUrl(domainUrl);
         final TuleapClientRawCmd.Command<Boolean> isUrlValidRawCmd = new TuleapClientRawCmd.IsTuleapServerUrlValid();
         TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean> newInstance(getApiBaseUrl())
             .withCommand(isUrlValidRawCmd)
@@ -87,13 +92,12 @@ public class TuleapConfiguration extends GlobalConfiguration {
                 return FormValidation.error("Failed to validate the account");
             }
         } catch (IOException e) {
-            return FormValidation.error(e, "Failed to validate the account");
+            return FormValidation.error(e, "Failed to validate url");
         }
     }
 
     @SuppressWarnings("unused")
     public FormValidation doCheckDomainUrl(@QueryParameter String domainUrl) {
-        setDomainUrl(defaultString(domainUrl));
         return validateUrls(domainUrl);
     }
 
@@ -101,7 +105,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
         try {
             new URL(url);
         } catch (MalformedURLException e) {
-            return FormValidation.error("Malformed OrangeForge url (%s)", e.getMessage());
+            return FormValidation.error("Malformed url (%s)", e.getMessage());
         }
 
         if (isEmpty(url)) {

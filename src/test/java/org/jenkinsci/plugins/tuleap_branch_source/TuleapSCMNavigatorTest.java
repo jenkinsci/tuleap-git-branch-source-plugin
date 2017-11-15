@@ -24,7 +24,7 @@ public class TuleapSCMNavigatorTest extends TuleapBranchSourceTest<TuleapSCMNavi
 
     @Test
     public void new_project_by_default(){
-        assertThat(instance.id(), is("https://www.forge.orange-labs.fr/projects::3280"));
+        assertThat(instance.id(), is("https://www.forge.orange-labs.fr::3280"));
         assertThat(instance.getprojectId(), is("3280"));
         assertThat(instance.getCredentialsId(), is("fe09fd0e-7287-44a1-b0b5-746accd227c1"));
         assertThat(instance.getApiUri(), is("https://www.forge.orange-labs.fr/api"));

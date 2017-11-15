@@ -89,7 +89,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @NonNull
     @Override
     protected String id() {
-        return TuleapConfiguration.get().getDomainUrl() + "/" + projectId;
+        return TuleapConfiguration.get().getDomainUrl() + "::" + projectId;
     }
 
     @Override
