@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 
+import org.jenkinsci.plugins.tuleap_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -13,7 +14,10 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.jenkinsci.plugins.tuleap_branch_source.Messages;
+import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient.DEFAULT_GIT_HTTPS_PATH;
+import static org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient.DEFAULT_TULEAP_API_PATH;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -24,17 +28,8 @@ import net.sf.json.JSONObject;
 @Extension
 public class TuleapConfiguration extends GlobalConfiguration {
 
-    public static final String ORANGEFORGE_URL = "https://www.forge.orange-labs.fr";
-    public static final String ORANGEFORGE_API_URL = ORANGEFORGE_URL + "/api";
-    public static final String ORANGEFORGE_GIT_HTTPS_URL = ORANGEFORGE_URL + "/plugins/git/";
     private static final Logger LOGGER = LoggerFactory.getLogger(TuleapConfiguration.class);
-    private String apiBaseUrl = ORANGEFORGE_API_URL;
-    /**
-     * Git URL as configured in /etc/tuleap/plugins/git/etc/config.inc
-     * https://tuleap.net/pipermail/tuleap-devel/2015-December/004425.html
-     * http://tuleap-documentation.readthedocs.io/en/latest/installation-guide/advanced-configuration.html#tuleap-configuration
-     */
-    private String gitBaseUrl = ORANGEFORGE_GIT_HTTPS_URL;
+    private String domainUrl;
 
     public TuleapConfiguration() throws IOException {
         load();
@@ -50,22 +45,22 @@ public class TuleapConfiguration extends GlobalConfiguration {
         return true;
     }
 
-    public String getApiBaseUrl() {
-        return apiBaseUrl;
+
+    public String getDomainUrl() {
+        return domainUrl;
     }
 
     @DataBoundSetter
-    public void setApiBaseUrl(String apiBaseUrl) {
-        this.apiBaseUrl = apiBaseUrl;
+    public void setDomainUrl(String domainUrl) {
+        this.domainUrl = domainUrl;
+    }
+
+    public String getApiBaseUrl() {
+        return domainUrl + DEFAULT_TULEAP_API_PATH;
     }
 
     public String getGitBaseUrl() {
-        return gitBaseUrl;
-    }
-
-    @DataBoundSetter
-    public void setGitBaseUrl(String gitBaseUrl) {
-        this.gitBaseUrl = gitBaseUrl;
+        return domainUrl + DEFAULT_GIT_HTTPS_PATH;
     }
 
     /**
@@ -78,11 +73,11 @@ public class TuleapConfiguration extends GlobalConfiguration {
     }
 
     @SuppressWarnings("unused")
-    public FormValidation doVerifyUrls(@QueryParameter String apiBaseUrl, @QueryParameter String gitBaseUrl) throws
+    public FormValidation doVerifyUrls(@QueryParameter String domainUrl) throws
         IOException {
-
+        setDomainUrl(defaultString(domainUrl));
         final TuleapClientRawCmd.Command<Boolean> isUrlValidRawCmd = new TuleapClientRawCmd.IsTuleapServerUrlValid();
-        TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean> newInstance(apiBaseUrl)
+        TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean> newInstance(getApiBaseUrl())
             .withCommand(isUrlValidRawCmd)
             .configure();
         try {
@@ -97,26 +92,22 @@ public class TuleapConfiguration extends GlobalConfiguration {
     }
 
     @SuppressWarnings("unused")
-    public FormValidation doCheckApiBaseUrl(@QueryParameter String apiBaseUrl) {
-        return validateUrls(apiBaseUrl, ORANGEFORGE_API_URL);
+    public FormValidation doCheckDomainUrl(@QueryParameter String domainUrl) {
+        setDomainUrl(defaultString(domainUrl));
+        return validateUrls(domainUrl);
     }
 
-    @SuppressWarnings("unused")
-    public FormValidation doCheckGitBaseUrl(@QueryParameter String gitBaseUrl) {
-        return validateUrls(gitBaseUrl, ORANGEFORGE_GIT_HTTPS_URL);
-    }
-
-    private FormValidation validateUrls(final String url, final String pattern) {
+    private FormValidation validateUrls(final String url) {
         try {
             new URL(url);
         } catch (MalformedURLException e) {
             return FormValidation.error("Malformed OrangeForge url (%s)", e.getMessage());
         }
 
-        if (pattern.equals(url)) {
-            return FormValidation.ok();
+        if (isEmpty(url)) {
+            return FormValidation.error("Url is required and should be valid");
         }
 
-        return FormValidation.warning("OrangeForge Urls are required and should be valid");
+        return FormValidation.ok();
     }
 }

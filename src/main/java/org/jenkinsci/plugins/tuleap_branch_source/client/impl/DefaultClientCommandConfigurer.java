@@ -3,12 +3,13 @@ package org.jenkinsci.plugins.tuleap_branch_source.client.impl;
 import java.util.Optional;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
 import org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConfiguration;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
+
+import static org.apache.commons.lang3.StringUtils.defaultString;
 
 import hudson.Extension;
 
@@ -58,8 +59,8 @@ public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandCon
 
     @Override
     public final TuleapClientRawCmd.Command<T> configure() {
-        DefaultClient client = new DefaultClient(Optional.ofNullable(credentials), StringUtils
-            .defaultString(apiUrl), StringUtils.defaultString(gitUrl));
+        DefaultClient client = new DefaultClient(Optional.ofNullable(credentials), defaultString(apiUrl),
+                                                 defaultString(gitUrl));
         ((TuleapClientRawCmd) command).setClient(client);
         return command;
     }

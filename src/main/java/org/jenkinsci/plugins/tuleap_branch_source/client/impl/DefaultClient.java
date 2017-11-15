@@ -12,12 +12,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapApi;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
@@ -29,6 +29,10 @@ import org.slf4j.LoggerFactory;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.startsWith;
 
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
@@ -96,7 +100,7 @@ class DefaultClient implements TuleapClient {
                     if (users.size() > 1){
                         throw new MultipleUserMatchingCredentialsException(users);
                     }
-                    return StringUtils.isNotBlank(users.get(0).getEmail()) && StringUtils.isNotBlank(users.get(0)
+                    return isNotBlank(users.get(0).getEmail()) && isNotBlank(users.get(0)
                         .getStatus());
                 }
             } else {
@@ -112,7 +116,27 @@ class DefaultClient implements TuleapClient {
      */
     @Override
     public boolean isServerUrlValid() throws IOException {
-        return !allUserProjects(false).isEmpty();
+        String apiExplorerUrl = apiBaseUrl + TULEAP_API_EXPLORER_PATH ;
+        Request req = new Request.Builder()
+            .url(apiExplorerUrl)
+            .addHeader("content-type", "application/json")
+            .cacheControl(CacheControl.FORCE_NETWORK)
+            .get()
+            .build();
+        try (Response response = client.newCall(req).execute()) {
+            if (!response.isSuccessful())
+                throw new IOException(
+                    "HTTP call error at url: " + req.url().toString() + " " + "with code: " + response.code());
+
+            ResponseBody body = response.body();
+            if (body != null) {
+                TuleapApi api = parse(body.string(), TuleapApi.class);
+                return "1".equals(api.getApiVersion());
+            }
+            return false;
+        } catch (IOException e) {
+            throw new IOException("Retrieve current api encounter error", e);
+        }
     }
 
     /**
@@ -219,10 +243,10 @@ class DefaultClient implements TuleapClient {
             LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
             final String username = ((StandardUsernamePasswordCredentials)credentials.get()).getUsername();
             final String password = ((StandardUsernamePasswordCredentials)credentials.get()).getPassword().getPlainText();
-            if (!StringUtils.startsWith(gitRepoPath, projectName+"/")) {
+            if (!startsWith(gitRepoPath, projectName+"/")) {
                 gitRepoPath = projectName+"/" + gitRepoPath;
             }
-            if (!StringUtils.endsWith(gitRepoPath, ".git")) {
+            if (!endsWith(gitRepoPath, ".git")) {
                 gitRepoPath = gitRepoPath + ".git";
             }
             final String remote = gitBaseUrl + gitRepoPath;

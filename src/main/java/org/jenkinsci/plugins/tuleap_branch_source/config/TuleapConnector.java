@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
 import org.kohsuke.stapler.AncestorInPath;
@@ -24,8 +23,8 @@ import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.filter;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConfiguration.ORANGEFORGE_API_URL;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Util;
@@ -76,7 +75,7 @@ public class TuleapConnector {
             final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd
                 .IsTuleapServerUrlValid();
             TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer
-                .<Boolean> newInstance(StringUtils.isEmpty(apiUri) ? TuleapConfiguration.get().getApiBaseUrl() : apiUri)
+                .<Boolean> newInstance(defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl()))
                 .withCredentials(cred).withCommand(isCredentialValidRawCmd).configure();
             try {
                 if (configuredCmd.call()) {
@@ -108,7 +107,7 @@ public class TuleapConnector {
     }
 
     private static List<DomainRequirement> OFDomainRequirements(@CheckForNull String apiUri) {
-        return URIRequirementBuilder.fromUri(StringUtils.defaultIfEmpty(apiUri, ORANGEFORGE_API_URL)).build();
+        return URIRequirementBuilder.fromUri(defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl())).build();
     }
 
     public static CredentialsMatcher allUsernamePasswordMatch() {

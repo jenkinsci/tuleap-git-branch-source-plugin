@@ -20,6 +20,25 @@ import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapUser;
  */
 public interface TuleapClient {
 
+    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.forge.orange-labs.fr";
+
+    /**
+     * Git URL as default configured in /etc/tuleap/plugins/git/etc/config.inc
+     * https://tuleap.net/pipermail/tuleap-devel/2015-December/004425.html
+     * http://tuleap-documentation.readthedocs.io/en/latest/installation-guide/advanced-configuration.html#tuleap-configuration
+    */
+    String DEFAULT_GIT_HTTPS_PATH = "/plugins/git/";
+
+    /**
+     * The api path according to api v1
+     */
+    String DEFAULT_TULEAP_API_PATH = "/api";
+
+    /**
+     * The api explorer path according to api v1
+     */
+    String TULEAP_API_EXPLORER_PATH = "/explorer/resources.json";
+
     /**
      * The projects api path according to api v1
      */

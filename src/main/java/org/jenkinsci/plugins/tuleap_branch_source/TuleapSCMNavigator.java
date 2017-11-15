@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
@@ -36,6 +35,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.checkCredentials;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.listScanCredentials;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.lookupScanCredentials;
@@ -89,14 +89,14 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @NonNull
     @Override
     protected String id() {
-        return "https://www.forge.orange-labs.fr/projects::" + projectId;
+        return TuleapConfiguration.get().getDomainUrl() + "/" + projectId;
     }
 
     @Override
     public void visitSources(SCMSourceObserver observer) throws IOException, InterruptedException {
         TaskListener listener = observer.getListener();
 
-        if (StringUtils.isBlank(getprojectId())) {
+        if (isBlank(getprojectId())) {
             listener.getLogger().format("Must specify a project Id%n");
             return;
         }
@@ -162,7 +162,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         final Optional<TuleapProject> project = configuredCmd.call();
         if (project.isPresent()) {
             actions.add(new TuleapProjectMetadataAction(project.get()));
-            actions.add(new TuleapLink("icon-orangeforge-logo",TuleapConfiguration.ORANGEFORGE_URL + "/projects/" +
+            actions.add(new TuleapLink("icon-orangeforge-logo",TuleapConfiguration.get().getDomainUrl() + "/projects/" +
                 project.get().getShortname()));
         }
         return actions;
@@ -219,7 +219,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
      */
     @CheckForNull
     public String getApiUri() {
-        if (StringUtils.isBlank(apiUri)) {
+        if (isBlank(apiUri)) {
             apiUri = TuleapConfiguration.get().getApiBaseUrl();
         }
         return apiUri;
@@ -232,7 +232,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
      */
     @CheckForNull
     public String getGitBaseUri() {
-        if (StringUtils.isBlank(gitBaseUri)) {
+        if (isBlank(gitBaseUri)) {
             gitBaseUri = TuleapConfiguration.get().getGitBaseUrl();
         }
         return gitBaseUri;

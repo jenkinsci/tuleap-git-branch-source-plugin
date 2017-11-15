@@ -8,9 +8,15 @@ import java.util.List;
 import java.util.Optional;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.transport.RefSpec;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
+import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
+import org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConfiguration;
+import org.jenkinsci.plugins.tuleap_branch_source.trait.BranchDiscoveryTrait;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -23,14 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
-import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
-import org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConfiguration;
-import org.jenkinsci.plugins.tuleap_branch_source.trait.BranchDiscoveryTrait;
 
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.checkCredentials;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.listScanCredentials;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.lookupScanCredentials;
@@ -268,17 +268,11 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     public String getApiBaseUri() {
-        if (StringUtils.isBlank(apiBaseUri)) {
-            apiBaseUri = TuleapConfiguration.get().getApiBaseUrl();
-        }
-        return apiBaseUri;
+        return defaultIfEmpty(apiBaseUri, TuleapConfiguration.get().getApiBaseUrl());
     }
 
     public String getGitBaseUri() {
-        if (StringUtils.isBlank(gitBaseUri)) {
-            gitBaseUri = TuleapConfiguration.get().getGitBaseUrl();
-        }
-        return gitBaseUri;
+        return defaultIfEmpty(gitBaseUri, TuleapConfiguration.get().getGitBaseUrl());
     }
 
     @Symbol("orangeforge")
