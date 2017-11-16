@@ -31,6 +31,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 
@@ -76,12 +77,9 @@ class DefaultClient implements TuleapClient {
      * {@inheritDoc}
      */
     public final boolean isCredentialValid() throws IOException {
-        // If credential is present then it should be StandardUsernamePasswordCredentials otherwise it should have
-        // exploded in constructor
-        // If not present it's weird as it is clearly not anonymous call so showstopper
-        if (!credentials.isPresent()) {
-            throw new IllegalArgumentException("Want to check credential though no credentials info provided ..weird");
-        }
+        isApiUrlPresent("Checking credentials");
+        isCredentialsPresent("Checking credentials");
+
         final String username = ((StandardUsernamePasswordCredentials) credentials.get()).getUsername();
         final String queryObject = String.format(BY_USERNAME_QUERY_OBJECT_PATTERN, username);
         final String urlEncodedQueryObject = URLEncoder.encode(queryObject, StandardCharsets.UTF_8.displayName());
@@ -116,6 +114,7 @@ class DefaultClient implements TuleapClient {
      */
     @Override
     public boolean isServerUrlValid() throws IOException {
+        isApiUrlPresent("Checking url");
         String apiExplorerUrl = apiBaseUrl + TULEAP_API_EXPLORER_PATH ;
         Request req = new Request.Builder()
             .url(apiExplorerUrl)
@@ -143,6 +142,7 @@ class DefaultClient implements TuleapClient {
      * {@inheritDoc}
      */
     public final List<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException {
+        isApiUrlPresent("Fetching all users's projects");
         String projectsApiUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH ;
         //If property is_member_of is not defined, api will respond with all projects in read-only mode
         if (isMemberOf) {
@@ -174,6 +174,9 @@ class DefaultClient implements TuleapClient {
      * {@inheritDoc}
      */
     public final Optional<TuleapProject> projectById(final String projectId) throws IOException {
+        isApiUrlPresent("Fetching project by Id");
+        //avoid falling back to TULEAP_API_PROJECT_PATH if no projectId
+        isProjectIdPresent(projectId,"Fetching project by Id");
         final String apiProjectsUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId;
         // FIXME enable cache later
         Request req = new Request.Builder()
@@ -212,6 +215,8 @@ class DefaultClient implements TuleapClient {
      * @throws IOException in case HTTP errors occurs or parsing of response fail
      */
     private TuleapProjectRepositories projectRepositoriesWrapper(final String projectId) throws IOException {
+        isApiUrlPresent("Fetching all project's git repos");
+        isProjectIdPresent(projectId, "Fetching all project's git repos");
         final String apiRepositoriesUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId + TULEAP_API_GIT_PATH;
         // FIXME enable cache later
         Request req = new Request.Builder()
@@ -235,9 +240,10 @@ class DefaultClient implements TuleapClient {
      */
     public final List<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
         throws IOException, NoSingleRepoByPathException {
-        // If not present it's weird as it is clearly not anonymous call so showstopper
-        if (!credentials.isPresent()) {
-            throw new IllegalArgumentException("Want to check credential though no credentials info provided ..weird");
+        isGitUrlPresent("Fetching git repo's branches");
+        isCredentialsPresent("Fetching git repo's branches");
+        if (isEmpty(gitRepoPath)) {
+            throw new IllegalArgumentException("Fetching git repo's branches requires a git repo path but is missing");
         }
         try {
             LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
@@ -283,6 +289,33 @@ class DefaultClient implements TuleapClient {
             return mapper.readValue(input, clazz);
         } catch (IOException e) {
             throw new IOException("Parsing class pbm", e);
+        }
+    }
+
+    private void isApiUrlPresent(String message) {
+        if (isEmpty(apiBaseUrl)) {
+            throw new IllegalArgumentException(message + " requires an api url but is missing");
+        }
+    }
+
+    private void isGitUrlPresent(String message) {
+        if (isEmpty(gitBaseUrl)) {
+            throw new IllegalArgumentException(message + " requires a git base url but is missing");
+        }
+    }
+
+    private void isProjectIdPresent(String projectId, String message) {
+        if (isEmpty(projectId)) {
+            throw new IllegalArgumentException(message + " requires a projectId but is missing");
+        }
+    }
+
+    private void isCredentialsPresent(String message) {
+        // If credential is present then it should be StandardUsernamePasswordCredentials otherwise it should have
+        // exploded in constructor
+        // If not present it's weird as it is clearly not anonymous call so showstopper
+        if (!credentials.isPresent()) {
+            throw new IllegalArgumentException(message + " requires a valid api url but is missing");
         }
     }
 }
