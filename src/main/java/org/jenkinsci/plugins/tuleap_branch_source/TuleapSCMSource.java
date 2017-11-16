@@ -174,6 +174,31 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     @Override
+    protected SCMRevision retrieve(SCMHead head, TaskListener listener) throws IOException, InterruptedException {
+        Optional<String> revision = Optional.empty();
+        List<TuleapGitBranch> branches = TuleapClientCommandConfigurer
+            .<List<TuleapGitBranch>> newInstance(getApiBaseUri())
+            .withCredentials(credentials)
+            .withGitUrl(getGitBaseUri())
+            .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
+            .configure()
+            .call();
+        Optional<TuleapGitBranch> branch = branches.stream().filter(b -> b.getName().equals(head.getName()))
+                                                   .findFirst();
+        if (branch.isPresent()) {
+            revision = Optional.of(branch.get().getSha1());
+        } else {
+            listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
+        }
+        if (revision.isPresent()) {
+            return new SCMRevisionImpl(head, revision.get());
+        } else {
+            listener.getLogger().format("Cannot resolve the hash of the revision in branch %s%n", head.getName());
+            return null;
+        }
+    }
+
+    @Override
     protected List<RefSpec> getRefSpecs() {
         return Arrays.asList(new RefSpec("+refs/heads/*:refs/remotes/origin/*", RefSpec.WildcardMode.ALLOW_MISMATCH));
     }
