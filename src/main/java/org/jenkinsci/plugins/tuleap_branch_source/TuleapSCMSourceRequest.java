@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.tuleap_branch_source;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
@@ -31,7 +32,7 @@ public class TuleapSCMSourceRequest extends SCMSourceRequest {
      * The branch details or {@code null} if not {@link #isFetchBranches()}.
      */
     @CheckForNull
-    private Iterable<TuleapGitBranch> branches;
+    private Stream<TuleapGitBranch> branches;
 
     protected TuleapSCMSourceRequest(@NonNull SCMSource source, @NonNull TuleapSCMSourceContext context,
                                      @CheckForNull TaskListener listener) {
@@ -56,11 +57,11 @@ public class TuleapSCMSourceRequest extends SCMSourceRequest {
         return fetchBranches;
     }
 
-    public Iterable<TuleapGitBranch> getBranches() {
+    public Stream<TuleapGitBranch> getBranches() {
         return branches;
     }
 
-    public void setBranches(Iterable<TuleapGitBranch> branches) {
+    public void setBranches(Stream<TuleapGitBranch> branches) {
         this.branches = branches;
     }
 }

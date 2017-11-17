@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.tuleap_branch_source.client;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
@@ -22,7 +22,7 @@ public class TuleapClientRawCmd {
         T call() throws IOException;
     }
 
-    public static class AllUserProjects extends TuleapClientRawCmd implements Command<List<TuleapProject>> {
+    public static class AllUserProjects extends TuleapClientRawCmd implements Command<Stream<TuleapProject>> {
 
         private final boolean fetchProjectsUserIsMemberOf;
 
@@ -31,12 +31,12 @@ public class TuleapClientRawCmd {
         }
 
         @Override
-        public List<TuleapProject> call() throws IOException {
+        public Stream<TuleapProject> call() throws IOException {
             return client.allUserProjects(fetchProjectsUserIsMemberOf);
         }
     }
 
-    public static class AllRepositoriesByProject extends TuleapClientRawCmd implements Command<List<TuleapGitRepository>> {
+    public static class AllRepositoriesByProject extends TuleapClientRawCmd implements Command<Stream<TuleapGitRepository>> {
 
         private final String projectId;
 
@@ -45,7 +45,7 @@ public class TuleapClientRawCmd {
         }
 
         @Override
-        public List<TuleapGitRepository> call() throws IOException {
+        public Stream<TuleapGitRepository> call() throws IOException {
             return client.allProjectRepositories(projectId);
         }
     }
@@ -64,7 +64,7 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public static class AllBranchesByGitRepo extends TuleapClientRawCmd implements Command<List<TuleapGitBranch>> {
+    public static class AllBranchesByGitRepo extends TuleapClientRawCmd implements Command<Stream<TuleapGitBranch>> {
 
         private final String gitRepoPath, projectName;
 
@@ -74,7 +74,7 @@ public class TuleapClientRawCmd {
         }
 
         @Override
-        public List<TuleapGitBranch> call() throws IOException {
+        public Stream<TuleapGitBranch> call() throws IOException {
             return client.branchByGitRepo(gitRepoPath, projectName);
         }
     }

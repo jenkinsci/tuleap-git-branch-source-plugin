@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 
@@ -33,7 +35,6 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.checkCredentials;
@@ -96,19 +97,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
     public void visitSources(SCMSourceObserver observer) throws IOException, InterruptedException {
         TaskListener listener = observer.getListener();
 
-        if (isBlank(getprojectId())) {
-            listener.getLogger().format("Must specify a project Id%n");
-            return;
-        }
         listener.getLogger().printf("Visit Sources of %s...%n", getprojectId());
         StandardCredentials credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
             getApiUri(), credentialsId);
-
-        //TODO wrap from here DefaultClientCommandConfigurer.java:61
-        if (credentials == null) {
-            listener.getLogger().format("Must provide a Username Password credentials to continue Id%n");
-            return;
-        }
 
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
@@ -125,13 +116,14 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 listener.getLogger().format("No project match projectId "+ projectId +"... it's weird%n");
                 return;
             }
-            List<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<List<TuleapGitRepository>> newInstance(getApiUri())
+            Stream<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<Stream<TuleapGitRepository>> newInstance
+                (getApiUri())
 				.withCredentials(credentials)
                 .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
                 .configure()
                 .call();
 
-            for (TuleapGitRepository repo : repos) {
+            for (TuleapGitRepository repo : repos.collect(Collectors.toList())) {
                 repositories.put(repo.getName(), repo);
                 SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
                 if (request.process(repo.getName(), sourceFactory, null, witness)) {
@@ -410,14 +402,14 @@ public class TuleapSCMNavigator extends SCMNavigator {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
-            if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-               TuleapClientCommandConfigurer.<List<TuleapProject>> newInstance(apiUri)
-					.withCredentials(credentials)
-                    .withCommand(new TuleapClientRawCmd.AllUserProjects(true))
-                    .configure()
-                    .call()
-                    .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
-            }
+
+            TuleapClientCommandConfigurer.<Stream<TuleapProject>> newInstance(apiUri)
+                .withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.AllUserProjects(true))
+                .configure()
+                .call()
+                .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
+
             return result;
         }
 

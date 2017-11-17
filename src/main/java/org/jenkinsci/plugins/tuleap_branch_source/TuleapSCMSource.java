@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 import org.eclipse.jgit.transport.RefSpec;
@@ -28,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
-import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.checkCredentials;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.listScanCredentials;
 import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.lookupScanCredentials;
@@ -78,9 +78,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     private TuleapGitRepository repository;
 
     private TuleapProject project;
-
-    private String apiBaseUri;
-    private String gitBaseUri;
 
     /**
      * Git Repository of the source to be manipulated
@@ -146,14 +143,15 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             setRemoteUrl(getGitBaseUri() + repositoryPath);
             if (request.isFetchBranches()) {
                 LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
-                List<TuleapGitBranch> branches = TuleapClientCommandConfigurer.<List<TuleapGitBranch>> newInstance(getApiBaseUri())
+                Stream<TuleapGitBranch> branches = TuleapClientCommandConfigurer.<Stream<TuleapGitBranch>> newInstance
+                    (getApiBaseUri())
                         .withCredentials(credentials).withGitUrl(getGitBaseUri())
                         .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
                         .configure()
                         .call();
                 request.setBranches(branches);
                 int count = 0;
-                for (TuleapGitBranch branch : branches) {
+                for (TuleapGitBranch branch : branches.collect(Collectors.toList())) {
                     count++;
                     request.listener().getLogger()
                         .format("Crawling branch %s::%s for repo %s", branch.getName(), branch.getSha1(), getRemote())
@@ -174,14 +172,14 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @Override
     protected SCMRevision retrieve(SCMHead head, TaskListener listener) throws IOException, InterruptedException {
         Optional<String> revision = Optional.empty();
-        List<TuleapGitBranch> branches = TuleapClientCommandConfigurer
-            .<List<TuleapGitBranch>> newInstance(getApiBaseUri())
+        Stream<TuleapGitBranch> branches = TuleapClientCommandConfigurer
+            .<Stream<TuleapGitBranch>> newInstance(getApiBaseUri())
             .withCredentials(credentials)
             .withGitUrl(getGitBaseUri())
             .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
             .configure()
             .call();
-        Optional<TuleapGitBranch> branch = branches.stream().filter(b -> b.getName().equals(head.getName()))
+        Optional<TuleapGitBranch> branch = branches.filter(b -> b.getName().equals(head.getName()))
                                                    .findFirst();
         if (branch.isPresent()) {
             revision = Optional.of(branch.get().getSha1());
@@ -291,11 +289,11 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     public String getApiBaseUri() {
-        return defaultIfEmpty(apiBaseUri, TuleapConfiguration.get().getApiBaseUrl());
+        return TuleapConfiguration.get().getApiBaseUrl();
     }
 
     public String getGitBaseUri() {
-        return defaultIfEmpty(gitBaseUri, TuleapConfiguration.get().getGitBaseUrl());
+        return TuleapConfiguration.get().getGitBaseUrl();
     }
 
     @Symbol("orangeforge")
@@ -331,17 +329,15 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
-            if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>> newInstance(apiUri)
-					.withCredentials(credentials)
-                    .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
-                    .configure()
-                    .call();
-                if (project.isPresent()) {
-                    ListBoxModel.Option newItem = new ListBoxModel.Option(project.get().getShortname(),
-                        String.valueOf(project.get().getId()));
-                    result.add(newItem);
-                }
+            Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>> newInstance(apiUri)
+                .withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
+                .configure()
+                .call();
+            if (project.isPresent()) {
+                ListBoxModel.Option newItem = new ListBoxModel.Option(project.get().getShortname(),
+                    String.valueOf(project.get().getId()));
+                result.add(newItem);
             }
             return result;
         }
@@ -354,12 +350,12 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
             StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
             Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
-                .<List<TuleapGitRepository>>newInstance(apiBaseUrl)
+                .<Stream<TuleapGitRepository>>newInstance(apiBaseUrl)
                 .withCredentials(credentials)
                 .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
                 .configure()
                 .call()
-                .stream().distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
+                .distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
             if (repo.isPresent()) {
                 final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.get().getName(), repo.get().getPath());
                 result.add(newItem);

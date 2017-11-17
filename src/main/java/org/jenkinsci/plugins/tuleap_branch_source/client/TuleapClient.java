@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.tuleap_branch_source.client;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
@@ -97,7 +98,7 @@ public interface TuleapClient {
      * @return list of projects current user has access
      * @throws IOException in case HTTP errors occurs or parsing of response fail
      */
-    List<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException ;
+    Stream<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException ;
 
     /**
      * Get a list of git repositories of the project identified by a projectIf
@@ -106,7 +107,7 @@ public interface TuleapClient {
      * @return the list of repositories
      * @throws IOException in case HTTP errors occurs or parsing of response fail
      */
-    List<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException;
+    Stream<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException;
 
     /**
      * Get the project identified by the projectId
@@ -126,7 +127,7 @@ public interface TuleapClient {
      * @throws IOException in case git connexion pbm
      * @throws NoSingleRepoByPathException in case multiple git repo are represented by a path, this is blocking
      */
-    List<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
+    Stream<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
         throws IOException, NoSingleRepoByPathException;
 
     /**

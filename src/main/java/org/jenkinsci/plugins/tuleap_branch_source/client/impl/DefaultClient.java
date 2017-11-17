@@ -3,13 +3,12 @@ package org.jenkinsci.plugins.tuleap_branch_source.client.impl;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -141,7 +140,7 @@ class DefaultClient implements TuleapClient {
     /**
      * {@inheritDoc}
      */
-    public final List<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException {
+    public final Stream<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException {
         isApiUrlPresent("Fetching all users's projects");
         String projectsApiUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH ;
         //If property is_member_of is not defined, api will respond with all projects in read-only mode
@@ -162,9 +161,9 @@ class DefaultClient implements TuleapClient {
 
             ResponseBody body = response.body();
             if (body != null) {
-                return Arrays.asList(parse(body.string(), TuleapProject[].class));
+                return Stream.of(parse(body.string(), TuleapProject[].class));
             }
-            return new ArrayList<>();
+            return Stream.empty();
         } catch (IOException e) {
             throw new IOException("Retrieve current user's projects encounter error", e);
         }
@@ -203,8 +202,8 @@ class DefaultClient implements TuleapClient {
     /**
      * {@inheritDoc}
      */
-    public final List<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException {
-        return projectRepositoriesWrapper(projectId).getRepositories();
+    public final Stream<TuleapGitRepository> allProjectRepositories(final String projectId) throws IOException {
+        return projectRepositoriesWrapper(projectId).getRepositories().stream();
     }
 
     /**
@@ -238,7 +237,7 @@ class DefaultClient implements TuleapClient {
     /**
      * {@inheritDoc}
      */
-    public final List<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
+    public final Stream<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
         throws IOException, NoSingleRepoByPathException {
         isGitUrlPresent("Fetching git repo's branches");
         isCredentialsPresent("Fetching git repo's branches");
@@ -262,8 +261,7 @@ class DefaultClient implements TuleapClient {
                 .setHeads(true)
                 .call()
                 .stream()
-                .map(refToOFGitBranch())
-                .collect(Collectors.toList());
+                .map(refToOFGitBranch());
         } catch (GitAPIException e) {
             throw new TuleapGitException(gitBaseUrl, gitRepoPath, e);
         }
@@ -272,7 +270,6 @@ class DefaultClient implements TuleapClient {
     private Optional<TuleapGitRepository> gitRepoByPath(final String projectId, final String gitRepoPath)
         throws IOException, NoSingleRepoByPathException {
         return allProjectRepositories(projectId)
-            .stream()
             .filter(ofGitRepository -> gitRepoPath.equals(ofGitRepository.getPath()))
             .reduce((a, b) -> {
                 throw new NoSingleRepoByPathException(gitRepoPath, a.getUri(), b.getUri());
