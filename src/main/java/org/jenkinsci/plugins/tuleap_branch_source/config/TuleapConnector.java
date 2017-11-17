@@ -71,14 +71,15 @@ public class TuleapConnector {
                 filter(lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
                     Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
                 CredentialsMatchers.allOf(withId(credentialsId), allUsernamePasswordMatch()));
-
-            final TuleapClientRawCmd.Command<Boolean> isCredentialValidRawCmd = new TuleapClientRawCmd
-                .IsTuleapServerUrlValid();
-            TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer
-                .<Boolean> newInstance(defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl()))
-                .withCredentials(cred).withCommand(isCredentialValidRawCmd).configure();
             try {
-                if (configuredCmd.call()) {
+                Boolean credentialsAreValid = TuleapClientCommandConfigurer.<Boolean>newInstance(
+                    defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl()))
+                    .withCredentials(cred)
+                    .withCommand(new TuleapClientRawCmd.IsTuleapServerUrlValid())
+                    .configure()
+                    .call();
+
+                if (credentialsAreValid) {
                     return FormValidation.ok();
                 } else {
                     return FormValidation.error("Failed to validate the provided credentials");

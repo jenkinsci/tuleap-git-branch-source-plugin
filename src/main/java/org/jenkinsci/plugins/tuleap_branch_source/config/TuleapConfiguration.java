@@ -81,12 +81,13 @@ public class TuleapConfiguration extends GlobalConfiguration {
             return validation;
         }
         setDomainUrl(domainUrl);
-        final TuleapClientRawCmd.Command<Boolean> isUrlValidRawCmd = new TuleapClientRawCmd.IsTuleapServerUrlValid();
-        TuleapClientRawCmd.Command<Boolean> configuredCmd = TuleapClientCommandConfigurer.<Boolean> newInstance(getApiBaseUrl())
-            .withCommand(isUrlValidRawCmd)
-            .configure();
         try {
-            if (configuredCmd.call()) {
+            boolean serverUrlIsValid = TuleapClientCommandConfigurer.<Boolean>newInstance(getApiBaseUrl())
+                .withCommand(new TuleapClientRawCmd.IsTuleapServerUrlValid())
+                .configure()
+                .call();
+
+            if (serverUrlIsValid) {
                 return FormValidation.ok("Connexion established with these Urls");
             } else {
                 return FormValidation.error("Failed to validate the account");

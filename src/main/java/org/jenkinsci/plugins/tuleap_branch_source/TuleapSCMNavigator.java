@@ -113,11 +113,11 @@ public class TuleapSCMNavigator extends SCMNavigator {
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener);
-            final TuleapClientRawCmd.ProjectById projectByIdRawCmd = new TuleapClientRawCmd.ProjectById(projectId);
-            Optional<TuleapProject> project = TuleapClientCommandConfigurer
-                .<Optional<TuleapProject>>newInstance(getApiUri())
-                .withCredentials(credentials).withCommand(projectByIdRawCmd)
-                .configure().call();
+            Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>>newInstance(getApiUri())
+                .withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
+                .configure()
+                .call();
             if (project.isPresent()) {
                 this.project = project.get();
             } else {
@@ -125,14 +125,13 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 listener.getLogger().format("No project match projectId "+ projectId +"... it's weird%n");
                 return;
             }
-            final TuleapClientRawCmd.Command<List<TuleapGitRepository>> allRepositoriesByProjectRawCmd = new
-					TuleapClientRawCmd.AllRepositoriesByProject(projectId);
-            final TuleapClientRawCmd.Command<List<TuleapGitRepository>> configuredCmd = TuleapClientCommandConfigurer
-                .<List<TuleapGitRepository>> newInstance(getApiUri())
-				.withCredentials(credentials).withCommand(allRepositoriesByProjectRawCmd)
-                .configure();
+            List<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<List<TuleapGitRepository>> newInstance(getApiUri())
+				.withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
+                .configure()
+                .call();
 
-            for (TuleapGitRepository repo : configuredCmd.call()) {
+            for (TuleapGitRepository repo : repos) {
                 repositories.put(repo.getName(), repo);
                 SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
                 if (request.process(repo.getName(), sourceFactory, null, witness)) {
@@ -152,14 +151,12 @@ public class TuleapSCMNavigator extends SCMNavigator {
         List<Action> actions = new ArrayList<>();
 
         final StandardCredentials credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
-        final TuleapClientRawCmd.Command<Optional<TuleapProject>> projectByIdRawCmd = new TuleapClientRawCmd
-            .ProjectById(projectId);
-
-        final TuleapClientRawCmd.Command<Optional<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
+        Optional<TuleapProject> project = TuleapClientCommandConfigurer
             .<Optional<TuleapProject>> newInstance(getApiUri())
-			.withCredentials(credentials).withCommand(projectByIdRawCmd)
-            .configure();
-        final Optional<TuleapProject> project = configuredCmd.call();
+			.withCredentials(credentials)
+            .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
+            .configure()
+            .call();
         if (project.isPresent()) {
             actions.add(new TuleapProjectMetadataAction(project.get()));
             actions.add(new TuleapLink("icon-orangeforge-logo",TuleapConfiguration.get().getDomainUrl() + "/projects/" +
@@ -414,14 +411,11 @@ public class TuleapSCMNavigator extends SCMNavigator {
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             if (credentials != null && credentials instanceof StandardUsernamePasswordCredentials) {
-                final TuleapClientRawCmd.AllUserProjects allUserProjectsRawCmd =  new TuleapClientRawCmd.AllUserProjects
-                    (true);
-                final TuleapClientRawCmd.Command<List<TuleapProject>> configuredCmd = TuleapClientCommandConfigurer
-                    .<List<TuleapProject>> newInstance(apiUri)
-					.withCredentials(credentials).withCommand(allUserProjectsRawCmd)
-                    .configure();
-
-                configuredCmd.call()
+               TuleapClientCommandConfigurer.<List<TuleapProject>> newInstance(apiUri)
+					.withCredentials(credentials)
+                    .withCommand(new TuleapClientRawCmd.AllUserProjects(true))
+                    .configure()
+                    .call()
                     .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
             }
             return result;
