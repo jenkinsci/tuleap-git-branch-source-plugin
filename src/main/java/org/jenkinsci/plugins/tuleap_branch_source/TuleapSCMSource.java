@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-import org.eclipse.jgit.transport.RefSpec;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
@@ -48,6 +47,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.plugins.git.GitSCMBuilder;
+import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMHeadCategory;
 import jenkins.scm.api.SCMHeadEvent;
@@ -194,11 +194,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
     }
 
-    @Override
-    protected List<RefSpec> getRefSpecs() {
-        return Arrays.asList(new RefSpec("+refs/heads/*:refs/remotes/origin/*", RefSpec.WildcardMode.ALLOW_MISMATCH));
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -306,7 +301,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
 
         public List<SCMSourceTrait> getTraitsDefaults() {
-            return Arrays.asList(new BranchDiscoveryTrait());
+            return Arrays.asList(new BranchDiscoveryTrait(), new RefSpecsSCMSourceTrait());
         }
 
         @RequirePOST

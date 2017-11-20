@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -277,7 +278,8 @@ class DefaultClient implements TuleapClient {
     }
 
     private Function<Ref, TuleapGitBranch> refToOFGitBranch() {
-        return ref -> new TuleapGitBranch(ref.getName(), ref.getObjectId().getName());
+        return ref -> new TuleapGitBranch(StringUtils.removeStart(ref.getName(), "refs/heads/"),
+                                          ref.getObjectId().getName());
     }
 
     private <T> T parse(final String input, Class<T> clazz) throws IOException {
