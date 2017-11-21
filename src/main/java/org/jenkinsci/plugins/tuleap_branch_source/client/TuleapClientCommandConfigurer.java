@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.tuleap_branch_source.client;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 
 import hudson.ExtensionList;
+import hudson.model.TaskListener;
 
 public interface TuleapClientCommandConfigurer<T> {
 
@@ -24,6 +25,8 @@ public interface TuleapClientCommandConfigurer<T> {
     TuleapClientCommandConfigurer<T> withCredentials(StandardCredentials credentials);
 
     TuleapClientCommandConfigurer<T> withGitUrl(final String gitUrl);
+
+    TuleapClientCommandConfigurer<T> withListener(final TaskListener listener);
 
     TuleapClientRawCmd.Command<T> configure();
 }

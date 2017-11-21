@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +16,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.errors.RemoteRepositoryException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient;
@@ -35,6 +39,7 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 
+import hudson.model.TaskListener;
 import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -51,11 +56,14 @@ class DefaultClient implements TuleapClient {
     private final String apiBaseUrl, gitBaseUrl;
     private final OkHttpClient client;
     private Optional<StandardCredentials> credentials;
+    private Optional<TaskListener> listener;
 
-    DefaultClient(Optional<StandardCredentials> credentials, final String apiBaseUrl, final String gitBaseUrl) {
+    DefaultClient(Optional<StandardCredentials> credentials, final String apiBaseUrl, final String gitBaseUrl,
+                  Optional<TaskListener> listener) {
         this.apiBaseUrl = apiBaseUrl;
         this.gitBaseUrl = gitBaseUrl;
         this.credentials = credentials;
+        this.listener = listener;
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit
                 .SECONDS).cache(null);
@@ -239,7 +247,7 @@ class DefaultClient implements TuleapClient {
      * {@inheritDoc}
      */
     public final Stream<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
-        throws IOException, NoSingleRepoByPathException {
+        throws NoSingleRepoByPathException, TuleapGitException {
         isGitUrlPresent("Fetching git repo's branches");
         isCredentialsPresent("Fetching git repo's branches");
         if (isEmpty(gitRepoPath)) {
@@ -256,15 +264,30 @@ class DefaultClient implements TuleapClient {
                 gitRepoPath = gitRepoPath + ".git";
             }
             final String remote = gitBaseUrl + gitRepoPath;
-            return new LsRemoteCommand(null)
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
-                .setRemote(remote)
-                .setHeads(true)
-                .call()
+            return listRemoteBranch(username, password, remote)
                 .stream()
                 .map(refToOFGitBranch());
         } catch (GitAPIException e) {
             throw new TuleapGitException(gitBaseUrl, gitRepoPath, e);
+        }
+    }
+
+    private Collection<Ref> listRemoteBranch(String username, String password, String remote) throws GitAPIException, TuleapGitException {
+        try {
+            return new LsRemoteCommand(null)
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
+                .setRemote(remote)
+                .setHeads(true)
+                .call();
+        } catch (TransportException e) {
+            if (e.getCause() instanceof RemoteRepositoryException && e.getMessage().contains("DENIED by fallthru")) {
+                listener.ifPresent(l -> l.getLogger().printf("It seems user : %s is denied access to the repository :" +
+                                                                 "%s %n%s%n", username, remote, e.getMessage()));
+                LOGGER.warn("Permission denied to access this repository\n" + e.getMessage());
+                return Collections.EMPTY_LIST;
+            } else {
+                throw new TuleapGitException(remote, e);
+            }
         }
     }
 

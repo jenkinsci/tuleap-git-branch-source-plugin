@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 
+import org.eclipse.jgit.api.errors.TransportException;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
@@ -158,6 +159,10 @@ public interface TuleapClient {
     class TuleapGitException extends IOException {
         public TuleapGitException(final String uri, final String path, Throwable t) {
             super("Unable to communicate to Tuleap git at " + uri + "/" + path, t);
+        }
+
+        public TuleapGitException(String remote, TransportException e) {
+            super("Unable to communicate to Tuleap git at " + remote, e);
         }
     }
 }

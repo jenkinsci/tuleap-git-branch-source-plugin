@@ -1,19 +1,17 @@
 package org.jenkinsci.plugins.tuleap_branch_source.trait;
 
-import java.io.IOException;
 import javax.annotation.Nonnull;
 
-
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 import org.jenkinsci.plugins.tuleap_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_branch_source.TuleapSCMNavigatorContext;
 import org.jenkinsci.plugins.tuleap_branch_source.TuleapSCMSource;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -22,10 +20,8 @@ import jenkins.scm.api.SCMHeadCategory;
 import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.trait.SCMNavigatorContext;
-import jenkins.scm.api.trait.SCMNavigatorRequest;
 import jenkins.scm.api.trait.SCMNavigatorTrait;
 import jenkins.scm.api.trait.SCMNavigatorTraitDescriptor;
-import jenkins.scm.api.trait.SCMSourceFilter;
 import jenkins.scm.api.trait.SCMSourcePrefilter;
 import jenkins.scm.impl.trait.Discovery;
 
@@ -54,7 +50,6 @@ public class UserForkRepositoryTrait extends SCMNavigatorTrait {
     @Override
     protected void decorateContext(SCMNavigatorContext<?, ?> ctx) {
         TuleapSCMNavigatorContext context = (TuleapSCMNavigatorContext) ctx;
-        context.withFilter(new ExcludeNotOwnedRepositoryFilter());
         context.wantUserFork(strategy == 1);
         if (strategy == 1) {
             context.withPrefilter(new ExcludeUserForkRepositorySCMFilter());
@@ -78,17 +73,6 @@ public class UserForkRepositoryTrait extends SCMNavigatorTrait {
             TuleapSCMNavigator navigator = (TuleapSCMNavigator) source;
             TuleapGitRepository repo = navigator.getRepositories().get(projectName);
             return repo.getPath().contains("/u/");
-        }
-    }
-
-    private static class ExcludeNotOwnedRepositoryFilter extends SCMSourceFilter {
-
-        @Override
-        public boolean isExcluded(@NonNull SCMNavigatorRequest request, @NonNull String projectName)
-            throws IOException, InterruptedException {
-            // TODO either ask orangeforge if authenticated user can read repo = projectName
-            // or better when OFClient.allProjectRepositories only return projeect that we can access
-            return false;
         }
     }
 

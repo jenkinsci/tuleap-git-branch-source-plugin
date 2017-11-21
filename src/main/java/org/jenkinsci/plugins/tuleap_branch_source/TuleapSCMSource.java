@@ -145,7 +145,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
                 Stream<TuleapGitBranch> branches = TuleapClientCommandConfigurer.<Stream<TuleapGitBranch>> newInstance
                     (getApiBaseUri())
-                        .withCredentials(credentials).withGitUrl(getGitBaseUri())
+                        .withCredentials(credentials).withGitUrl(getGitBaseUri()).withListener(listener)
                         .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
                         .configure()
                         .call();
@@ -174,8 +174,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         Optional<String> revision = Optional.empty();
         Stream<TuleapGitBranch> branches = TuleapClientCommandConfigurer
             .<Stream<TuleapGitBranch>> newInstance(getApiBaseUri())
-            .withCredentials(credentials)
-            .withGitUrl(getGitBaseUri())
+            .withCredentials(credentials).withGitUrl(getGitBaseUri()).withListener(listener)
             .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
             .configure()
             .call();

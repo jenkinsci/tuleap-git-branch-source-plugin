@@ -12,6 +12,7 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 
 import hudson.Extension;
+import hudson.model.TaskListener;
 
 @Extension
 public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandConfigurer {
@@ -20,6 +21,8 @@ public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandCon
     private String gitUrl;
     private TuleapClientRawCmd.Command command;
     private StandardCredentials credentials;
+    private TaskListener listener;
+
 
     public DefaultClientCommandConfigurer() {
     }
@@ -58,9 +61,15 @@ public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandCon
     }
 
     @Override
+    public TuleapClientCommandConfigurer withListener(TaskListener listener) {
+        this.listener = listener;
+        return this;
+    }
+
+    @Override
     public final TuleapClientRawCmd.Command<T> configure() {
         DefaultClient client = new DefaultClient(Optional.ofNullable(credentials), defaultString(apiUrl),
-                                                 defaultString(gitUrl));
+                                                 defaultString(gitUrl), Optional.ofNullable(listener));
         ((TuleapClientRawCmd) command).setClient(client);
         return command;
     }
