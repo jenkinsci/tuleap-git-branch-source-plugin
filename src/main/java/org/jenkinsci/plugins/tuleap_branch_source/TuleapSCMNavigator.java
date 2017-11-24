@@ -4,12 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,9 +47,9 @@ import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
 import jenkins.plugins.git.GitSCMBuilder;
-import jenkins.plugins.git.traits.GitBrowserSCMSourceTrait;
 import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.SCMNavigatorDescriptor;
 import jenkins.scm.api.SCMNavigatorEvent;
@@ -70,6 +67,7 @@ import jenkins.scm.impl.UncategorizedSCMSourceCategory;
 import jenkins.scm.impl.form.NamedArrayList;
 import jenkins.scm.impl.trait.Discovery;
 import jenkins.scm.impl.trait.Selection;
+import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import net.jcip.annotations.GuardedBy;
 
@@ -103,7 +101,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
                 .withTraits(traits).newRequest(this, observer)) {
-            WitnessImpl witness = new WitnessImpl(listener);
+            WitnessImpl witness = new WitnessImpl(listener, this);
             Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>>newInstance(getApiUri())
                 .withCredentials(credentials)
                 .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
@@ -245,6 +243,19 @@ public class TuleapSCMNavigator extends SCMNavigator {
         return repositories;
     }
 
+    public boolean isIncludeExcludesDefault() {
+        String includes = "*";
+        String excludes = "*";
+        for (SCMTrait<?> trait : traits) {
+            if (trait instanceof WildcardSCMHeadFilterTrait) {
+                includes = ((WildcardSCMHeadFilterTrait) trait).getIncludes();
+                excludes = ((WildcardSCMHeadFilterTrait) trait).getExcludes();
+            }
+        }
+
+        return "*".equals(includes) && "*".equals(excludes);
+    }
+
     @Symbol("orangeforge")
     @Extension
     public static class DescriptorImpl extends SCMNavigatorDescriptor {
@@ -361,6 +372,25 @@ public class TuleapSCMNavigator extends SCMNavigator {
             return checkCredentials(context, apiUri ,credentialsId);
         }
 
+        @Restricted(NoExternalUse.class) // stapler
+        public FormValidation doCheckProjectId(@CheckForNull @AncestorInPath Item context,
+            @QueryParameter String projectId, @QueryParameter String includes, @QueryParameter String excludes) {
+
+            Optional<SCMNavigator> navigator = ((OrganizationFolder) context).getNavigators().stream().filter(n
+                                                                                                                       -> n
+                instanceof TuleapSCMNavigator).findFirst();
+            if (navigator.isPresent()) {
+                if (((TuleapSCMNavigator)navigator.get()).isIncludeExcludesDefault()) {
+                    return FormValidation.warning("Sans modifications des includes excludes tout repository sera " +
+                                                      "ignoré");
+                } else {
+                    return FormValidation.ok();
+                }
+            } else {
+                return FormValidation.error("Error fetching navigator ... weird");
+            }
+        }
+
         /**
          * Populates the drop-down list of credentials.
          *
@@ -440,24 +470,15 @@ public class TuleapSCMNavigator extends SCMNavigator {
             all.addAll(SCMNavigatorTrait._for(this, TuleapSCMNavigatorContext.class, TuleapSCMSourceBuilder.class));
             all.addAll(SCMSourceTrait._for(sourceDescriptor, TuleapSCMSourceContext.class, null));
             all.addAll(SCMSourceTrait._for(sourceDescriptor, null, GitSCMBuilder.class));
-            Set<SCMTraitDescriptor<?>> dedup = new HashSet<>();
-            for (Iterator<SCMTraitDescriptor<?>> iterator = all.iterator(); iterator.hasNext();) {
-                SCMTraitDescriptor<?> d = iterator.next();
-                if (dedup.contains(d) || d instanceof GitBrowserSCMSourceTrait.DescriptorImpl) {
-                    // FIXME
-                    // remove any we have seen already and ban the browser configuration as it will always be github
-                    iterator.remove();
-                } else {
-                    dedup.add(d);
-                }
-            }
+            List<SCMTraitDescriptor<?>> distinct = all.stream().distinct().collect(Collectors.toList());
+
             List<NamedArrayList<? extends SCMTraitDescriptor<?>>> result = new ArrayList<>();
-            NamedArrayList.select(all, "Repositories",
+            NamedArrayList.select(distinct, "Repositories",
                 scmTraitDescriptor -> scmTraitDescriptor instanceof SCMNavigatorTraitDescriptor, true, result);
-            NamedArrayList.select(all, "Within repository", NamedArrayList
+            NamedArrayList.select(distinct, "Within repository", NamedArrayList
                 .anyOf(NamedArrayList.withAnnotation(Discovery.class), NamedArrayList.withAnnotation(Selection.class)),
                 true, result);
-            NamedArrayList.select(all, "Additional", null, true, result);
+            NamedArrayList.select(distinct, "Additional", null, true, result);
             return result;
         }
     }
@@ -476,8 +497,11 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @GuardedBy("this")
         private int count;
 
-        private WitnessImpl(TaskListener listener) {
+        private TuleapSCMNavigator navigator;
+
+        private WitnessImpl(TaskListener listener, TuleapSCMNavigator navigator) {
             this.listener = listener;
+            this.navigator = navigator;
         }
 
         @Override
@@ -488,7 +512,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
                     count++;
                 }
             } else {
-                listener.getLogger().format("Ignoring %s%n", name);
+                TuleapGitRepository repo = navigator.getRepositories().get(name);
+                listener.getLogger().format("Ignoring %s (reason : private user fork is excluded, URL : %s)%n",
+                                            name, repo.getPath());
             }
         }
 
