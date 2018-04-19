@@ -138,7 +138,9 @@ class DefaultClient implements TuleapClient {
             ResponseBody body = response.body();
             if (body != null) {
                 TuleapApi api = parse(body.string(), TuleapApi.class);
-                return "1".equals(api.getApiVersion());
+                //API has changed no version number provided anymore :(
+                //return "1".equals(api.getApiVersion());
+                return true;
             }
             return false;
         } catch (IOException e) {

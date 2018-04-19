@@ -39,7 +39,8 @@ public interface TuleapClient {
     /**
      * The api explorer path according to api v1
      */
-    String TULEAP_API_EXPLORER_PATH = "/explorer/resources.json";
+    //API has changed no resources.json anymore :(
+    String TULEAP_API_EXPLORER_PATH = "/explorer/swagger.json";
 
     /**
      * The projects api path according to api v1
