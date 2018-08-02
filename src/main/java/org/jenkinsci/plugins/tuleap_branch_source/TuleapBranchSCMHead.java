@@ -4,7 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.scm.api.SCMHead;
 
 /**
- * Head corresponding to a branch of an OrangeForge git repository.
+ * Head corresponding to a branch of an Tuleap git repository.
  */
 public class TuleapBranchSCMHead extends SCMHead {
 
@@ -20,7 +20,7 @@ public class TuleapBranchSCMHead extends SCMHead {
      */
     @Override
     public String getPronoun() {
-        return Messages.OFBranchSCMHead_pronoun();
+        return Messages.BranchSCMHead_pronoun();
     }
 
 }

@@ -1,18 +1,27 @@
 package org.jenkinsci.plugins.tuleap_branch_source;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.inject.Inject;
-
-
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Action;
+import hudson.model.Item;
+import hudson.model.TaskListener;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.branch.OrganizationFolder;
+import jenkins.model.Jenkins;
+import jenkins.plugins.git.GitSCMBuilder;
+import jenkins.scm.api.*;
+import jenkins.scm.api.trait.*;
+import jenkins.scm.impl.UncategorizedSCMSourceCategory;
+import jenkins.scm.impl.form.NamedArrayList;
+import jenkins.scm.impl.trait.Discovery;
+import jenkins.scm.impl.trait.Selection;
+import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
+import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
+import net.jcip.annotations.GuardedBy;
 import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
@@ -31,45 +40,16 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.checkCredentials;
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.listScanCredentials;
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.lookupScanCredentials;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.Action;
-import hudson.model.Item;
-import hudson.model.TaskListener;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.branch.OrganizationFolder;
-import jenkins.model.Jenkins;
-import jenkins.plugins.git.GitSCMBuilder;
-import jenkins.scm.api.SCMNavigator;
-import jenkins.scm.api.SCMNavigatorDescriptor;
-import jenkins.scm.api.SCMNavigatorEvent;
-import jenkins.scm.api.SCMNavigatorOwner;
-import jenkins.scm.api.SCMSource;
-import jenkins.scm.api.SCMSourceCategory;
-import jenkins.scm.api.SCMSourceObserver;
-import jenkins.scm.api.trait.SCMNavigatorRequest;
-import jenkins.scm.api.trait.SCMNavigatorTrait;
-import jenkins.scm.api.trait.SCMNavigatorTraitDescriptor;
-import jenkins.scm.api.trait.SCMSourceTrait;
-import jenkins.scm.api.trait.SCMTrait;
-import jenkins.scm.api.trait.SCMTraitDescriptor;
-import jenkins.scm.impl.UncategorizedSCMSourceCategory;
-import jenkins.scm.impl.form.NamedArrayList;
-import jenkins.scm.impl.trait.Discovery;
-import jenkins.scm.impl.trait.Selection;
-import jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait;
-import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
-import net.jcip.annotations.GuardedBy;
+import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.*;
 
 public class TuleapSCMNavigator extends SCMNavigator {
 
@@ -149,7 +129,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
             .call();
         if (project.isPresent()) {
             actions.add(new TuleapProjectMetadataAction(project.get()));
-            actions.add(new TuleapLink("icon-orangeforge-logo",TuleapConfiguration.get().getDomainUrl() + "/projects/" +
+            actions.add(new TuleapLink("icon-tuleap-logo", TuleapConfiguration.get().getDomainUrl() + "/projects/" +
                 project.get().getShortname()));
         }
         return actions;
@@ -173,10 +153,10 @@ public class TuleapSCMNavigator extends SCMNavigator {
     }
 
     /**
-     * Gets the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and also the
+     * Gets the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also the
      * default credentials to use for checking out).
      *
-     * @return the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and also
+     * @return the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also
      *         the default credentials to use for checking out).
      * @since 2.2.0
      */
@@ -186,11 +166,11 @@ public class TuleapSCMNavigator extends SCMNavigator {
     }
 
     /**
-     * Sets the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and also the
+     * Sets the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also the
      * default credentials to use for checking out).
      *
      * @param credentialsId
-     *            the {@link StandardCredentials#getId()} of the credentials to use when accessing OrangeForge (and also
+     *            the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also
      *            the default credentials to use for checking out).
      * @since 2.2.0
      */
@@ -200,9 +180,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
     }
 
     /**
-     * Gets the API endpoint for the OrangeForge server.
+     * Gets the API endpoint for the Tuleap server.
      *
-     * @return the API endpoint for the OrangeForge server.
+     * @return the API endpoint for the Tuleap server.
      */
     @CheckForNull
     public String getApiUri() {
@@ -213,9 +193,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
     }
 
     /**
-     * Gets the Git endpoint for OrangeForge server.
+     * Gets the Git endpoint for Tuleap server.
      *
-     * @return the Git endpoint for OrangeForge server.
+     * @return the Git endpoint for Tuleap server.
      */
     @CheckForNull
     public String getGitBaseUri() {
@@ -256,30 +236,30 @@ public class TuleapSCMNavigator extends SCMNavigator {
         return "*".equals(includes) && "*".equals(excludes);
     }
 
-    @Symbol("orangeforge")
+    @Symbol("tuleap")
     @Extension
     public static class DescriptorImpl extends SCMNavigatorDescriptor {
 
         private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
 
         static {
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-scm-navigator icon-sm",
-                "plugin/tuleap-branch-source/images/16x16/orangeforge-scmnavigator.png", Icon.ICON_SMALL_STYLE));
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-scm-navigator icon-md",
-                "plugin/tuleap-branch-source/images/24x24/orangeforge-scmnavigator.png", Icon.ICON_MEDIUM_STYLE));
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-scm-navigator icon-lg",
-                "plugin/tuleap-branch-source/images/32x32/orangeforge-scmnavigator.png", Icon.ICON_LARGE_STYLE));
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-scm-navigator icon-xlg",
-                "plugin/tuleap-branch-source/images/48x48/orangeforge-scmnavigator.png", Icon.ICON_XLARGE_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-scm-navigator icon-sm",
+                "plugin/tuleap-branch-source/images/16x16/tuleap-scmnavigator.png", Icon.ICON_SMALL_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-scm-navigator icon-md",
+                "plugin/tuleap-branch-source/images/24x24/tuleap-scmnavigator.png", Icon.ICON_MEDIUM_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-scm-navigator icon-lg",
+                "plugin/tuleap-branch-source/images/32x32/tuleap-scmnavigator.png", Icon.ICON_LARGE_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-scm-navigator icon-xlg",
+                "plugin/tuleap-branch-source/images/48x48/tuleap-scmnavigator.png", Icon.ICON_XLARGE_STYLE));
 
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-logo icon-sm",
-                "plugin/tuleap-branch-source/images/16x16/orangeforge-logo.png", Icon.ICON_SMALL_STYLE));
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-logo icon-md",
-                "plugin/tuleap-branch-source/images/24x24/orangeforge-logo.png", Icon.ICON_MEDIUM_STYLE));
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-logo icon-lg",
-                "plugin/tuleap-branch-source/images/32x32/orangeforge-logo.png", Icon.ICON_LARGE_STYLE));
-            IconSet.icons.addIcon(new Icon("icon-orangeforge-logo icon-xlg",
-                "plugin/tuleap-branch-source/images/48x48/orangeforge-logo.png", Icon.ICON_XLARGE_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-logo icon-sm",
+                "plugin/tuleap-branch-source/images/16x16/tuleap-logo.png", Icon.ICON_SMALL_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-logo icon-md",
+                "plugin/tuleap-branch-source/images/24x24/tuleap-logo.png", Icon.ICON_MEDIUM_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-logo icon-lg",
+                "plugin/tuleap-branch-source/images/32x32/tuleap-logo.png", Icon.ICON_LARGE_STYLE));
+            IconSet.icons.addIcon(new Icon("icon-tuleap-logo icon-xlg",
+                "plugin/tuleap-branch-source/images/48x48/tuleap-logo.png", Icon.ICON_XLARGE_STYLE));
 
             IconSet.icons.addIcon(new Icon("icon-git-repo icon-sm",
                 "plugin/tuleap-branch-source/images/16x16/git-repo.png", Icon.ICON_SMALL_STYLE));
@@ -308,7 +288,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
          */
         @Override
         public String getPronoun() {
-            return Messages.OFSCMNavigator_pronoun();
+            return Messages.SCMNavigator_pronoun();
         }
 
         /**
@@ -330,13 +310,13 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @NonNull
         @Override
         public String getDisplayName() {
-            return "OrangeForge Project";
+            return "Tuleap Project";
         }
 
         @NonNull
         protected SCMSourceCategory[] createCategories() {
             return new SCMSourceCategory[] {
-                new UncategorizedSCMSourceCategory(Messages._OFSCMNavigator_depotSourceCategory()) };
+                new UncategorizedSCMSourceCategory(Messages._SCMNavigator_depotSourceCategory()) };
         }
 
         /**
@@ -345,7 +325,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @NonNull
         @Override
         public String getDescription() {
-            return Messages.OFSCMNavigator_description();
+            return Messages.SCMNavigator_description();
         }
 
         /**
@@ -353,7 +333,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
          */
         @Override
         public String getIconFilePathPattern() {
-            return "plugin/tuleap-branch-source/images/:size/orangeforge-scmnavigator.png";
+            return "plugin/tuleap-branch-source/images/:size/tuleap-scmnavigator.png";
         }
 
         /**
@@ -361,7 +341,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
          */
         @Override
         public String getIconClassName() {
-            return "icon-orangeforge-scm-navigator";
+            return "icon-tuleap-scm-navigator";
         }
 
         @RequirePOST
@@ -373,8 +353,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
         }
 
         @Restricted(NoExternalUse.class) // stapler
-        public FormValidation doCheckProjectId(@CheckForNull @AncestorInPath Item context,
+        public FormValidation doCheckProjectId(@Nonnull @AncestorInPath Item context,
             @QueryParameter String projectId, @QueryParameter String includes, @QueryParameter String excludes) {
+
 
             Optional<SCMNavigator> navigator = ((OrganizationFolder) context).getNavigators().stream().filter(n
                                                                                                                        -> n
@@ -421,7 +402,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @SuppressWarnings("unused") // stapler
         public ListBoxModel doFillApiUriItems() {
             ListBoxModel result = new ListBoxModel();
-            result.add("OrangeForge API", TuleapConfiguration.get().getApiBaseUrl());
+            result.add("Tuleap API", TuleapConfiguration.get().getApiBaseUrl());
             return result;
         }
 
@@ -452,7 +433,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @SuppressWarnings("unused") // stapler
         public ListBoxModel doFillGitBaseUriItems() {
             ListBoxModel result = new ListBoxModel();
-            result.add("OrangeForge Git", TuleapConfiguration.get().getGitBaseUrl());
+            result.add("Tuleap Git", TuleapConfiguration.get().getGitBaseUrl());
             return result;
         }
 

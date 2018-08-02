@@ -44,7 +44,7 @@ public class TuleapLink implements Action, IconSpec {
 
     @Override
     public String getDisplayName() {
-        return "OrangeForge";
+        return "Tuleap Project";
     }
 
     @Override

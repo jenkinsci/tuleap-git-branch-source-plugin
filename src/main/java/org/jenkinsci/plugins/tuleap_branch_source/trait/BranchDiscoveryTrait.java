@@ -52,7 +52,7 @@ public class BranchDiscoveryTrait extends SCMSourceTrait {
     public static class DescriptorImpl extends SCMSourceTraitDescriptor {
         @Override
         public String getDisplayName() {
-            return Messages.OFBranchDiscoveryTrait_displayName();
+            return Messages.BranchDiscoveryTrait_displayName();
         }
 
         @Override

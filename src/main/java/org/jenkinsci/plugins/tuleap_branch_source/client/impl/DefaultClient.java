@@ -1,18 +1,10 @@
 package org.jenkinsci.plugins.tuleap_branch_source.client.impl;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
-
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hudson.model.TaskListener;
+import okhttp3.*;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -21,31 +13,19 @@ import org.eclipse.jgit.errors.RemoteRepositoryException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClient;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapApi;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProjectRepositories;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapUser;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
-import static org.apache.commons.lang3.StringUtils.endsWith;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.startsWith;
-
-import hudson.model.TaskListener;
-import okhttp3.CacheControl;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import static org.apache.commons.lang3.StringUtils.*;
 
 /**
  * A default implementation of a Tuleap Client
@@ -137,7 +117,7 @@ class DefaultClient implements TuleapClient {
 
             ResponseBody body = response.body();
             if (body != null) {
-                TuleapApi api = parse(body.string(), TuleapApi.class);
+//                TuleapApi api = parse(body.string(), TuleapApi.class);
                 //API has changed no version number provided anymore :(
                 //return "1".equals(api.getApiVersion());
                 return true;

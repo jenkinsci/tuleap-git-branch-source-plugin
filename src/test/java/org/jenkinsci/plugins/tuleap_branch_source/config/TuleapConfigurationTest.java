@@ -20,6 +20,7 @@ public class TuleapConfigurationTest {
     @ClassRule
     public static JenkinsRule j = new JenkinsRule();
     private TuleapConfiguration instance;
+    private static String VALID_TULEAP_URL = "https://tuleap.net";
 
     @Before
     public void setup() {
@@ -27,21 +28,21 @@ public class TuleapConfigurationTest {
     }
     @Test
     public void testConnexion_malformed_url() throws IOException {
-        final FormValidation formValidation = instance.doVerifyUrls("url.sucks.com");
+        final FormValidation formValidation = instance.doVerifyUrls("url.sucks.test");
         assertThat(formValidation.kind, is(FormValidation.Kind.ERROR));
         assertThat(formValidation.getMessage(), anything("Malformed url"));
     }
 
     @Test
     public void testConnexion_fake_url() throws IOException {
-        final FormValidation formValidation = instance.doVerifyUrls("http://aaa.bb.com");
+        final FormValidation formValidation = instance.doVerifyUrls("http://aaa.bb.test");
         assertThat(formValidation.kind, is(FormValidation.Kind.ERROR));
         assertThat(formValidation.getMessage(), anything("Failed to validate url"));
     }
 
     @Test
     public void testConnexion_ok_url() throws IOException {
-        final FormValidation formValidation = instance.doVerifyUrls(DEFAULT_TULEAP_DOMAIN_URL);
+        final FormValidation formValidation = instance.doVerifyUrls(VALID_TULEAP_URL);
         assertThat(formValidation.kind, is(FormValidation.Kind.OK));
     }
 }

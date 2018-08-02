@@ -61,7 +61,7 @@ import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 
 /**
- * SCM source implementation for OrangeForge discover branch af a repo
+ * SCM source implementation for Tuleap discover branch af a repo
  */
 public class TuleapSCMSource extends AbstractGitSCMSource {
 
@@ -235,10 +235,10 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     /**
-     * Gets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking
+     * Gets the credentials used to access the Tuleap REST API (also used as the default credentials for checking
      * out sources.
      *
-     * @return the credentials used to access the OrangeForge REST API
+     * @return the credentials used to access the Tuleap REST API
      */
     @Override
     @CheckForNull
@@ -247,11 +247,11 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     /**
-     * Sets the credentials used to access the OrangeForge REST API (also used as the default credentials for checking
+     * Sets the credentials used to access the Tuleap REST API (also used as the default credentials for checking
      * out sources.
      *
      * @param credentialsId
-     *            the credentials used to access the OrangeForge REST API
+     *            the credentials used to access the Tuleap REST API
      * @since 2.2.0
      */
     @DataBoundSetter
@@ -290,13 +290,13 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         return TuleapConfiguration.get().getGitBaseUrl();
     }
 
-    @Symbol("orangeforge")
+    @Symbol("Tuleap")
     @Extension
     public static class DescriptorImpl extends SCMSourceDescriptor {
 
         @Override
         public String getDisplayName() {
-            return "OrangeForge";
+            return "Tuleap";
         }
 
         public List<SCMSourceTrait> getTraitsDefaults() {

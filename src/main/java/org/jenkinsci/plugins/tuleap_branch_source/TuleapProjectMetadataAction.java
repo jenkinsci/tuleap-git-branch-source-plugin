@@ -17,7 +17,7 @@ public class TuleapProjectMetadataAction extends AvatarMetadataAction {
      */
     @Override
     public String getAvatarDescription() {
-        return Messages.OFProjectMetadataAction_iconDescription();
+        return Messages.ProjectMetadataAction_iconDescription();
     }
 
     /**

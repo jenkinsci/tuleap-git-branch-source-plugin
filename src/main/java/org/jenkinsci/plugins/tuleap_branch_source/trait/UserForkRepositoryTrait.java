@@ -82,7 +82,7 @@ public class UserForkRepositoryTrait extends SCMNavigatorTrait {
         @Nonnull
         @Override
         public String getDisplayName() {
-            return Messages.OFUserForkRepositoryTrait_displayName();
+            return Messages.UserForkRepositoryTrait_displayName();
         }
 
         @Override
@@ -100,8 +100,8 @@ public class UserForkRepositoryTrait extends SCMNavigatorTrait {
         @SuppressWarnings("unused") // stapler
         public ListBoxModel doFillStrategyItems() {
             ListBoxModel result = new ListBoxModel();
-            result.add(Messages.OFUserForkRepositoryTrait_excludeUserForkRepositories(), "1");
-            result.add(Messages.OFUserForkRepositoryTrait_allRepositories(), "2");
+            result.add(Messages.UserForkRepositoryTrait_excludeUserForkRepositories(), "1");
+            result.add(Messages.UserForkRepositoryTrait_allRepositories(), "2");
             return result;
         }
     }

@@ -1,28 +1,26 @@
 package org.jenkinsci.plugins.tuleap_branch_source.client;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-
 import org.eclipse.jgit.api.errors.TransportException;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
 import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapUser;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 /**
  * Defines a Tuleap REST client and its behaviours given some configurations.
  * Translates Tuleap api response from api php object to api java object and populate these objects to be used by the
  * SCM api.
  *
- * source https://www.forge.orange-labs.fr/api/explorer/resources.json and it represent the v1
- * @see <a href= https://www.forge.orange-labs.fr/api/explorer/>API OrangeForge</a>
+ * @see <a href= https://tuleap.net/api/explorer/>API Tuleap</a>
  */
 public interface TuleapClient {
 
-    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.forge.orange-labs.fr";
+    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.tuleap.example.test";
 
     /**
      * Git URL as default configured in /etc/tuleap/plugins/git/etc/config.inc
@@ -90,10 +88,10 @@ public interface TuleapClient {
     boolean isServerUrlValid() throws IOException ;
 
     /**
-     * Return projects current user has access. Using param object ?query={"is_member_of": true} of OrangeForge api
+     * Return projects current user has access. Using param object ?query={"is_member_of": true} of Tuleap api
      * it returns only projects user is member of
      * From docs
-     * https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve : Please note that {"is_member_of": false} is
+     * https://tuleap.net/api/explorer/#!/projects/retrieve : Please note that {"is_member_of": false} is
      * not supported and will result in a 400 Bad Request error.
      *
      * @param isMemberOf if return only projects user is member of

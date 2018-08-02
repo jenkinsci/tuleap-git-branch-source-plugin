@@ -70,7 +70,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
     @NonNull
     @Override
     public String getDisplayName() {
-        return Messages.OFConfiguration_displayName();
+        return Messages.Configuration_displayName();
     }
 
     @SuppressWarnings("unused")
