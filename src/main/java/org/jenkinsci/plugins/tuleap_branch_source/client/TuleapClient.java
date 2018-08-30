@@ -1,10 +1,7 @@
 package org.jenkinsci.plugins.tuleap_branch_source.client;
 
 import org.eclipse.jgit.api.errors.TransportException;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapUser;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,7 +17,7 @@ import java.util.stream.Stream;
  */
 public interface TuleapClient {
 
-    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.tuleap.example.test";
+    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.forge.orange-labs.fr";
 
     /**
      * Git URL as default configured in /etc/tuleap/plugins/git/etc/config.inc
@@ -54,7 +51,6 @@ public interface TuleapClient {
      * The git api path according to api v1
      */
     String TULEAP_API_GIT_PATH = "/git";
-
     /**
      * The query param syntax according to api v1
      */
@@ -130,6 +126,9 @@ public interface TuleapClient {
     Stream<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
         throws IOException, NoSingleRepoByPathException;
 
+    Optional<TuleapFileContent> getJenkinsFile(int idRepo, String path_to_file,String ref) throws IOException;
+
+    Stream<TuleapBranches> allBranches(int idRepo) throws IOException;
     /**
      * If multpile git repo are represented by a path it is a show stopper as in Tuleap the discriminant is the git
      * repo path

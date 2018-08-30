@@ -1,21 +1,28 @@
 package org.jenkinsci.plugins.tuleap_branch_source;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Action;
+import hudson.model.Actionable;
+import hudson.model.Item;
+import hudson.model.TaskListener;
+import hudson.scm.SCM;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.branch.MultiBranchProjectFactory;
+import jenkins.plugins.git.AbstractGitSCMSource;
+import jenkins.plugins.git.GitSCMBuilder;
+import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
+import jenkins.scm.api.*;
+import jenkins.scm.api.trait.SCMSourceRequest;
+import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_branch_source.client.TuleapClientRawCmd;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.*;
 import org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConfiguration;
 import org.jenkinsci.plugins.tuleap_branch_source.trait.BranchDiscoveryTrait;
 import org.kohsuke.accmod.Restricted;
@@ -28,37 +35,12 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.checkCredentials;
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.listScanCredentials;
-import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.lookupScanCredentials;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.Action;
-import hudson.model.Actionable;
-import hudson.model.Item;
-import hudson.model.TaskListener;
-import hudson.scm.SCM;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.plugins.git.AbstractGitSCMSource;
-import jenkins.plugins.git.GitSCMBuilder;
-import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
-import jenkins.scm.api.SCMHead;
-import jenkins.scm.api.SCMHeadCategory;
-import jenkins.scm.api.SCMHeadEvent;
-import jenkins.scm.api.SCMHeadObserver;
-import jenkins.scm.api.SCMRevision;
-import jenkins.scm.api.SCMSourceCriteria;
-import jenkins.scm.api.SCMSourceDescriptor;
-import jenkins.scm.api.SCMSourceEvent;
-import jenkins.scm.api.SCMSourceOwner;
-import jenkins.scm.api.trait.SCMSourceRequest;
-import jenkins.scm.api.trait.SCMSourceTrait;
+import static org.jenkinsci.plugins.tuleap_branch_source.config.TuleapConnector.*;
 
 /**
  * SCM source implementation for Tuleap discover branch af a repo
@@ -143,24 +125,31 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             setRemoteUrl(getGitBaseUri() + repositoryPath);
             if (request.isFetchBranches()) {
                 LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
-                Stream<TuleapGitBranch> branches = TuleapClientCommandConfigurer.<Stream<TuleapGitBranch>> newInstance
-                    (getApiBaseUri())
-                        .withCredentials(credentials).withGitUrl(getGitBaseUri()).withListener(listener)
-                        .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
+                Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
+                    .withCredentials(credentials)
+                    .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
+                    .configure()
+                    .call();
+                request.setBranchesFromTuleapApi(branches);
+                int count = 0;
+                for (TuleapBranches branch : branches.collect(Collectors.toList())) {
+                    count++;
+                    request.listener().getLogger().println("Get the Jenkinsfile from Tuleap.");
+                    Optional<TuleapFileContent> file = TuleapClientCommandConfigurer.<Optional<TuleapFileContent>>newInstance(getApiBaseUri())
+                        .withCredentials(credentials)
+                        .withCommand(new TuleapClientRawCmd.GetJenkinsFile(repository.getId(), "Jenkinsfile", branch.getName()))
                         .configure()
                         .call();
-                request.setBranches(branches);
-                int count = 0;
-                for (TuleapGitBranch branch : branches.collect(Collectors.toList())) {
-                    count++;
-                    request.listener().getLogger()
-                        .format("Crawling branch %s::%s for repo %s", branch.getName(), branch.getSha1(), getRemote())
-                        .println();
-                    TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
-                    if (request.process(head, new SCMRevisionImpl(head, branch.getSha1()),
-                                        TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
-                        request.listener().getLogger()
-                            .format("%n  %d branches were processed (query completed)%n", count).println();
+                    if (file.get().getName() != null) {
+                        request.listener().getLogger().format("Search at '%s'", branch.getName());
+                        TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
+                        if (request.process(head, new SCMRevisionImpl(head, branch.getCommit().getCommit_id()),
+                            TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
+                            request.listener().getLogger()
+                                .format("%n  %d branches were processed (query completed)%n", count).println();
+                        }
+                    } else {
+                        request.listener().getLogger().format("There is no Jenkinsfile at the branch: %s \n", branch.getName());
                     }
 
                 }
@@ -172,16 +161,15 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @Override
     protected SCMRevision retrieve(SCMHead head, TaskListener listener) throws IOException, InterruptedException {
         Optional<String> revision = Optional.empty();
-        Stream<TuleapGitBranch> branches = TuleapClientCommandConfigurer
-            .<Stream<TuleapGitBranch>> newInstance(getApiBaseUri())
-            .withCredentials(credentials).withGitUrl(getGitBaseUri()).withListener(listener)
-            .withCommand(new TuleapClientRawCmd.AllBranchesByGitRepo(repositoryPath, project.getShortname()))
+        Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
+            .withCredentials(credentials)
+            .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
             .configure()
             .call();
-        Optional<TuleapGitBranch> branch = branches.filter(b -> b.getName().equals(head.getName()))
+        Optional<TuleapBranches> branch = branches.filter(b -> b.getName().equals(head.getName()))
                                                    .findFirst();
         if (branch.isPresent()) {
-            revision = Optional.of(branch.get().getSha1());
+            revision = Optional.of(branch.get().getCommit().getCommit_id());
         } else {
             listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
         }

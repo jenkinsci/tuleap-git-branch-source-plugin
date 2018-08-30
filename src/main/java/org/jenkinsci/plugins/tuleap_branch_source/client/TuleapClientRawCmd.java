@@ -1,13 +1,10 @@
 package org.jenkinsci.plugins.tuleap_branch_source.client;
 
+import org.jenkinsci.plugins.tuleap_branch_source.client.api.*;
+
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitBranch;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapGitRepository;
-import org.jenkinsci.plugins.tuleap_branch_source.client.api.TuleapProject;
 
 public class TuleapClientRawCmd {
 
@@ -92,6 +89,37 @@ public class TuleapClientRawCmd {
         @Override
         public Boolean call() throws IOException {
             return client.isCredentialValid();
+        }
+    }
+
+    public static class Branches extends TuleapClientRawCmd implements Command<Stream<TuleapBranches>> {
+        private final int idRepo;
+
+        public Branches(int idRepo) {
+            this.idRepo = idRepo;
+        }
+
+        @Override
+        public Stream<TuleapBranches> call() throws IOException {
+            return client.allBranches(idRepo);
+        }
+    }
+
+    public static class GetJenkinsFile extends TuleapClientRawCmd implements Command<Optional<TuleapFileContent>> {
+
+        private int idRepo;
+        private String pathToFile;
+        private String ref;
+
+        public GetJenkinsFile(int idRepo, String pathToFile, String ref) {
+            this.idRepo = idRepo;
+            this.ref = ref;
+            this.pathToFile = pathToFile;
+        }
+
+        @Override
+        public Optional<TuleapFileContent> call() throws IOException {
+            return client.getJenkinsFile(idRepo, pathToFile, ref);
         }
     }
 }

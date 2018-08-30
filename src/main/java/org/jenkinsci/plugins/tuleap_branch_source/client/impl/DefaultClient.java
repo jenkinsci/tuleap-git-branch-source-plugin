@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -225,6 +226,44 @@ class DefaultClient implements TuleapClient {
         }
     }
 
+    public final Stream<TuleapBranches> allBranches(int idRepo) throws IOException {
+        String allBranchesUrl = apiBaseUrl + TULEAP_API_GIT_PATH + "/" + idRepo + "/branches";
+        Request request = new Request.Builder()
+            .url(new URL(allBranchesUrl))
+            .addHeader("content-type", "application/json")
+            .cacheControl(CacheControl.FORCE_NETWORK)
+            .get()
+            .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException(
+                    "HTTP call error at url: " + request.url().toString() + " " + "with code: " + response.code());
+            }
+            return Stream.of(parse(response.body().string(), TuleapBranches[].class));
+        } catch (IOException e) {
+            throw new IOException("GetBranches encounter error", e);
+        }
+    }
+
+    public final Optional<TuleapFileContent> getJenkinsFile(int idRepo, String pathToFile, String ref) throws IOException {
+        String getJenkinsFileUrl = apiBaseUrl + TULEAP_API_GIT_PATH + "/" + idRepo + "/files";
+        Request request = new Request.Builder().url(HttpUrl.parse(getJenkinsFileUrl).newBuilder()
+            .addQueryParameter("path_to_file", pathToFile)
+            .addQueryParameter("ref", ref).build())
+            .addHeader("content-type", "application/json")
+            .cacheControl(CacheControl.FORCE_NETWORK)
+            .get()
+            .build();
+        try (Response response = client.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            if (body != null) {
+                return Optional.ofNullable(parse(body.string(), TuleapFileContent.class));
+            }
+            return Optional.empty();
+        } catch (IOException e) {
+            throw new IOException("getJenkinsFile encounter error", e);
+        }
+    }
     /**
      * {@inheritDoc}
      */
