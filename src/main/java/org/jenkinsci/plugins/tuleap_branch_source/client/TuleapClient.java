@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  */
 public interface TuleapClient {
 
-    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.forge.orange-labs.fr";
+    String DEFAULT_TULEAP_DOMAIN_URL = "https://www.tuleap.example.test";
 
     /**
      * Git URL as default configured in /etc/tuleap/plugins/git/etc/config.inc

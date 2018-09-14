@@ -149,7 +149,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                                 .format("%n  %d branches were processed (query completed)%n", count).println();
                         }
                     } else {
-                        request.listener().getLogger().format("There is no Jenkinsfile at the branch: %s \n", branch.getName());
+                        request.listener().getLogger().format("There is no Jenkinsfile at the branch: %s %n", branch.getName());
                     }
 
                 }
