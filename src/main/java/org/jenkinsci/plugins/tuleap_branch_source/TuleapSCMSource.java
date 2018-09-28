@@ -143,7 +143,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     if (file.get().getName() != null) {
                         request.listener().getLogger().format("Search at '%s'", branch.getName());
                         TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
-                        if (request.process(head, new SCMRevisionImpl(head, branch.getCommit().getCommit_id()),
+                        if (request.process(head, new SCMRevisionImpl(head, branch.getCommit().getId()),
                             TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
                             request.listener().getLogger()
                                 .format("%n  %d branches were processed (query completed)%n", count).println();
@@ -169,7 +169,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         Optional<TuleapBranches> branch = branches.filter(b -> b.getName().equals(head.getName()))
                                                    .findFirst();
         if (branch.isPresent()) {
-            revision = Optional.of(branch.get().getCommit().getCommit_id());
+            revision = Optional.of(branch.get().getCommit().getId());
         } else {
             listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
         }

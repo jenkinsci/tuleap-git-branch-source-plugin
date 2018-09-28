@@ -1,13 +1,16 @@
 package org.jenkinsci.plugins.tuleap_branch_source.client.api;
 
-public class TuleapCommit {
-    private String commit_id;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-    public String getCommit_id() {
-        return commit_id;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class TuleapCommit {
+    private String id;
+
+    public String getId() {
+        return id;
     }
 
-    public void setCommit_id(String commit_id) {
-        this.commit_id = commit_id;
+    public void setId(String id) {
+        this.id = id;
     }
 }
