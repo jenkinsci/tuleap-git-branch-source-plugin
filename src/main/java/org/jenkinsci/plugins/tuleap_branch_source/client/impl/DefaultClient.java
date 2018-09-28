@@ -134,6 +134,7 @@ class DefaultClient implements TuleapClient {
      */
     public final Stream<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException {
         isApiUrlPresent("Fetching all users's projects");
+        LOGGER.info("Fetching all user's projects");
         String projectsApiUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH ;
         //If property is_member_of is not defined, api will respond with all projects in read-only mode
         if (isMemberOf) {

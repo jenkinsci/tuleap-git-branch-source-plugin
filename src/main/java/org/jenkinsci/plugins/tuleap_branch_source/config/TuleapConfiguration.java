@@ -54,6 +54,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setDomainUrl(String domainUrl) {
         this.domainUrl = domainUrl;
+        save();
     }
 
     public String getApiBaseUrl() {
