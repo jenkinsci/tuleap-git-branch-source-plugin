@@ -3,9 +3,6 @@
 
 ## Todo
 
-* Finish to remove Orangeforge references
-* Makes english by default + fr translation
-* License to MIT as requested by Orange
 * Filter history to purge creds before go live
 * Make use of Tuleap API key instead of basic auth (server relief)
   This would be a really good stuff for better performances (basic auth is really CPU intensive) however we don't know
