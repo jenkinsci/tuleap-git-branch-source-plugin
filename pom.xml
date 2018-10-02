@@ -9,7 +9,7 @@
     <version>2.11</version>
     <relativePath/>
   </parent>
-  <artifactId>tuleap-branch-source</artifactId>
+  <artifactId>tuleap-git-branch-source</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
@@ -23,9 +23,9 @@
 
   <!--TODO Align version from work/plugins-->
 
-  <name>Jenkins Tuleap Branch Source for Tuleap</name>
+  <name>Tuleap Git Branch Source Plugin</name>
   <description>Mimic the Github Branch Source plugin for Tuleap so that Jenkins' jobs are
-    autocreated when a git repository containing a jenkinsFile is discovered in the Tuleap project's
+    autocreated when a git repository containing a Jenkinsfile is discovered in the Tuleap project's
     repo</description>
 
   <repositories>
