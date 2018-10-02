@@ -1,21 +1,38 @@
-# Todo
+
+# Development
+
+## Todo
 
 * Finish to remove Orangeforge references
 * Makes english by default + fr translation
 * License to MIT as requested by Orange
 * Filter history to purge creds before go live
-* May use of Tuleap API key instead of basic auth (server relief)
-
-# Development
-
-## Build
-
-docker run -it --rm --name my-maven-project -v ~/.m2:/var/maven/.m2 -u $(id -u) -e MAVEN_CONFIG=/var/maven/.m2 -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn -Duser.home=/var/maven clean install
+* Make use of Tuleap API key instead of basic auth (server relief)
+  This would be a really good stuff for better performances (basic auth is really CPU intensive) however we don't know
+  how to do that properly today. There are 2 pain points
+  - First, we should use "Secret key" (or token) to store the AccessKey (instead of user/password) but we didn't find
+    a good documentation for that ATM.
+  - Then the issue is that the same auth is used for API access and git operations (clone of repo, etc). However the access key
+    cannot be used to do git operation so we should have 2 separated creds here.
 
 ## On jenkins, connect to Tuleap
 
-echo -n | openssl s_client -connect tuleap-web.tuleap-aio-dev.docker:443 |    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p'  > /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
+Configure Jenkins to accept a tuleap dev environment certificate
 
-keytool -keystore /docker-java-home/jre/lib/security/cacerts   -import -trustcacerts -storepass changeit -noprompt -alias tuleap-web-dev -file /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
+    echo -n | openssl s_client -connect tuleap-web.tuleap-aio-dev.docker:443 |    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p'  > /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
+    keytool -keystore /docker-java-home/jre/lib/security/cacerts   -import -trustcacerts -storepass changeit -noprompt -alias tuleap-web-dev -file /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
+    update-ca-certificates
 
-update-ca-certificates
+## Build
+
+### You have a local java / maven env
+
+Tested with OpenJDK 8
+
+    $> mvn clean install
+    $> cp target/tuleap-branch-source.hpi onto jenkins
+
+### With docker
+
+    docker run -it --rm -v ~/.m2:/var/maven/.m2 -u $(id -u) -e MAVEN_CONFIG=/var/maven/.m2 -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn -Duser.home=/var/maven clean install
+
