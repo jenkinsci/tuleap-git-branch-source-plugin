@@ -362,8 +362,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 instanceof TuleapSCMNavigator).findFirst();
             if (navigator.isPresent()) {
                 if (((TuleapSCMNavigator)navigator.get()).isIncludeExcludesDefault()) {
-                    return FormValidation.warning("Sans modifications des includes excludes tout repository sera " +
-                                                      "ignoré");
+                    return FormValidation.warning("Without modifications of include/exlude parameters everything will be ignored");
                 } else {
                     return FormValidation.ok();
                 }
