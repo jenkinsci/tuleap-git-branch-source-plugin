@@ -67,6 +67,11 @@ public interface TuleapClient {
     String IS_MEMBER_OF_QUERY_OBJECT_PATTERN = "{\"is_member_of\":true}";
 
     /**
+     * When a collection is returned by Tuleap, the size is advertized by this header.
+     */
+    String COLLECTION_LENGTH_HEADER = "x-pagination-size";
+
+    /**
      * A means to tell we did a successful http call to a Tuleap server with correct registered credentials
      * From Tuleap docs : Note that when accessing this route without authentication certain properties will not be
      * returned in the response.

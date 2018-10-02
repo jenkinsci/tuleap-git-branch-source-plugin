@@ -141,25 +141,41 @@ class DefaultClient implements TuleapClient {
             final String urlEncodedQueryObject = URLEncoder.encode(IS_MEMBER_OF_QUERY_OBJECT_PATTERN, StandardCharsets.UTF_8.displayName());
             projectsApiUrl += QUERY_OBJECT_PARAM + urlEncodedQueryObject;
         }
-        Request req = new Request.Builder()
-            .url(projectsApiUrl)
-            .addHeader("content-type", "application/json")
-            .cacheControl(CacheControl.FORCE_NETWORK)
-            .get()
-            .build();
-        try (Response response = client.newCall(req).execute()) {
-            if (!response.isSuccessful())
-                throw new IOException(
-                    "HTTP call error at url: " + req.url().toString() + " " + "with code: " + response.code());
+        int offset            = 0;
+        int limit             = 10;
+        int totalPages        = 0;
+        int pageCount         = 0;
+        Stream<TuleapProject> allProjects = Stream.empty();
+        do {
+            offset = pageCount * limit;
+            final String fetchUrl = projectsApiUrl+"&offset="+ offset + "&limit="+limit;
+            LOGGER.info("GET {}", fetchUrl);
 
-            ResponseBody body = response.body();
-            if (body != null) {
-                return Stream.of(parse(body.string(), TuleapProject[].class));
+            Request req = new Request.Builder()
+                .url(fetchUrl)
+                .addHeader("content-type", "application/json")
+                .cacheControl(CacheControl.FORCE_NETWORK)
+                .get()
+		.build();
+	    try (Response response = client.newCall(req).execute()) {
+		if (offset == 0) {
+		    int nbProjectsMax = Integer.parseInt(response.header(COLLECTION_LENGTH_HEADER));
+		    totalPages = nbProjectsMax / limit + ((nbProjectsMax % limit == 0) ? 0 : 1);
+		}
+		if (!response.isSuccessful())
+		    throw new IOException(
+			    "HTTP call error at url: " + req.url().toString() + " " + "with code: " + response.code());
+
+                ResponseBody body = response.body();
+                if (body != null) {
+                    allProjects = Stream.concat(allProjects, Stream.of(parse(body.string(), TuleapProject[].class)));
+                }
+            } catch (IOException e) {
+                throw new IOException("Retrieve current user's projects encounter error", e);
             }
-            return Stream.empty();
-        } catch (IOException e) {
-            throw new IOException("Retrieve current user's projects encounter error", e);
-        }
+            pageCount++;
+        } while(pageCount < totalPages);
+        return allProjects;
     }
 
     /**
