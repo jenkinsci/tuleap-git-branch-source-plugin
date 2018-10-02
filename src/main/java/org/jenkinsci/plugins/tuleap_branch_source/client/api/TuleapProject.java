@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 /**
  * Translate a ProjectRepresentation
  *
- * @see <a href= https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve>https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieve</a>
+ * @see <a href= https://tuleap.net/api/explorer/#!/projects/retrieve>https://tuleap.net/api/explorer/#!/projects/retrieve</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TuleapProject {

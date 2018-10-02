@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 /**
  * Encapsulate the Tuleap git representation and JGit git repo Translation of Tuleap's GitRepositoryRepresentation
  *
- * @see <a href= https://www.forge.orange-labs.fr/api/explorer/#!/git/retrieve>https://www.forge.orange-labs.fr/api/explorer/#!/git/retrieve</a>
- * @see <a href= https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit>https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit</a>
- * @see <a href= https://goo.gl/kbMmwA>GitRepositoryRepresentation</a>
+ * @see <a href="https://tuleap.net/api/explorer/#!/git/retrieve">https://tuleap.net/api/explorer/#!/git/retrieve</a>
+ * @see <a href="https://tuleap.net/api/explorer/#!/projects/retrieveGit">https://tuleap.net/api/explorer/#!/projects/retrieveGit</a>
+ * @see <a href="https://tuleap.net/api/explorer/#!/git/retrieveRepositoryResource">GitRepositoryRepresentation</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TuleapGitRepository {

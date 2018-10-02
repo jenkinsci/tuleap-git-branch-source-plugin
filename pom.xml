@@ -23,9 +23,9 @@
 
   <!--TODO Align version from work/plugins-->
 
-  <name>Jenkins Tuleap Branch Source for Tuleap (OrangeForge, ...)</name>
-  <description>Mimic the Github Branch Source plugin for OrangeForge Tuleap so that Jenkins' jobs are
-    autocreated when a git repository containing a jenkinsFile is discovered in the OrangeForge project's
+  <name>Jenkins Tuleap Branch Source for Tuleap</name>
+  <description>Mimic the Github Branch Source plugin for Tuleap so that Jenkins' jobs are
+    autocreated when a git repository containing a jenkinsFile is discovered in the Tuleap project's
     repo</description>
 
   <repositories>

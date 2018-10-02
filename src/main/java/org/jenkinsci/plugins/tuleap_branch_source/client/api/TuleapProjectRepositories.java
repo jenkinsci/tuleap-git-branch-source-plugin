@@ -8,9 +8,9 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * Translation of OrangeForge Project's repositories
+ * Translation of Tuleap Project's repositories
  *
- * @see <a href= https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit>https://www.forge.orange-labs.fr/api/explorer/#!/projects/retrieveGit</a>
+ * @see <a href= https://tuleap.net/api/explorer/#!/projects/retrieveGit>https://tuleap.net/api/explorer/#!/projects/retrieveGit</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TuleapProjectRepositories {
