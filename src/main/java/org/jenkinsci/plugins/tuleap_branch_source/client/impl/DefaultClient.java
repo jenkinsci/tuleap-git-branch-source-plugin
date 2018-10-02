@@ -142,13 +142,13 @@ class DefaultClient implements TuleapClient {
             projectsApiUrl += QUERY_OBJECT_PARAM + urlEncodedQueryObject;
         }
         int offset            = 0;
-        int limit             = 10;
+        int limit             = 50;
         int totalPages        = 0;
         int pageCount         = 0;
         Stream<TuleapProject> allProjects = Stream.empty();
         do {
             offset = pageCount * limit;
-            final String fetchUrl = projectsApiUrl+"&offset="+ offset + "&limit="+limit;
+            final String fetchUrl = projectsApiUrl + "&offset=" + offset + "&limit=" + limit;
             LOGGER.info("GET {}", fetchUrl);
 
             Request req = new Request.Builder()
@@ -245,21 +245,38 @@ class DefaultClient implements TuleapClient {
 
     public final Stream<TuleapBranches> allBranches(int idRepo) throws IOException {
         String allBranchesUrl = apiBaseUrl + TULEAP_API_GIT_PATH + "/" + idRepo + "/branches";
-        Request request = new Request.Builder()
-            .url(new URL(allBranchesUrl))
-            .addHeader("content-type", "application/json")
-            .cacheControl(CacheControl.FORCE_NETWORK)
-            .get()
-            .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException(
-                    "HTTP call error at url: " + request.url().toString() + " " + "with code: " + response.code());
+        int offset            = 0;
+        int limit             = 50;
+        int totalPages        = 0;
+        int pageCount         = 0;
+        Stream<TuleapBranches> allBranches = Stream.empty();
+        do {
+            offset = pageCount * limit;
+            final String fetchUrl = allBranchesUrl + "?offset=" + offset + "&limit=" + limit;
+            LOGGER.info("GET {}", fetchUrl);
+
+            Request request = new Request.Builder()
+                .url(new URL(allBranchesUrl))
+                .addHeader("content-type", "application/json")
+                .cacheControl(CacheControl.FORCE_NETWORK)
+                .get()
+                .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException(
+                        "HTTP call error at url: " + request.url().toString() + " " + "with code: " + response.code());
+                }
+                if (offset == 0) {
+		    int nbMax = Integer.parseInt(response.header(COLLECTION_LENGTH_HEADER));
+		    totalPages = nbMax / limit + ((nbMax % limit == 0) ? 0 : 1);
+		}
+                allBranches = Stream.concat(allBranches, Stream.of(parse(response.body().string(), TuleapBranches[].class)));
+            } catch (IOException e) {
+                throw new IOException("GetBranches encounter error", e);
             }
-            return Stream.of(parse(response.body().string(), TuleapBranches[].class));
-        } catch (IOException e) {
-            throw new IOException("GetBranches encounter error", e);
-        }
+            pageCount++;
+        } while(pageCount < totalPages);
+        return allBranches;
     }
 
     public final Optional<TuleapFileContent> getJenkinsFile(int idRepo, String pathToFile, String ref) throws IOException {

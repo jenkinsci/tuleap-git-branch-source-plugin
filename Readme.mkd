@@ -2,9 +2,6 @@
 
 * Finish to remove Orangeforge references
 * Makes english by default + fr translation
-* Add loops over most of query calls, very minimum
-  * get list of projects
-  * get list of branches
 * License to MIT as requested by Orange
 * Filter history to purge creds before go live
 * May use of Tuleap API key instead of basic auth (server relief)
