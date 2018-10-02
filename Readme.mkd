@@ -1,3 +1,22 @@
+# Tuleap Branch Source plugin for Jenkins
+
+This jenkins plugin allow autodiscovery of Tuleap's git repositories and branches to automatically create jenkins jobs when branches have `Jenkinsfile`.
+
+Works with any recent version of Jenkins >= 2 (latest LTS preferred).
+
+# How to use
+
+* Install the plugin (!)
+* In Jenkins global configuration you should reference your Tuleap instance (only one server ATM)
+* Then any Jenkins user can create a new "Tuleap project" job type
+  * They should have a `username/password` jenkins credential with a user that can access the project you want to target
+  * They need to select the project they want to work on
+  * Update the filters (by default all repositories are ignored), for instance remove the "*" in "Exclude"
+  * Save the conf
+  * Then Jenkins should be automatically scanning the project
+    * Find all matching git repositories
+    * For each repo, scan all branches
+    * For each branch, when there is a `Jenkinsfile` a job should be created and scheduled accordingly
 
 # Development
 
@@ -33,3 +52,8 @@ Tested with OpenJDK 8
 
     docker run -it --rm -v ~/.m2:/var/maven/.m2 -u $(id -u) -e MAVEN_CONFIG=/var/maven/.m2 -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn -Duser.home=/var/maven clean install
 
+## Authors
+
+* RAMBELONTSALAMA Haja (project's initiator)
+* ROBINSON Clarck
+* VACELET Manuel
