@@ -28,21 +28,21 @@ public class TuleapConfigurationTest {
     }
     @Test
     public void testConnexion_malformed_url() throws IOException {
-        final FormValidation formValidation = instance.doVerifyUrls("url.sucks.test");
+        final FormValidation formValidation = instance.doCheckDomainUrl("url.sucks.test");
         assertThat(formValidation.kind, is(FormValidation.Kind.ERROR));
         assertThat(formValidation.getMessage(), anything("Malformed url"));
     }
 
     @Test
     public void testConnexion_fake_url() throws IOException {
-        final FormValidation formValidation = instance.doVerifyUrls("http://aaa.bb.test");
+        final FormValidation formValidation = instance.doCheckDomainUrl("http://aaa.bb.test");
         assertThat(formValidation.kind, is(FormValidation.Kind.ERROR));
         assertThat(formValidation.getMessage(), anything("Failed to validate url"));
     }
 
     @Test
     public void testConnexion_ok_url() throws IOException {
-        final FormValidation formValidation = instance.doVerifyUrls(VALID_TULEAP_URL);
+        final FormValidation formValidation = instance.doCheckDomainUrl(VALID_TULEAP_URL);
         assertThat(formValidation.kind, is(FormValidation.Kind.OK));
     }
 }

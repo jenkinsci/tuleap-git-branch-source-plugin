@@ -5,12 +5,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 
+import hudson.Util;
+import hudson.model.Item;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tuleap_git_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.verb.POST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,11 +79,13 @@ public class TuleapConfiguration extends GlobalConfiguration {
         return Messages.Configuration_displayName();
     }
 
+    @POST
     @SuppressWarnings("unused")
-    public FormValidation doVerifyUrls(@QueryParameter String domainUrl) throws
+    public FormValidation doCheckDomainUrl(@QueryParameter String domainUrl) throws
         IOException {
-        final FormValidation validation = doCheckDomainUrl(domainUrl);
-        if (!FormValidation.Kind.OK.equals(validation.kind)){
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        final FormValidation validation = checkDomainUrl(domainUrl);
+        if (!FormValidation.Kind.OK.equals(validation.kind)) {
             return validation;
         }
         setDomainUrl(domainUrl);
@@ -99,7 +106,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
     }
 
     @SuppressWarnings("unused")
-    public FormValidation doCheckDomainUrl(@QueryParameter String domainUrl) {
+    public FormValidation checkDomainUrl(@QueryParameter String domainUrl) {
         return validateUrls(domainUrl);
     }
 
@@ -110,7 +117,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
             return FormValidation.error("Malformed url (%s)", e.getMessage());
         }
 
-        if (isEmpty(url)) {
+        if (Util.fixEmptyAndTrim(url) == null) {
             return FormValidation.error("Url is required and should be valid");
         }
 
