@@ -132,7 +132,7 @@ class DefaultClient implements TuleapClient {
     /**
      * {@inheritDoc}
      */
-    public final Stream<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException {
+    public final Stream<TuleapProject> allUserProjects(boolean isMemberOf) throws IOException, NumberFormatException {
         isApiUrlPresent("Fetching all users's projects");
         LOGGER.info("Fetching all user's projects");
         String projectsApiUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH ;
