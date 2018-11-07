@@ -19,7 +19,6 @@
 	<repositoryPath>ttp/sample-simpleproject.git</repositoryPath>
 	<remoteUrl>https://www.tuleap.example.test/plugins/git/ttp/sample-simpleproject.git</remoteUrl>
 	<traits>
-		<org.jenkinsci.plugins.tuleap__git__branch__source.trait.BranchDiscoveryTrait/>
 	</traits>
 	<credentialsId>fe09fd0e-7287-44a1-b0b5-746accd227c1</credentialsId>
 	<credentials class="com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"

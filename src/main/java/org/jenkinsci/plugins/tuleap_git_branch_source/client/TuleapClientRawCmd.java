@@ -61,21 +61,6 @@ public class TuleapClientRawCmd {
         }
     }
 
-    public static class AllBranchesByGitRepo extends TuleapClientRawCmd implements Command<Stream<TuleapGitBranch>> {
-
-        private final String gitRepoPath, projectName;
-
-        public AllBranchesByGitRepo(String gitRepoPath, String projectName) {
-            this.gitRepoPath = gitRepoPath;
-            this.projectName = projectName;
-        }
-
-        @Override
-        public Stream<TuleapGitBranch> call() throws IOException {
-            return client.branchByGitRepo(gitRepoPath, projectName);
-        }
-    }
-
     public static class IsTuleapServerUrlValid extends TuleapClientRawCmd implements Command<Boolean> {
 
         @Override

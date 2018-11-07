@@ -119,18 +119,6 @@ public interface TuleapClient {
      */
     Optional<TuleapProject> projectById(final String projectId) throws IOException;
 
-    /**
-     * Get all head refs of a git repository define by its path
-     *
-     * @param gitRepoPath the  git repo path to inspect
-     * @param projectName the  project name corresponding to the git repo path to inspect
-     * @return all head refs
-     * @throws IOException in case git connexion pbm
-     * @throws NoSingleRepoByPathException in case multiple git repo are represented by a path, this is blocking
-     */
-    Stream<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
-        throws IOException, NoSingleRepoByPathException;
-
     Optional<TuleapFileContent> getJenkinsFile(int idRepo, String path_to_file,String ref) throws IOException;
 
     Stream<TuleapBranches> allBranches(int idRepo) throws IOException;

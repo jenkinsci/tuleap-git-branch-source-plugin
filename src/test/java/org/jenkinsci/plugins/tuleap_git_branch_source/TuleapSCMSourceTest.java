@@ -1,9 +1,7 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import org.hamcrest.Matchers;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.BranchDiscoveryTrait;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,12 +18,6 @@ public class TuleapSCMSourceTest extends TuleapBranchSourceTest<TuleapSCMSource>
         assertThat(instance.getGitBaseUri(), is("https://www.tuleap.example.test/plugins/git/"));
         assertThat(instance.getRemote(), is("https://www.tuleap.example.test/plugins/git/ttp/sample-simpleproject.git"));
         assertThat(instance.getRepositoryPath(), is("ttp/sample-simpleproject.git"));
-        assertThat(instance.getTraits(),
-                                 containsInAnyOrder(
-                                     Matchers.<SCMTrait<?>>allOf(
-                                         instanceOf(BranchDiscoveryTrait.class))
-                                 )
-        );
         assertThat(instance.getTraits(), not(hasItem(Matchers.instanceOf(RegexSCMSourceFilterTrait.class))));
     }
 }

@@ -6,12 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.model.TaskListener;
 import okhttp3.*;
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.jgit.api.LsRemoteCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.errors.RemoteRepositoryException;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClient;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.*;
 import org.slf4j.Logger;
@@ -21,12 +16,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * A default implementation of a Tuleap Client
@@ -296,53 +294,6 @@ class DefaultClient implements TuleapClient {
             return Optional.empty();
         } catch (IOException e) {
             throw new IOException("getJenkinsFile encounter error", e);
-        }
-    }
-    /**
-     * {@inheritDoc}
-     */
-    public final Stream<TuleapGitBranch> branchByGitRepo(String gitRepoPath, String projectName)
-        throws NoSingleRepoByPathException, TuleapGitException {
-        isGitUrlPresent("Fetching git repo's branches");
-        isCredentialsPresent("Fetching git repo's branches");
-        if (isEmpty(gitRepoPath)) {
-            throw new IllegalArgumentException("Fetching git repo's branches requires a git repo path but is missing");
-        }
-        try {
-            LOGGER.info("Ls-remoting heads of git repository at {} + {}", gitBaseUrl, gitRepoPath);
-            final String username = ((StandardUsernamePasswordCredentials)credentials.get()).getUsername();
-            final String password = ((StandardUsernamePasswordCredentials)credentials.get()).getPassword().getPlainText();
-            if (!startsWith(gitRepoPath, projectName+"/")) {
-                gitRepoPath = projectName+"/" + gitRepoPath;
-            }
-            if (!endsWith(gitRepoPath, ".git")) {
-                gitRepoPath = gitRepoPath + ".git";
-            }
-            final String remote = gitBaseUrl + gitRepoPath;
-            return listRemoteBranch(username, password, remote)
-                .stream()
-                .map(refToOFGitBranch());
-        } catch (GitAPIException e) {
-            throw new TuleapGitException(gitBaseUrl, gitRepoPath, e);
-        }
-    }
-
-    private Collection<Ref> listRemoteBranch(String username, String password, String remote) throws GitAPIException, TuleapGitException {
-        try {
-            return new LsRemoteCommand(null)
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
-                .setRemote(remote)
-                .setHeads(true)
-                .call();
-        } catch (TransportException e) {
-            if (e.getCause() instanceof RemoteRepositoryException && e.getMessage().contains("DENIED by fallthru")) {
-                listener.ifPresent(l -> l.getLogger().printf("It seems user : %s is denied access to the repository :" +
-                                                                 "%s %n%s%n", username, remote, e.getMessage()));
-                LOGGER.warn("Permission denied to access this repository\n" + e.getMessage());
-                return Collections.EMPTY_LIST;
-            } else {
-                throw new TuleapGitException(remote, e);
-            }
         }
     }
 
