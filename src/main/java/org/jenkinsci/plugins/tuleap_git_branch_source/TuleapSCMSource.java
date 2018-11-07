@@ -12,7 +12,6 @@ import hudson.model.TaskListener;
 import hudson.scm.SCM;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.branch.MultiBranchProjectFactory;
 import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
@@ -22,9 +21,11 @@ import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.*;
+import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapBranches;
+import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapFileContent;
+import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitRepository;
+import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapProject;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.BranchDiscoveryTrait;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -84,7 +85,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         this.project = project;
         this.projectId = String.valueOf(project.getId());
         this.repositoryPath = repository.getPath();
-        traits.add(new BranchDiscoveryTrait());
     }
 
     @NonNull
@@ -288,7 +288,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
 
         public List<SCMSourceTrait> getTraitsDefaults() {
-            return Arrays.asList(new BranchDiscoveryTrait(), new RefSpecsSCMSourceTrait());
+            return Arrays.asList(new RefSpecsSCMSourceTrait());
         }
 
         @RequirePOST

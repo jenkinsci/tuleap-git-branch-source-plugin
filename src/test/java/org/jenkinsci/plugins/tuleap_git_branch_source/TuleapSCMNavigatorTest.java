@@ -4,11 +4,9 @@ import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import org.hamcrest.Matchers;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.BranchDiscoveryTrait;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.UserForkRepositoryTrait;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
@@ -33,8 +31,6 @@ public class TuleapSCMNavigatorTest extends TuleapBranchSourceTest<TuleapSCMNavi
                        Matchers.<SCMTrait<?>>allOf(
                            instanceOf(UserForkRepositoryTrait.class),
                            hasProperty("strategy", is(1))),
-                       Matchers.<SCMTrait<?>>allOf(
-                           instanceOf(BranchDiscoveryTrait.class)),
                        Matchers.<SCMTrait<?>>allOf(
                            instanceOf(WildcardSCMSourceFilterTrait.class),
                            hasProperty("includes", is("*")),
