@@ -412,14 +412,16 @@ public class TuleapSCMNavigator extends SCMNavigator {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
-
-            TuleapClientCommandConfigurer.<Stream<TuleapProject>> newInstance(apiUri)
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.AllUserProjects(true))
-                .configure()
-                .call()
-                .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
-
+            try {
+                TuleapClientCommandConfigurer.<Stream<TuleapProject>>newInstance(apiUri)
+                    .withCredentials(credentials)
+                    .withCommand(new TuleapClientRawCmd.AllUserProjects(true))
+                    .configure()
+                    .call()
+                    .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
+            } catch (NumberFormatException e) {
+                result.clear();
+            }
             return result;
         }
 

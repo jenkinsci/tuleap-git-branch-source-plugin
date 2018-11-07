@@ -59,6 +59,9 @@ public class TuleapConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setDomainUrl(String domainUrl) {
         this.domainUrl = domainUrl;
+        if (this.domainUrl.charAt(domainUrl.length() - 1) == '/') {
+            this.domainUrl = domainUrl.substring(0, domainUrl.length() - 1);
+        }
         save();
     }
 
