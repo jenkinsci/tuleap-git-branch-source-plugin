@@ -27,7 +27,22 @@
   <description>Mimic the Github Branch Source plugin for Tuleap so that Jenkins' jobs are
     autocreated when a git repository containing a Jenkinsfile is discovered in the Tuleap project's
     repo</description>
-
+  <url>https://wiki.jenkins.io/display/JENKINS/Tuleap+Git+Branch+Source+Plugin</url>
+  <scm>
+    <connection>scm:git:ssh://github.com/jenkinsci/tuleap-git-branch-source-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/tuleap-git-branch-source-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/tuleap-git-branch-source-plugin</url>
+  </scm>
+  <developers>
+    <developer>
+      <id>vaceletm</id>
+      <name>Manuel Vacelet</name>
+    </developer>
+    <developer>
+      <id>robinsc</id>
+      <name>Clarck Robinson</name>
+    </developer>
+  </developers>
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
