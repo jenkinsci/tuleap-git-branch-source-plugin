@@ -7,18 +7,18 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>2.11</version>
-    <relativePath/>
   </parent>
+
   <artifactId>tuleap-git-branch-source</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <properties>
+    <groupId>io.jenkins.plugins</groupId>
     <jenkins.version>2.60.3</jenkins.version>
     <java.level>8</java.level>
     <concurrency>1</concurrency> <!-- default was 1C but the slave crashs during build with 1C -->
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
-
   </properties>
 
   <!--TODO Align version from work/plugins-->
@@ -39,7 +39,7 @@
       <name>Manuel Vacelet</name>
     </developer>
     <developer>
-      <id>robinsc</id>
+      <id>robinsoc</id>
       <name>Clarck Robinson</name>
     </developer>
   </developers>
