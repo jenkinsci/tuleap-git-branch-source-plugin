@@ -22,7 +22,6 @@ Works with any recent version of Jenkins >= 2 (latest LTS preferred).
 
 ## Todo
 
-* Filter history to purge creds before go live
 * Make use of Tuleap API key instead of basic auth (server relief)
   This would be a really good stuff for better performances (basic auth is really CPU intensive) however we don't know
   how to do that properly today. There are 2 pain points
