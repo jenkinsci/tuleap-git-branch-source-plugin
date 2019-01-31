@@ -56,7 +56,7 @@ public class TuleapConnector {
 
     public static FormValidation checkCredentials(@AncestorInPath Item item, String apiUri, String credentialsId) {
         if (item == null) {
-            if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+            if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                 return FormValidation.ok();
             }
         } else {
@@ -68,14 +68,14 @@ public class TuleapConnector {
             return FormValidation.error("Username Password credential is required");
         } else {
             StandardUsernamePasswordCredentials cred = CredentialsMatchers.firstOrNull(
-                filter(lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
+                filter(lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.get(), ACL.SYSTEM,
                     Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
                 CredentialsMatchers.allOf(withId(credentialsId), allUsernamePasswordMatch()));
             try {
                 Boolean credentialsAreValid = TuleapClientCommandConfigurer.<Boolean>newInstance(
                     defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl()))
                     .withCredentials(cred)
-                    .withCommand(new TuleapClientRawCmd.IsTuleapServerUrlValid())
+                    .withCommand(new TuleapClientRawCmd.IsCredentialsValid())
                     .configure()
                     .call();
 
@@ -84,7 +84,7 @@ public class TuleapConnector {
                 } else {
                     return FormValidation.error("Failed to validate the provided credentials");
                 }
-            } catch (IOException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 return FormValidation.error(e, "Failed to validate the provided credentials");
             }
         }
