@@ -419,7 +419,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
                     .configure()
                     .call()
                     .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
-            } catch (NumberFormatException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 result.clear();
             }
             return result;
