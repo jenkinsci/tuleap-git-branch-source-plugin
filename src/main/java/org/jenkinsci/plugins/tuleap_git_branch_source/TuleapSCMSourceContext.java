@@ -1,12 +1,13 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.TaskListener;
 import jenkins.scm.api.SCMHeadObserver;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.SCMSourceCriteria;
 import jenkins.scm.api.trait.SCMSourceContext;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceContext, TuleapSCMSourceRequest> {
 
@@ -15,13 +16,13 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
      */
     private boolean wantBranches = false;
 
-    public TuleapSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer) {
+    public TuleapSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @Nonnull SCMHeadObserver observer) {
         super(criteria, observer);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public TuleapSCMSourceRequest newRequest(@NonNull SCMSource scmSource, @CheckForNull TaskListener taskListener) {
+    public TuleapSCMSourceRequest newRequest(@Nonnull SCMSource scmSource, @CheckForNull TaskListener taskListener) {
         return new TuleapSCMSourceRequest(scmSource, this, taskListener);
     }
 
@@ -42,7 +43,7 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
      *            with method chaining)
      * @return {@code this} for method chaining.
      */
-    @NonNull
+    @Nonnull
     public TuleapSCMSourceContext wantBranches(boolean include) {
         wantBranches = wantBranches || include;
         return this;

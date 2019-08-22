@@ -1,8 +1,6 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Action;
@@ -36,6 +34,8 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -87,10 +87,10 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         this.repositoryPath = repository.getPath();
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event,
-        @NonNull TaskListener listener) throws IOException, InterruptedException {
+    protected List<Action> retrieveActions(@Nonnull SCMHead head, @CheckForNull SCMHeadEvent event,
+        @Nonnull TaskListener listener) throws IOException, InterruptedException {
         List<Action> result = new ArrayList<>();
         SCMSourceOwner owner = getOwner();
         if (owner instanceof Actionable) {
@@ -104,9 +104,9 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         return result;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener)
+    protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @Nonnull TaskListener listener)
         throws IOException, InterruptedException {
         List<Action> result = new ArrayList<>();
         result.add(new TuleapLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
@@ -114,8 +114,8 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     @Override
-    protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
-        @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
+    protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @Nonnull SCMHeadObserver observer,
+        @CheckForNull SCMHeadEvent<?> event, @Nonnull TaskListener listener) throws IOException, InterruptedException {
         try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer)
                 .withTraits(traits).wantBranches(true)
                 .newRequest(this, listener)) {
@@ -184,7 +184,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     /**
      * {@inheritDoc}
      */
-    protected boolean isCategoryEnabled(@NonNull SCMHeadCategory category) {
+    protected boolean isCategoryEnabled(@Nonnull SCMHeadCategory category) {
         if (super.isCategoryEnabled(category)) {
             for (SCMSourceTrait trait : traits) {
                 if (trait.isCategoryEnabled(category)) {
@@ -200,7 +200,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     @Override
-    public SCM build(@NonNull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
+    public SCM build(@Nonnull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
         return new GitSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId).withTraits(traits).build();
     }
 
@@ -354,7 +354,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
 
         @Override
-        public void record(@NonNull SCMHead scmHead, @CheckForNull SCMRevision revision, boolean isMatch) {
+        public void record(@Nonnull SCMHead scmHead, @CheckForNull SCMRevision revision, boolean isMatch) {
             if (isMatch) {
                 listener.getLogger().format("    Met criteria%n");
             } else {

@@ -26,7 +26,7 @@ import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCreden
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
+
 import hudson.Util;
 import hudson.model.Item;
 import hudson.model.Queue;
@@ -36,12 +36,14 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
+import javax.annotation.CheckForNull;
+
 public class TuleapConnector {
 
     public static ListBoxModel listScanCredentials(@CheckForNull @AncestorInPath Item context,
         @QueryParameter String apiUri, @QueryParameter String credentialsId, boolean includeEmpty) {
         if (context == null ?
-                !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER) :
+                !Jenkins.get().hasPermission(Jenkins.ADMINISTER) :
                 !context.hasPermission(Item.EXTENDED_READ)) {
             return new StandardListBoxModel().includeCurrentValue(credentialsId);
         }
@@ -99,7 +101,7 @@ public class TuleapConnector {
             return CredentialsMatchers
                 .firstOrNull(
                     CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                        context instanceof Queue.Task ? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
+                        context instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) context)
                             : ACL.SYSTEM,
                         OFDomainRequirements(apiUri)),
                     CredentialsMatchers.allOf(withId(scanCredentialsId),

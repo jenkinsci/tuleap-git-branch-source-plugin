@@ -13,7 +13,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class TuleapGitRepository {
 
     private int id;
-    private String uri, name, path, description;
+    private String uri;
+    private String name;
+    private String path;
 
     public int getId() {
         return id;
@@ -45,13 +47,5 @@ public class TuleapGitRepository {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

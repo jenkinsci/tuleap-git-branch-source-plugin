@@ -3,8 +3,9 @@ package org.jenkinsci.plugins.tuleap_git_branch_source;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitRepository;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapProject;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.scm.api.trait.SCMSourceBuilder;
+
+import javax.annotation.Nonnull;
 
 public class TuleapSCMSourceBuilder extends SCMSourceBuilder<TuleapSCMSourceBuilder, TuleapSCMSource> {
     private final String id;
@@ -29,7 +30,7 @@ public class TuleapSCMSourceBuilder extends SCMSourceBuilder<TuleapSCMSourceBuil
     }
 
     // projectName is the representation of a repo git in the context of a SCM
-    @NonNull
+    @Nonnull
     @Override
     public TuleapSCMSource build() {
         TuleapSCMSource result = new TuleapSCMSource(project, repository);

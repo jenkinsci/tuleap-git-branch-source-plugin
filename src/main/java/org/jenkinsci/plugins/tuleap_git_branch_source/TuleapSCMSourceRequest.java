@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.TaskListener;
 import jenkins.scm.api.SCMHead;
@@ -10,6 +8,7 @@ import jenkins.scm.api.trait.SCMSourceRequest;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapBranches;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitBranch;
 
+import javax.annotation.CheckForNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

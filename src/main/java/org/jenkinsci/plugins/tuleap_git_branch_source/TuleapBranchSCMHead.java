@@ -1,7 +1,8 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.scm.api.SCMHead;
+
+import javax.annotation.Nonnull;
 
 /**
  * Head corresponding to a branch of an Tuleap git repository.
@@ -11,7 +12,7 @@ public class TuleapBranchSCMHead extends SCMHead {
     /**
      * {@inheritDoc}
      */
-    public TuleapBranchSCMHead(@NonNull String name) {
+    public TuleapBranchSCMHead(@Nonnull String name) {
         super(name);
     }
 

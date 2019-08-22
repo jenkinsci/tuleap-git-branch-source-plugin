@@ -11,8 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class TuleapProject {
 
     private int id;
-
-    private String uri, label, shortname;
+    private String shortname;
 
     public int getId() {
         return id;
@@ -22,27 +21,7 @@ public class TuleapProject {
         this.id = id;
     }
 
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
     public String getShortname() {
         return shortname;
-    }
-
-    public void setShortname(String shortname) {
-        this.shortname = shortname;
     }
 }

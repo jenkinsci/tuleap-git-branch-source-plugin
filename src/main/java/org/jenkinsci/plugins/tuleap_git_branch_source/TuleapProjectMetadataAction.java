@@ -52,6 +52,6 @@ public class TuleapProjectMetadataAction extends AvatarMetadataAction {
      */
     @Override
     public String toString() {
-        return "OFProjectMetadataAction {" + "avatar= " + avatar + "}";
+        return "TuleapProjectMetadataAction {" + "avatar= " + avatar + "}";
     }
 }

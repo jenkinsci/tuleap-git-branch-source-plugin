@@ -13,7 +13,6 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 import jenkins.scm.api.SCMHeadCategory;
@@ -27,7 +26,7 @@ import jenkins.scm.impl.trait.Discovery;
 
 public class UserForkRepositoryTrait extends SCMNavigatorTrait {
 
-    @NonNull
+    @Nonnull
     private int strategy;
 
     @DataBoundConstructor
@@ -62,14 +61,14 @@ public class UserForkRepositoryTrait extends SCMNavigatorTrait {
      * {@inheritDoc}
      */
     @Override
-    public boolean includeCategory(@NonNull SCMHeadCategory category) {
+    public boolean includeCategory(@Nonnull SCMHeadCategory category) {
         return category.isUncategorized();
     }
 
     private static class ExcludeUserForkRepositorySCMFilter extends SCMSourcePrefilter {
 
         @Override
-        public boolean isExcluded(@NonNull SCMNavigator source, @NonNull String projectName) {
+        public boolean isExcluded(@Nonnull SCMNavigator source, @Nonnull String projectName) {
             TuleapSCMNavigator navigator = (TuleapSCMNavigator) source;
             TuleapGitRepository repo = navigator.getRepositories().get(projectName);
             return repo.getPath().contains("/u/");
@@ -95,7 +94,7 @@ public class UserForkRepositoryTrait extends SCMNavigatorTrait {
             return TuleapSCMSource.class;
         }
 
-        @NonNull
+        @Nonnull
         @Restricted(NoExternalUse.class)
         @SuppressWarnings("unused") // stapler
         public ListBoxModel doFillStrategyItems() {

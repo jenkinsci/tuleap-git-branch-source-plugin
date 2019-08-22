@@ -6,24 +6,25 @@ import org.jenkins.ui.icon.IconSet;
 import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.stapler.Stapler;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.Action;
 import jenkins.model.Jenkins;
+
+import javax.annotation.Nonnull;
 
 public class TuleapLink implements Action, IconSpec {
     /**
      * The icon class name to use.
      */
-    @NonNull
+    @Nonnull
     private final String iconClassName;
 
     /**
      * Target of the hyperlink to take the user to.
      */
-    @NonNull
+    @Nonnull
     private final String url;
 
-    public TuleapLink(@NonNull String iconClassName, @NonNull String url) {
+    public TuleapLink(@Nonnull String iconClassName, @Nonnull String url) {
         this.iconClassName = iconClassName;
         this.url = url;
     }
@@ -57,7 +58,7 @@ public class TuleapLink implements Action, IconSpec {
         return iconClassName;
     }
 
-    @NonNull
+    @Nonnull
     public String getUrl() {
         return url;
     }

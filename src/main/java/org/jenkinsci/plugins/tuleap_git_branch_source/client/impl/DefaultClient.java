@@ -64,7 +64,7 @@ class DefaultClient implements TuleapClient {
      * {@inheritDoc}
      */
     public final boolean isCredentialValid() throws IOException {
-        isApiUrlPresent("Checking credentials");
+        isApiUrlPresent("Checking API url");
         isCredentialsPresent("Checking credentials");
 
         final String username = ((StandardUsernamePasswordCredentials) credentials.get()).getUsername();
@@ -116,7 +116,6 @@ class DefaultClient implements TuleapClient {
 
             ResponseBody body = response.body();
             if (body != null) {
-//                TuleapApi api = parse(body.string(), TuleapApi.class);
                 //API has changed no version number provided anymore :(
                 //return "1".equals(api.getApiVersion());
                 return true;
@@ -323,12 +322,6 @@ class DefaultClient implements TuleapClient {
     private void isApiUrlPresent(String message) {
         if (isEmpty(apiBaseUrl)) {
             throw new IllegalArgumentException(message + " requires an api url but is missing");
-        }
-    }
-
-    private void isGitUrlPresent(String message) {
-        if (isEmpty(gitBaseUrl)) {
-            throw new IllegalArgumentException(message + " requires a git base url but is missing");
         }
     }
 

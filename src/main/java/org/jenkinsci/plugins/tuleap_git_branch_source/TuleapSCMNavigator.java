@@ -1,8 +1,6 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Action;
@@ -40,6 +38,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -65,7 +64,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         this.projectId = projectId;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     protected String id() {
         return TuleapConfiguration.get().getDomainUrl() + "::" + projectId;
@@ -113,10 +112,10 @@ public class TuleapSCMNavigator extends SCMNavigator {
         }
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    protected List<Action> retrieveActions(@NonNull SCMNavigatorOwner owner, @CheckForNull SCMNavigatorEvent event,
-        @NonNull TaskListener listener) throws IOException, InterruptedException {
+    protected List<Action> retrieveActions(@Nonnull SCMNavigatorOwner owner, @CheckForNull SCMNavigatorEvent event,
+                                           @Nonnull TaskListener listener) throws IOException {
         listener.getLogger().printf("Looking up details of %s...%n", getprojectId());
         List<Action> actions = new ArrayList<>();
 
@@ -307,13 +306,13 @@ public class TuleapSCMNavigator extends SCMNavigator {
         /**
          * {@inheritDoc}
          */
-        @NonNull
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Tuleap Project";
         }
 
-        @NonNull
+        @Nonnull
         protected SCMSourceCategory[] createCategories() {
             return new SCMSourceCategory[] {
                 new UncategorizedSCMSourceCategory(Messages._SCMNavigator_depotSourceCategory()) };
@@ -322,7 +321,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         /**
          * {@inheritDoc}
          */
-        @NonNull
+        @Nonnull
         @Override
         public String getDescription() {
             return Messages.SCMNavigator_description();
@@ -348,7 +347,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @Restricted(NoExternalUse.class) // stapler
         public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
             @QueryParameter String apiUri, @QueryParameter String credentialsId) {
-
+            LOGGER.info(credentialsId);
             return checkCredentials(context, apiUri ,credentialsId);
         }
 
@@ -446,7 +445,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
          */
         @SuppressWarnings("unused") // jelly
         public List<NamedArrayList<? extends SCMTraitDescriptor<?>>> getTraitsDescriptorLists() {
-            TuleapSCMSource.DescriptorImpl sourceDescriptor = Jenkins.getActiveInstance()
+            TuleapSCMSource.DescriptorImpl sourceDescriptor = Jenkins.get()
                                                                      .getDescriptorByType(TuleapSCMSource.DescriptorImpl.class);
             List<SCMTraitDescriptor<?>> all = new ArrayList<>();
             all.addAll(SCMNavigatorTrait._for(this, TuleapSCMNavigatorContext.class, TuleapSCMSourceBuilder.class));
@@ -487,7 +486,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         }
 
         @Override
-        public void record(@NonNull String name, boolean isMatch) {
+        public void record(@Nonnull String name, boolean isMatch) {
             if (isMatch) {
                 listener.getLogger().format("Proposing %s%n", name);
                 synchronized (this) {
@@ -522,9 +521,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
             this.project = project;
         }
 
-        @NonNull
+        @Nonnull
         @Override
-        public SCMSource create(@NonNull String repositoryName) throws IOException, InterruptedException {
+        public SCMSource create(@Nonnull String repositoryName) throws IOException, InterruptedException {
             return new TuleapSCMSourceBuilder(getId() + repositoryName, credentialsId, project, repo)
                 .withRequest(request).build();
         }

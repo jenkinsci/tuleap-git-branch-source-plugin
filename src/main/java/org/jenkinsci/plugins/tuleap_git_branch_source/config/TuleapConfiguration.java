@@ -6,12 +6,10 @@ import java.net.URL;
 
 
 import hudson.Util;
-import hudson.model.Item;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tuleap_git_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -20,16 +18,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClient.DEFAULT_GIT_HTTPS_PATH;
 import static org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClient.DEFAULT_TULEAP_API_PATH;
 import static org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClient.DEFAULT_TULEAP_DOMAIN_URL;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
+
+import javax.annotation.Nonnull;
 
 @Extension
 public class TuleapConfiguration extends GlobalConfiguration {
@@ -37,7 +35,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(TuleapConfiguration.class);
     private String domainUrl;
 
-    public TuleapConfiguration() throws IOException {
+    public TuleapConfiguration() {
         load();
     }
 
@@ -76,7 +74,7 @@ public class TuleapConfiguration extends GlobalConfiguration {
     /**
      * {@inheritDoc}
      */
-    @NonNull
+    @Nonnull
     @Override
     public String getDisplayName() {
         return Messages.Configuration_displayName();
@@ -84,8 +82,8 @@ public class TuleapConfiguration extends GlobalConfiguration {
 
     @POST
     @SuppressWarnings("unused")
-    public FormValidation doCheckDomainUrl(@QueryParameter String domainUrl) throws
-        IOException {
+    public FormValidation doCheckDomainUrl(@QueryParameter String domainUrl)
+    {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         final FormValidation validation = checkDomainUrl(domainUrl);
         if (!FormValidation.Kind.OK.equals(validation.kind)) {
