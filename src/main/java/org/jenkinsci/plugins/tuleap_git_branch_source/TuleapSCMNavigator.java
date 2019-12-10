@@ -446,7 +446,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
          */
         @SuppressWarnings("unused") // jelly
         public List<NamedArrayList<? extends SCMTraitDescriptor<?>>> getTraitsDescriptorLists() {
-            TuleapSCMSource.DescriptorImpl sourceDescriptor = Jenkins.getActiveInstance()
+            TuleapSCMSource.DescriptorImpl sourceDescriptor = Jenkins.get()
                                                                      .getDescriptorByType(TuleapSCMSource.DescriptorImpl.class);
             List<SCMTraitDescriptor<?>> all = new ArrayList<>();
             all.addAll(SCMNavigatorTrait._for(this, TuleapSCMNavigatorContext.class, TuleapSCMSourceBuilder.class));

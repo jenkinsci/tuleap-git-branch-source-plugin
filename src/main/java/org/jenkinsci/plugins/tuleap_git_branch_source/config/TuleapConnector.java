@@ -41,7 +41,7 @@ public class TuleapConnector {
     public static ListBoxModel listScanCredentials(@CheckForNull @AncestorInPath Item context,
         @QueryParameter String apiUri, @QueryParameter String credentialsId, boolean includeEmpty) {
         if (context == null ?
-                !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER) :
+                !Jenkins.get().hasPermission(Jenkins.ADMINISTER) :
                 !context.hasPermission(Item.EXTENDED_READ)) {
             return new StandardListBoxModel().includeCurrentValue(credentialsId);
         }
@@ -50,7 +50,7 @@ public class TuleapConnector {
             model.includeEmptyValue();
         }
         return model.includeMatchingAs(
-            context instanceof Queue.Task ? Tasks.getDefaultAuthenticationOf((Queue.Task) context) : ACL.SYSTEM,
+            context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication() : ACL.SYSTEM,
             context, StandardUsernameCredentials.class, OFDomainRequirements(apiUri), allUsernamePasswordMatch());
     }
 
@@ -99,7 +99,7 @@ public class TuleapConnector {
             return CredentialsMatchers
                 .firstOrNull(
                     CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                        context instanceof Queue.Task ? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
+                        context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication()
                             : ACL.SYSTEM,
                         OFDomainRequirements(apiUri)),
                     CredentialsMatchers.allOf(withId(scanCredentialsId),
