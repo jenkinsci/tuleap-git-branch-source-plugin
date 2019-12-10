@@ -10,7 +10,6 @@ import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
 import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.scm.api.*;
@@ -357,7 +356,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
             @QueryParameter String projectId, @QueryParameter String includes, @QueryParameter String excludes) {
 
 
-            Optional<SCMNavigator> navigator = ((OrganizationFolder) context).getNavigators().stream().filter(n
+            Optional<SCMNavigator> navigator = ((SCMNavigatorOwner) context).getSCMNavigators().stream().filter(n
                                                                                                                        -> n
                 instanceof TuleapSCMNavigator).findFirst();
             if (navigator.isPresent()) {
