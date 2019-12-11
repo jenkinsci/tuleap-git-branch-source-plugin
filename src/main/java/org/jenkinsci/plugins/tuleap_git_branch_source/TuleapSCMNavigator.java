@@ -53,7 +53,7 @@ import static org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnec
 public class TuleapSCMNavigator extends SCMNavigator {
 
     private String projectId;
-    private List<SCMTrait<? extends SCMTrait>> traits;
+    private List<SCMTrait<? extends SCMTrait<?>>> traits;
     private String credentialsId;
     private String apiUri, gitBaseUri;
     private Map<String, TuleapGitRepository> repositories = new HashMap<>();
@@ -134,7 +134,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
         return actions;
     }
 
-    public List<SCMTrait<? extends SCMTrait>> getTraits() {
+    @NonNull
+    public List<SCMTrait<? extends SCMTrait<?>>> getTraits() {
         return Collections.unmodifiableList(traits);
     }
 
