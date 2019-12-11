@@ -17,7 +17,7 @@
     <java.level>8</java.level>
     <concurrency>1</concurrency> <!-- default was 1C but the slave crashs during build with 1C -->
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
-
+    <slf4jVersion>1.7.26</slf4jVersion>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
@@ -85,7 +85,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>git</artifactId>
-      <version>3.5.1</version>
+      <version>4.0.0</version>
       <exclusions>
         <exclusion>
           <groupId>org.jenkins-ci.plugins</groupId>
