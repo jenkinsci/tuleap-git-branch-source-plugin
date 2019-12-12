@@ -157,7 +157,11 @@ class DefaultClient implements TuleapClient {
 		.build();
 	    try (Response response = client.newCall(req).execute()) {
 		if (offset == 0) {
-		    int nbProjectsMax = Integer.parseInt(response.header(COLLECTION_LENGTH_HEADER));
+            int nbProjectsMax = 0;
+            String collectionLengthHeader = response.header(COLLECTION_LENGTH_HEADER);
+            if (collectionLengthHeader != null) {
+                nbProjectsMax = Integer.parseInt(collectionLengthHeader);
+            }
 		    totalPages = nbProjectsMax / limit + ((nbProjectsMax % limit == 0) ? 0 : 1);
 		}
 		if (!response.isSuccessful())
@@ -224,18 +228,27 @@ class DefaultClient implements TuleapClient {
         isApiUrlPresent("Fetching all project's git repos");
         isProjectIdPresent(projectId, "Fetching all project's git repos");
         final String apiRepositoriesUrl = apiBaseUrl + TULEAP_API_PROJECT_PATH + "/" + projectId + TULEAP_API_GIT_PATH;
+        HttpUrl url = HttpUrl.parse(apiRepositoriesUrl);
+        if (url == null) {
+            throw new IOException("Cannot parse URL to retrieve project repositories: " + apiRepositoriesUrl);
+        }
         // FIXME enable cache later
         Request req = new Request.Builder()
-            .url(HttpUrl.parse(apiRepositoriesUrl).newBuilder().addQueryParameter("limit", "200").build())
+            .url(url.newBuilder().addQueryParameter("limit", "200").build())
             .addHeader("content-type", "application/json")
             .cacheControl(CacheControl.FORCE_NETWORK)
             .get()
             .build();
         try (Response response = client.newCall(req).execute()) {
-            if (!response.isSuccessful())
+            if (!response.isSuccessful()) {
                 throw new IOException(
                     "HTTP call error at url: " + req.url().toString() + " " + "with code: " + response.code());
-            return parse(response.body().string(), TuleapProjectRepositories.class);
+            }
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IOException("Response body do not have a body");
+            }
+            return parse(responseBody.string(), TuleapProjectRepositories.class);
         } catch (IOException e) {
             throw new IOException("GetProjectRepositories encounter error", e);
         }
@@ -265,10 +278,17 @@ class DefaultClient implements TuleapClient {
                         "HTTP call error at url: " + request.url().toString() + " " + "with code: " + response.code());
                 }
                 if (offset == 0) {
-		    int nbMax = Integer.parseInt(response.header(COLLECTION_LENGTH_HEADER));
-		    totalPages = nbMax / limit + ((nbMax % limit == 0) ? 0 : 1);
-		}
-                allBranches = Stream.concat(allBranches, Stream.of(parse(response.body().string(), TuleapBranches[].class)));
+                    int nbMax = 0;
+                    String collectionLengthHeader = response.header(COLLECTION_LENGTH_HEADER);
+                    if (collectionLengthHeader != null) {
+                        nbMax = Integer.parseInt(collectionLengthHeader);
+                    }
+                    totalPages = nbMax / limit + ((nbMax % limit == 0) ? 0 : 1);
+                }
+                ResponseBody responseBody = response.body();
+                if (responseBody != null) {
+                    allBranches = Stream.concat(allBranches, Stream.of(parse(responseBody.string(), TuleapBranches[].class)));
+                }
             } catch (IOException e) {
                 throw new IOException("GetBranches encounter error", e);
             }
@@ -279,7 +299,11 @@ class DefaultClient implements TuleapClient {
 
     public final Optional<TuleapFileContent> getJenkinsFile(int idRepo, String pathToFile, String ref) throws IOException {
         String getJenkinsFileUrl = apiBaseUrl + TULEAP_API_GIT_PATH + "/" + idRepo + "/files";
-        Request request = new Request.Builder().url(HttpUrl.parse(getJenkinsFileUrl).newBuilder()
+        HttpUrl url = HttpUrl.parse(getJenkinsFileUrl);
+        if (url == null) {
+            throw new IOException("Cannot parse URL to retrieve the Jenkinsfile: " + getJenkinsFileUrl);
+        }
+        Request request = new Request.Builder().url(url.newBuilder()
             .addQueryParameter("path_to_file", pathToFile)
             .addQueryParameter("ref", ref).build())
             .addHeader("content-type", "application/json")
