@@ -18,6 +18,10 @@ Works with any recent version of Jenkins >= 2 (latest LTS preferred).
     * For each repo, scan all branches
     * For each branch, when there is a `Jenkinsfile` a job should be created and scheduled accordingly
 
+## Report issues
+
+Issues must be reported in [Request tracker of the Tuleap project](https://tuleap.net/plugins/tracker/?report=1136) under the category "Jenkins Branch Source plugin".
+
 # Development
 
 ## Todo
