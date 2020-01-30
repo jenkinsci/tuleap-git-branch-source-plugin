@@ -13,11 +13,10 @@
   <packaging>hpi</packaging>
 
   <properties>
-    <jenkins.version>2.138.4</jenkins.version>
+    <jenkins.version>2.204.2</jenkins.version>
     <java.level>8</java.level>
     <concurrency>1</concurrency> <!-- default was 1C but the slave crashs during build with 1C -->
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
-
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
@@ -39,6 +38,10 @@
     <developer>
       <id>robinsc</id>
       <name>Clarck Robinson</name>
+    </developer>
+    <developer>
+      <id>goyotm</id>
+      <name> Martin Goyot</name>
     </developer>
   </developers>
   <repositories>
@@ -68,12 +71,6 @@
 
   <!-- depend on other plugins  -->
   <dependencies>
-
-    <dependency>
-      <groupId>org.jenkins-ci.main</groupId>
-      <artifactId>jenkins-core</artifactId>
-      <scope>provided</scope>
-    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>scm-api</artifactId>
@@ -107,9 +104,34 @@
       <artifactId>branch-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-multibranch</artifactId>
+      <version>2.21</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>3.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>1.7.30</version>
     </dependency>
 
     <!-- tests -->
