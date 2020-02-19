@@ -47,7 +47,7 @@ public class TuleapAccessTokenImpl extends BaseStandardCredentials implements Tu
         @Override
         @NonNull
         public String getDisplayName() {
-            return Messages.PersonalAccessToken_displayName();
+            return Messages.TuleapAccessToken_displayName();
         }
 
         @Restricted(NoExternalUse.class)
@@ -61,10 +61,10 @@ public class TuleapAccessTokenImpl extends BaseStandardCredentials implements Tu
                 return FormValidation.ok();
             } catch (InvalidAccessKeyException exception) {
                 return FormValidation
-                    .error(Messages.PersonalAccessToken_invalidAccessKey());
+                    .error(Messages.TuleapAccessToken_invalidAccessKey());
             } catch (InvalidScopesForAccessKeyException exception) {
                 return FormValidation
-                    .error(Messages.PersonalAccessToken_invalidScopesAccessKey());
+                    .error(Messages.TuleapAccessToken_invalidScopesAccessKey());
             }
         }
     }
