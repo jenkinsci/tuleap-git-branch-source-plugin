@@ -7,6 +7,7 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHoo
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapProjectNotFoundException;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.helper.TuleapWebHookHelper;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
@@ -30,11 +31,14 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
 
     private JobFinder jobFinder;
 
+    private TuleapWebHookHelper helper;
+
     @Inject
-    public TuleapWebHookProcessorImpl(Gson gson, TuleapWebHookChecker webHookChecker, JobFinder jobFinder) {
+    public TuleapWebHookProcessorImpl(Gson gson, TuleapWebHookChecker webHookChecker, JobFinder jobFinder, TuleapWebHookHelper helper) {
         this.gson = gson;
         this.webHookChecker = webHookChecker;
         this.jobFinder = jobFinder;
+        this.helper = helper;
     }
 
     public HttpResponse process(StaplerRequest request) throws IOException {
@@ -42,7 +46,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
             return HttpResponses.error(400, "Content type not supported");
         }
 
-        String payload = this.getStringPayload(request);
+        String payload = helper.getStringPayload(request);
 
         if (payload.isEmpty()) {
             LOGGER.log(Level.WARNING, "Jenkins job cannot be triggered. The request is empty");
@@ -53,7 +57,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         LOGGER.log(Level.INFO, "Decoding the request...");
         String decodedPayload;
         try {
-            decodedPayload = this.getUTF8DecodedPayload(payload);
+            decodedPayload = helper.getUTF8DecodedPayload(payload);
         } catch (UnsupportedEncodingException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             return HttpResponses.error(500, "Error while decoding the payload");
@@ -83,15 +87,5 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         }
 
         return HttpResponses.ok();
-    }
-
-    // protected for testing purpose
-    protected String getStringPayload(StaplerRequest request) throws IOException {
-        return IOUtils.toString(request.getInputStream());
-    }
-
-    // protected for testing purpose
-    protected String getUTF8DecodedPayload(String payload) throws UnsupportedEncodingException {
-        return URLDecoder.decode(payload,  UTF_8.name());
     }
 }
