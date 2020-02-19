@@ -42,4 +42,18 @@ public class AccessKeyCheckerTest {
 
         accessKeyChecker.verifyAccessKey(accessKey);
     }
+
+    @Test
+    public void itShouldNotGenerateAnyExceptionIfAccessKeyIsValid() throws InvalidScopesForAccessKeyException, InvalidAccessKeyException {
+        final String accessKey = "SomeAccessKey";
+        final AccessKeyScope scope1 = mock(AccessKeyScope.class);
+        final AccessKeyScope scope2 = mock(AccessKeyScope.class);
+
+        when(client.checkAccessKeyIsValid(accessKey)).thenReturn(true);
+        when(scope1.getIdentifier()).thenReturn("write:rest");
+        when(scope2.getIdentifier()).thenReturn("write:git_repository");
+        when(client.getAccessKeyScopes(accessKey)).thenReturn(ImmutableList.of(scope1, scope2));
+
+        accessKeyChecker.verifyAccessKey(accessKey);
+    }
 }
