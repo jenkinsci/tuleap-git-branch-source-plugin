@@ -57,7 +57,7 @@ public class TuleapAccessTokenImpl extends BaseStandardCredentials implements Tu
             AccessKeyChecker checker = injector.getInstance(AccessKeyChecker.class);
 
             try {
-                checker.verifyAccessKey(secret.getPlainText());
+                checker.verifyAccessKey(secret);
                 return FormValidation.ok();
             } catch (InvalidAccessKeyException exception) {
                 return FormValidation

@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import hudson.util.Secret;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
@@ -21,6 +22,7 @@ public class TuleapApiClientTest {
     private OkHttpClient client;
     private ObjectMapper mapper;
     private TuleapApiClient tuleapApiClient;
+    private Secret secret;
 
     @Before
     public void setUp() {
@@ -28,8 +30,10 @@ public class TuleapApiClientTest {
         tuleapConfiguration = mock(TuleapConfiguration.class);
         mapper = new ObjectMapper().registerModule(new GuavaModule());
         tuleapApiClient = new TuleapApiClient(tuleapConfiguration, client, mapper);
+        secret = mock(Secret.class);
 
         when(tuleapConfiguration.getApiBaseUrl()).thenReturn("https://example.tuleap.test");
+        when(secret.getPlainText()).thenReturn("whatever");
     }
 
     @Test
@@ -41,7 +45,7 @@ public class TuleapApiClientTest {
         when(call.execute()).thenReturn(response);
         when(response.code()).thenReturn(400);
 
-        assertFalse(tuleapApiClient.checkAccessKeyIsValid("whatever"));
+        assertFalse(tuleapApiClient.checkAccessKeyIsValid(secret));
     }
 
     @Test
@@ -53,7 +57,7 @@ public class TuleapApiClientTest {
         when(call.execute()).thenReturn(response);
         when(response.code()).thenReturn(200);
 
-        assertTrue(tuleapApiClient.checkAccessKeyIsValid("whatever"));
+        assertTrue(tuleapApiClient.checkAccessKeyIsValid(secret));
     }
 
     @Test
@@ -65,7 +69,7 @@ public class TuleapApiClientTest {
         when(call.execute()).thenReturn(response);
         when(response.isSuccessful()).thenReturn(false);
 
-        assertEquals(0, tuleapApiClient.getAccessKeyScopes("whatever").size());
+        assertEquals(0, tuleapApiClient.getAccessKeyScopes(secret).size());
     }
 
     @Test
@@ -81,6 +85,6 @@ public class TuleapApiClientTest {
         when(response.body()).thenReturn(responseBody);
         when(responseBody.string()).thenReturn(json_payload);
 
-        assertEquals(2, tuleapApiClient.getAccessKeyScopes("whatever").size());
+        assertEquals(2, tuleapApiClient.getAccessKeyScopes(secret).size());
     }
 }

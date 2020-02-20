@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.tuleap_credentials;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import hudson.util.Secret;
 import org.jenkinsci.plugins.tuleap_api.AccessKeyApi;
 import org.jenkinsci.plugins.tuleap_api.AccessKeyScope;
 import org.jenkinsci.plugins.tuleap_credentials.exceptions.InvalidAccessKeyException;
@@ -17,23 +18,23 @@ public class AccessKeyChecker {
         this.client = client;
     }
 
-    public void verifyAccessKey(String accessKey) throws InvalidAccessKeyException, InvalidScopesForAccessKeyException {
-        if (! accessKeyIsValid(accessKey)) {
+    public void verifyAccessKey(Secret secret) throws InvalidAccessKeyException, InvalidScopesForAccessKeyException {
+        if (! accessKeyIsValid(secret)) {
             throw new InvalidAccessKeyException();
         }
 
-        if (! scopesAreValid(accessKey)) {
+        if (! scopesAreValid(secret)) {
             throw new InvalidScopesForAccessKeyException();
         }
     }
 
-    private Boolean accessKeyIsValid(String accessKey) {
-        return client.checkAccessKeyIsValid(accessKey);
+    private Boolean accessKeyIsValid(Secret secret) {
+        return client.checkAccessKeyIsValid(secret);
     }
 
-    private Boolean scopesAreValid(String accessKey) {
+    private Boolean scopesAreValid(Secret secret) {
         return client
-        .getAccessKeyScopes(accessKey)
+        .getAccessKeyScopes(secret)
         .stream()
         .map(AccessKeyScope::getIdentifier)
         .collect(ImmutableList.toImmutableList())
