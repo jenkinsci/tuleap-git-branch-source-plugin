@@ -12,5 +12,6 @@ public class TuleapApiGuiceModule extends com.google.inject.AbstractModule {
         bind(OkHttpClient.class).toProvider(OkHttpClientProvider.class).asEagerSingleton();
         bind(ObjectMapper.class).toProvider(ObjectMapperProvider.class);
         bind(AccessKeyApi.class).to(TuleapApiClient.class);
+        bind(UserApi.class).to(TuleapApiClient.class);
     }
 }

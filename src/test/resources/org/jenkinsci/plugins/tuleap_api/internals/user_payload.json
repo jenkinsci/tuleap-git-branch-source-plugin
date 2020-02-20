@@ -1,0 +1,14 @@
+{
+  "avatar_url": "https://tuleap-web.tuleap-aio-dev.docker/themes/common/images/avatar_default.png",
+  "display_name": "Mick Jagger (mjagger)",
+  "email": "mjagger@rolling-stones.com",
+  "has_avatar": false,
+  "id": 102,
+  "is_anonymous": false,
+  "ldap_id": "102",
+  "real_name": "Mick Jagger",
+  "status": "A",
+  "uri": "users/102",
+  "user_url": "/users/mjagger",
+  "username": "mjagger"
+}

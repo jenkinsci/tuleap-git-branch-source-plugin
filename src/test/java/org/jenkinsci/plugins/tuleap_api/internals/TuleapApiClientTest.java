@@ -87,4 +87,32 @@ public class TuleapApiClientTest {
 
         assertEquals(2, tuleapApiClient.getAccessKeyScopes(secret).size());
     }
+
+    @Test(expected = RuntimeException.class)
+    public void itShouldThrowAnExceptionWhenCallForUserIsNotSuccessfull() throws IOException {
+        Call call = mock(Call.class);
+        Response response = mock(Response.class);
+
+        when(client.newCall(any())).thenReturn(call);
+        when(call.execute()).thenReturn(response);
+        when(response.isSuccessful()).thenReturn(false);
+
+        tuleapApiClient.getUserForAccessKey(secret);
+    }
+
+    @Test
+    public void itShouldReturnAUserWhenCallForUserIsSuccessfull() throws IOException {
+        Call call = mock(Call.class);
+        Response response = mock(Response.class);
+        ResponseBody responseBody = mock(ResponseBody.class);
+        String json_payload = IOUtils.toString(TuleapApiClientTest.class.getResourceAsStream("user_payload.json"));
+
+        when(client.newCall(any())).thenReturn(call);
+        when(call.execute()).thenReturn(response);
+        when(response.isSuccessful()).thenReturn(true);
+        when(response.body()).thenReturn(responseBody);
+        when(responseBody.string()).thenReturn(json_payload);
+
+        assertEquals("mjagger", tuleapApiClient.getUserForAccessKey(secret).getUsername());
+    }
 }
