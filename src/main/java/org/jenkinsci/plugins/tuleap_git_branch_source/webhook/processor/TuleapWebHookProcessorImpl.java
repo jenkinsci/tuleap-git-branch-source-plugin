@@ -55,7 +55,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
             return HttpResponses.error(500, "Error while decoding the payload");
         }
 
-        LOGGER.log(Level.INFO, "Checking the payload content...");
+        LOGGER.log(Level.FINEST, "Checking the payload content...");
 
         WebHookRepresentation representation = this.gson.fromJson(decodedPayload, WebHookRepresentation.class);
         if (representation == null || !this.webHookChecker.checkPayloadContent(representation)){
@@ -71,7 +71,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
             LOGGER.log(Level.SEVERE, e.getMessage());
             return HttpResponses.error(404, "Branch not found");
         } catch (TuleapProjectNotFoundException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, e.getMessage());
             return HttpResponses.error(404, "Tuleap project not found");
         }
 

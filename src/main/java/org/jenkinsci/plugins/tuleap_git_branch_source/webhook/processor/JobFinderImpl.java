@@ -29,7 +29,7 @@ public class JobFinderImpl implements JobFinder {
     }
 
     public void triggerConcernedJob(WebHookRepresentation representation) throws RepositoryNotFoundException, BranchNotFoundException, TuleapProjectNotFoundException {
-        LOGGER.log(Level.INFO, "Retrieve the concerned job...");
+        LOGGER.log(Level.FINEST, "Retrieve the concerned job...");
         Optional<OrganizationFolder> tuleapOrganizationFolder = this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()
             .filter(OrganizationFolder::isSingleOrigin)
             .filter(organizationFolder -> organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class))
@@ -51,9 +51,9 @@ public class JobFinderImpl implements JobFinder {
 
         if (job.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
         )) != null) {
-            LOGGER.log(Level.INFO, "The job has been successfully built");
+            LOGGER.log(Level.FINEST, "The job has been successfully built");
             return;
         }
-        LOGGER.log(Level.INFO, "The build of the job has not been scheduled yet");
+        LOGGER.log(Level.FINEST, "No job was triggered");
     }
 }

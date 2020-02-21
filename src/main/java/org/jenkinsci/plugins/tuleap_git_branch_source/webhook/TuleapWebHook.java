@@ -48,7 +48,7 @@ public class TuleapWebHook implements UnprotectedRootAction {
     }
 
     public HttpResponse doIndex(final StaplerRequest request, final StaplerResponse response) throws IOException {
-        LOGGER.log(Level.INFO, "Tuleap WebHook called with URL: {0} ", request.getRequestURIWithQueryString());
+        LOGGER.log(Level.FINEST, "Tuleap WebHook called with URL: {0} ", request.getRequestURIWithQueryString());
         return this.tuleapWebHookActionProcessor.process(request);
     }
 }
