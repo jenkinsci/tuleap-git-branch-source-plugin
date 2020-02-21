@@ -1,11 +1,8 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import hudson.model.CauseAction;
-import hudson.security.ACL;
-import hudson.security.ACLContext;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebHookCause;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
@@ -13,6 +10,8 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapP
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
 
+import javax.inject.Inject;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,48 +21,39 @@ public class JobFinderImpl implements JobFinder {
 
     private static final Logger LOGGER = Logger.getLogger(JobFinderImpl.class.getName());
 
-    public void triggerConcernedJob(WebHookRepresentation representation) throws BranchNotFoundException, RepositoryNotFoundException, TuleapProjectNotFoundException {
-        Jenkins.get().getACL();
+    private OrganizationFolderRetriever organizationFolderRetriever;
 
-        try (ACLContext old = ACL.as(ACL.SYSTEM)) {
+    @Inject
+    public JobFinderImpl(OrganizationFolderRetriever organizationFolderRetriever) {
+        this.organizationFolderRetriever = organizationFolderRetriever;
+    }
 
-            LOGGER.log(Level.INFO, "Retrieve the concerned job...");
+    public void triggerConcernedJob(WebHookRepresentation representation) throws RepositoryNotFoundException, BranchNotFoundException, TuleapProjectNotFoundException {
+        LOGGER.log(Level.INFO, "Retrieve the concerned job...");
+        Optional<OrganizationFolder> tuleapOrganizationFolder = this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()
+            .filter(OrganizationFolder::isSingleOrigin)
+            .filter(organizationFolder -> organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class))
+            .filter(organizationFolder -> representation.getTuleapProjectName().equals(organizationFolder.getName()))
+            .findFirst();
 
-            for (OrganizationFolder organizationFolder : Jenkins.get().getAllItems(OrganizationFolder.class)) {
-                LOGGER.log(Level.INFO, "Consider the Organization folder: {0}", organizationFolder.getName());
+        OrganizationFolder tuleapFolder = tuleapOrganizationFolder.orElseThrow(TuleapProjectNotFoundException::new);
+        MultiBranchProject multiBranchProject = tuleapFolder.getJob(representation.getRepositoryName());
 
-                if (!organizationFolder.isSingleOrigin()) {
-                    LOGGER.log(Level.INFO, "This folder has no project type or has several project types");
-                    continue;
-                }
-
-                if (!organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class)) {
-                    LOGGER.log(Level.INFO, "This folder is not a Tuleap Project");
-                    continue;
-                }
-
-                if (representation.getTuleapProjectName().equals(organizationFolder.getName())) {
-
-                    MultiBranchProject multiBranchProject = organizationFolder.getJob(representation.getRepositoryName());
-
-                    if (multiBranchProject == null) {
-                        throw new RepositoryNotFoundException();
-                    }
-                    ParameterizedJob job = (ParameterizedJob) multiBranchProject.getItem(representation.getBranchName());
-                    if (job == null) {
-                        throw new BranchNotFoundException();
-                    }
-                    if (job.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
-                    )) != null) {
-                        LOGGER.log(Level.INFO, "The job has been successfully built");
-                        return;
-                    }
-                } else {
-                    LOGGER.log(Level.INFO, "This Organization folder does not match");
-                }
-            }
-            LOGGER.log(Level.INFO, "No job found!");
-            throw new TuleapProjectNotFoundException();
+        if (multiBranchProject == null) {
+            throw new RepositoryNotFoundException();
         }
+
+        ParameterizedJob job = this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(multiBranchProject, representation);
+
+        if (job == null) {
+            throw new BranchNotFoundException();
+        }
+
+        if (job.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
+        )) != null) {
+            LOGGER.log(Level.INFO, "The job has been successfully built");
+            return;
+        }
+        LOGGER.log(Level.INFO, "The build of the job has not been scheduled yet");
     }
 }

@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import com.google.gson.Gson;
 import hudson.util.HttpResponses;
-import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
@@ -15,11 +14,8 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static com.google.common.base.Charsets.UTF_8;
 
 public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
 
@@ -27,7 +23,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
 
     private final Gson gson;
 
-    private transient TuleapWebHookChecker webHookChecker;
+    private TuleapWebHookChecker webHookChecker;
 
     private JobFinder jobFinder;
 
@@ -49,21 +45,15 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         String payload = helper.getStringPayload(request);
 
         if (payload.isEmpty()) {
-            LOGGER.log(Level.WARNING, "Jenkins job cannot be triggered. The request is empty");
             return HttpResponses.error(400, "Jenkins job cannot be triggered. The request is empty");
         }
 
-        LOGGER.log(Level.INFO, "Received the Tuleap commit hook notification : {0}", payload);
-        LOGGER.log(Level.INFO, "Decoding the request...");
         String decodedPayload;
         try {
             decodedPayload = helper.getUTF8DecodedPayload(payload);
         } catch (UnsupportedEncodingException e) {
-            LOGGER.log(Level.WARNING, e.getMessage());
             return HttpResponses.error(500, "Error while decoding the payload");
         }
-
-        LOGGER.log(Level.INFO, "... Done");
 
         LOGGER.log(Level.INFO, "Checking the payload content...");
 
@@ -72,7 +62,6 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
             LOGGER.log(Level.WARNING, "Bad payload format");
             return HttpResponses.error(400, "Bad payload format");
         }
-        LOGGER.log(Level.INFO, "... Done");
         try {
             this.jobFinder.triggerConcernedJob(representation);
         } catch (RepositoryNotFoundException e) {
