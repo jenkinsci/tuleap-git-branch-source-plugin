@@ -1,0 +1,16 @@
+{
+  "creation_date": "2020-02-17T11:31:05+01:00",
+  "description": "",
+  "expiration_date": null,
+  "id": 5,
+  "last_used_by": "172.18.0.6",
+  "last_used_on": "2020-02-18T18:20:23+01:00",
+  "scopes": [
+    {
+      "identifier": "write:git_repository"
+    },
+    {
+      "identifier": "write:rest"
+    }
+  ]
+}
