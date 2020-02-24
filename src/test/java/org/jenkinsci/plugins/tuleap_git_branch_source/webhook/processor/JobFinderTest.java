@@ -33,11 +33,9 @@ public class JobFinderTest {
     @Test(expected = TuleapProjectNotFoundException.class)
     public void testThrowsTuleapProjectNotFoundExceptionWhenThereIsNoTuleapOrganizationFolder() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException {
         OrganizationFolder folderWithSeveralOrigin = mock(OrganizationFolder.class);
-        when(folderWithSeveralOrigin.getName()).thenReturn("Bayerische-Motoren-Werke");
         when(folderWithSeveralOrigin.isSingleOrigin()).thenReturn(false);
 
         OrganizationFolder folderWithBadSCMNavigator = mock(OrganizationFolder.class);
-        when(folderWithBadSCMNavigator.getName()).thenReturn("Fabbrica Italiana Automobili Torino");
         when(folderWithBadSCMNavigator.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> scmNavigatorList = new ArrayList<>();
         SCMNavigator classicNavigator = mock(SCMNavigator.class);
@@ -45,15 +43,15 @@ public class JobFinderTest {
         when(folderWithBadSCMNavigator.getSCMNavigators()).thenReturn(scmNavigatorList);
 
         OrganizationFolder tuleapFolderWithAUnwantedName = mock(OrganizationFolder.class);
-        when(tuleapFolderWithAUnwantedName.getName()).thenReturn("Aufrecht-Melcher-Großaspach");
         when(tuleapFolderWithAUnwantedName.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolderWithAUnwantedName.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
+        when(tuleapNavigator.getprojectId()).thenReturn("204");
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
-        when(representation.getTuleapProjectName()).thenReturn("Tata");
+        when(representation.getTuleapProjectId()).thenReturn("8");
 
         JobFinderImpl jobFinder = new JobFinderImpl(this.organizationFolderRetriever);
         jobFinder.triggerConcernedJob(representation);
@@ -62,18 +60,18 @@ public class JobFinderTest {
     @Test(expected = RepositoryNotFoundException.class)
     public void testThrowRepositoryNotFoundExceptionWhenTheRepositoryDoesNotExist() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException {
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.getName()).thenReturn("Aufrecht-Melcher-Großaspach");
         when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
+        when(tuleapNavigator.getprojectId()).thenReturn("204");
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
-        when(representation.getTuleapProjectName()).thenReturn("Aufrecht-Melcher-Großaspach");
+        when(representation.getTuleapProjectId()).thenReturn("204");
 
         MultiBranchProject multiBranchProject = mock(MultiBranchProject.class);
         verify(multiBranchProject, never()).getItem(anyString());
@@ -89,17 +87,17 @@ public class JobFinderTest {
     @Test(expected = BranchNotFoundException.class)
     public void testThrowBranchNotFoundExceptionWhenTheBranchDoesNotExist() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
-        when(representation.getTuleapProjectName()).thenReturn("Aufrecht-Melcher-Großaspach");
+        when(representation.getTuleapProjectId()).thenReturn("204");
         when(representation.getRepositoryName()).thenReturn("C63");
         when(representation.getBranchName()).thenReturn("W204");
 
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.getName()).thenReturn("Aufrecht-Melcher-Großaspach");
         when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
+        when(tuleapNavigator.getprojectId()).thenReturn("204");
 
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
@@ -118,16 +116,16 @@ public class JobFinderTest {
     @Test
     public void testTheBuildIsScheduled() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
-        when(representation.getTuleapProjectName()).thenReturn("Aufrecht-Melcher-Großaspach");
+        when(representation.getTuleapProjectId()).thenReturn("204");
         when(representation.getRepositoryName()).thenReturn("C63");
 
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.getName()).thenReturn("Aufrecht-Melcher-Großaspach");
         when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
+        when(tuleapNavigator.getprojectId()).thenReturn("204");
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);

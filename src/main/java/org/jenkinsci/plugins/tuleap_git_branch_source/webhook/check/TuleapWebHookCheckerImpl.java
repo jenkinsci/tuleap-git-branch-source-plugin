@@ -9,6 +9,6 @@ public class TuleapWebHookCheckerImpl implements TuleapWebHookChecker {
     }
 
     public boolean checkPayloadContent(WebHookRepresentation representation) {
-        return representation.getBranchName() != null && representation.getRepositoryName() != null && representation.getTuleapProjectName() != null;
+        return representation.getBranchName() != null && representation.getRepositoryName() != null && representation.getTuleapProjectId() != null;
     }
 }

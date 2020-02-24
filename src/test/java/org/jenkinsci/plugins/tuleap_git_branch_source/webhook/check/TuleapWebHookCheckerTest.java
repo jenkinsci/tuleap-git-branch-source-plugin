@@ -30,7 +30,7 @@ public class TuleapWebHookCheckerTest {
     public void testItReturnsTrueIfThePayloadIsCorrect() {
         TuleapWebHookChecker checker = new TuleapWebHookCheckerImpl();
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
-        when(representation.getTuleapProjectName()).thenReturn("Aufrecht-Melcher-Großaspach");
+        when(representation.getTuleapProjectId()).thenReturn("200");
         when(representation.getRepositoryName()).thenReturn("W204");
         when(representation.getBranchName()).thenReturn("C63");
         assertTrue(checker.checkPayloadContent(representation));
@@ -40,7 +40,7 @@ public class TuleapWebHookCheckerTest {
     public void testItReturnsFalseIfThePayloadIsNotCorrect() {
         TuleapWebHookChecker checker = new TuleapWebHookCheckerImpl();
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
-        when(representation.getTuleapProjectName()).thenReturn(null);
+        when(representation.getTuleapProjectId()).thenReturn(null);
         when(representation.getRepositoryName()).thenReturn("C63");
         when(representation.getBranchName()).thenReturn(null);
         assertFalse(checker.checkPayloadContent(representation));

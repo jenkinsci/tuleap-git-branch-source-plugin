@@ -33,7 +33,11 @@ public class JobFinderImpl implements JobFinder {
         Optional<OrganizationFolder> tuleapOrganizationFolder = this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()
             .filter(OrganizationFolder::isSingleOrigin)
             .filter(organizationFolder -> organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class))
-            .filter(organizationFolder -> representation.getTuleapProjectName().equals(organizationFolder.getName()))
+            .filter(organizationFolder -> {
+                TuleapSCMNavigator tuleapSCMNavigator = (TuleapSCMNavigator) organizationFolder.getSCMNavigators().get(0);
+                String projectId = tuleapSCMNavigator.getprojectId();
+                return representation.getTuleapProjectId().equals(projectId);
+            })
             .findFirst();
 
         OrganizationFolder tuleapFolder = tuleapOrganizationFolder.orElseThrow(TuleapProjectNotFoundException::new);

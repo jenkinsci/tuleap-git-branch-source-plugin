@@ -1,12 +1,12 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model;
 
 public class WebHookRepresentation {
-    private String tuleapProjectName;
+    private String tuleapProjectId;
     private String repositoryName;
     private String branchName;
 
-    public String getTuleapProjectName() {
-        return tuleapProjectName;
+    public String getTuleapProjectId() {
+        return tuleapProjectId;
     }
 
     public String getRepositoryName() {
