@@ -1,13 +1,17 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.webhook;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import hudson.Extension;
 import hudson.model.UnprotectedRootAction;
-import hudson.util.HttpResponses;
+import org.jenkinsci.plugins.tuleap_git_branch_source.guice.TuleapWebhookGuiceModule;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor.TuleapWebHookProcessor;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import javax.annotation.CheckForNull;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +22,13 @@ public class TuleapWebHook implements UnprotectedRootAction {
 
     static final String WEBHOOK_URL = "tuleap-hook";
 
+    private TuleapWebHookProcessor tuleapWebHookActionProcessor;
+
+    public TuleapWebHook() {
+        Injector injector = Guice.createInjector(new TuleapWebhookGuiceModule());
+        this.tuleapWebHookActionProcessor = injector.getInstance(TuleapWebHookProcessor.class);
+    }
+
     @CheckForNull
     @Override
     public String getIconFileName() {
@@ -27,7 +38,7 @@ public class TuleapWebHook implements UnprotectedRootAction {
     @CheckForNull
     @Override
     public String getDisplayName() {
-        return "Process request from Tuleap";
+        return "Process request from Tuleap git repository";
     }
 
     @CheckForNull
@@ -36,9 +47,8 @@ public class TuleapWebHook implements UnprotectedRootAction {
         return WEBHOOK_URL;
     }
 
-    public HttpResponse doIndex(final StaplerRequest request, final StaplerResponse response) {
-        LOGGER.log(Level.INFO, "Tuleap WebHook called with URL: {0} ", request.getRequestURIWithQueryString());
-        return HttpResponses.ok();
+    public HttpResponse doIndex(final StaplerRequest request, final StaplerResponse response) throws IOException {
+        LOGGER.log(Level.FINEST, "Tuleap WebHook called with URL: {0} ", request.getRequestURIWithQueryString());
+        return this.tuleapWebHookActionProcessor.process(request);
     }
-
 }
