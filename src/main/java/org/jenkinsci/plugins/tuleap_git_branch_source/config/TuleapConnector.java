@@ -53,7 +53,7 @@ public class TuleapConnector {
         }
         return model.includeMatchingAs(
             context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication() : ACL.SYSTEM,
-            context, TuleapAccessToken.class, OFDomainRequirements(apiUri), allTuleapAccessTokenMatch());
+            context, TuleapAccessToken.class, TuleapDomainRequirements(apiUri), allTuleapAccessTokenMatch());
     }
 
     @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE") // see https://github.com/spotbugs/spotbugs/issues/651
@@ -97,17 +97,17 @@ public class TuleapConnector {
                     CredentialsProvider.lookupCredentials(TuleapAccessToken.class, context,
                         context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication()
                             : ACL.SYSTEM,
-                        OFDomainRequirements(apiUri)),
+                        TuleapDomainRequirements(apiUri)),
                     CredentialsMatchers.allOf(withId(scanCredentialsId),
                                               allTuleapAccessTokenMatch()));
         }
     }
 
-    private static List<DomainRequirement> OFDomainRequirements(@CheckForNull String apiUri) {
+    private static List<DomainRequirement> TuleapDomainRequirements(@CheckForNull String apiUri) {
         return URIRequirementBuilder.fromUri(defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl())).build();
     }
 
-    public static CredentialsMatcher allTuleapAccessTokenMatch() {
+    private static CredentialsMatcher allTuleapAccessTokenMatch() {
         return CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(TuleapAccessToken.class));
     }
 }

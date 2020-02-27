@@ -14,10 +14,8 @@ import org.jenkinsci.plugins.tuleap_api.internals.entities.UserEntity;
 import org.jenkinsci.plugins.tuleap_api.internals.exceptions.InvalidTuleapResponseException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 public class TuleapApiClient implements TuleapAuthorization, AccessKeyApi, UserApi {
