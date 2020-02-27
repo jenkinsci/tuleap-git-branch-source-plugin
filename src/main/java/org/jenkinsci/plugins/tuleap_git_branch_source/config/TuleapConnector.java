@@ -72,11 +72,7 @@ public class TuleapConnector {
         } else {
             Injector injector = Guice.createInjector(new TuleapApiGuiceModule());
             AccessKeyChecker checker = injector.getInstance(AccessKeyChecker.class);
-            TuleapAccessToken token = CredentialsMatchers.firstOrNull(
-                filter(lookupCredentials(TuleapAccessToken.class, Jenkins.get(), ACL.SYSTEM,
-                    Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
-                CredentialsMatchers.allOf(withId(credentialsId), allTuleapAccessTokenMatch()));
-
+            TuleapAccessToken token = lookupScanCredentials(item, apiUri, credentialsId);
             try {
                 checker.verifyAccessKey(Objects.requireNonNull(token).getToken());
                 return FormValidation.ok();
