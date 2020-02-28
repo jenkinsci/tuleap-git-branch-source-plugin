@@ -9,4 +9,4 @@ credentials:
 
 unclassified:
   tuleapConfiguration:
-    domainUrl: https://my.tuleap.instance.net
+    domainUrl: https://tuleap.example.net
