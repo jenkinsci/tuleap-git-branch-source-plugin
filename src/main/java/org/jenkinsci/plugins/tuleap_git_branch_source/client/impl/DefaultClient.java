@@ -7,6 +7,7 @@ import hudson.model.TaskListener;
 import okhttp3.*;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.lib.Ref;
+import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClient;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.*;
 import org.slf4j.Logger;
@@ -34,10 +35,10 @@ class DefaultClient implements TuleapClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClient.class);
     private final String apiBaseUrl, gitBaseUrl;
     private final OkHttpClient client;
-    private Optional<StandardCredentials> credentials;
+    private Optional<TuleapAccessToken> credentials;
     private Optional<TaskListener> listener;
 
-    DefaultClient(Optional<StandardCredentials> credentials, final String apiBaseUrl, final String gitBaseUrl,
+    DefaultClient(Optional<TuleapAccessToken> credentials, final String apiBaseUrl, final String gitBaseUrl,
                   Optional<TaskListener> listener) {
         this.apiBaseUrl = apiBaseUrl;
         this.gitBaseUrl = gitBaseUrl;
@@ -46,17 +47,7 @@ class DefaultClient implements TuleapClient {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit
                 .SECONDS).cache(null);
-        if (this.credentials.isPresent()) {
-            final StandardCredentials c = this.credentials.get();
-            if (c instanceof StandardUsernamePasswordCredentials) {
-                final String username = ((StandardUsernamePasswordCredentials) c).getUsername();
-                final String password = ((StandardUsernamePasswordCredentials) c).getPassword().getPlainText();
-                builder.addInterceptor(new BasicAuthInterceptor(username, password));
-            } else {
-                throw new UnsupportedOperationException(
-                    "Not implemented yet, only StandardUsernamePasswordCredentials " + "is supported ... for the moment");
-            }
-        }
+        credentials.ifPresent( token -> builder.addInterceptor(new AccessKeyInterceptor(token)));
         this.client = builder.build();
     }
 

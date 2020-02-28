@@ -24,6 +24,7 @@ import net.jcip.annotations.GuardedBy;
 import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitRepository;
@@ -75,7 +76,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         TaskListener listener = observer.getListener();
 
         listener.getLogger().printf("Visit Sources of %s...%n", getprojectId());
-        StandardCredentials credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
+        TuleapAccessToken credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
             getApiUri(), credentialsId);
 
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
@@ -119,7 +120,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         listener.getLogger().printf("Looking up details of %s...%n", getprojectId());
         List<Action> actions = new ArrayList<>();
 
-        final StandardCredentials credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
+        final TuleapAccessToken credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
         Optional<TuleapProject> project = TuleapClientCommandConfigurer
             .<Optional<TuleapProject>> newInstance(getApiUri())
 			.withCredentials(credentials)
@@ -410,7 +411,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
             @QueryParameter String credentialsId) throws IOException {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
-            final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
+            final TuleapAccessToken credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             try {
                 TuleapClientCommandConfigurer.<Stream<TuleapProject>>newInstance(apiUri)

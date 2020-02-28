@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 
 import hudson.ExtensionList;
 import hudson.model.TaskListener;
+import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 
 public interface TuleapClientCommandConfigurer<T> {
 
@@ -22,7 +23,7 @@ public interface TuleapClientCommandConfigurer<T> {
 
     TuleapClientCommandConfigurer<T> withCommand(TuleapClientRawCmd.Command<T> command);
 
-    TuleapClientCommandConfigurer<T> withCredentials(StandardCredentials credentials);
+    TuleapClientCommandConfigurer<T> withCredentials(TuleapAccessToken credentials);
 
     TuleapClientCommandConfigurer<T> withGitUrl(final String gitUrl);
 

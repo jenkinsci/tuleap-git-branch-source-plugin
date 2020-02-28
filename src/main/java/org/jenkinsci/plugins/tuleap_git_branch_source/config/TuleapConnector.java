@@ -1,22 +1,25 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.config;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jenkinsci.plugins.tuleap_api.TuleapApiGuiceModule;
+import org.jenkinsci.plugins.tuleap_credentials.AccessKeyChecker;
+import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
+import org.jenkinsci.plugins.tuleap_credentials.exceptions.InvalidAccessKeyException;
+import org.jenkinsci.plugins.tuleap_credentials.exceptions.InvalidScopesForAccessKeyException;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
@@ -30,7 +33,6 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Util;
 import hudson.model.Item;
 import hudson.model.Queue;
-import hudson.model.queue.Tasks;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -51,9 +53,10 @@ public class TuleapConnector {
         }
         return model.includeMatchingAs(
             context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication() : ACL.SYSTEM,
-            context, StandardUsernameCredentials.class, OFDomainRequirements(apiUri), allUsernamePasswordMatch());
+            context, TuleapAccessToken.class, TuleapDomainRequirements(apiUri), allTuleapAccessTokenMatch());
     }
 
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE") // see https://github.com/spotbugs/spotbugs/issues/651
     public static FormValidation checkCredentials(@AncestorInPath Item item, String apiUri, String credentialsId) {
         if (item == null) {
             if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
@@ -65,53 +68,42 @@ public class TuleapConnector {
             }
         }
         if (Util.fixEmpty(credentialsId) == null) {
-            return FormValidation.error("Username Password credential is required");
+            return FormValidation.error("Tuleap Access Token is required !");
         } else {
-            StandardUsernamePasswordCredentials cred = CredentialsMatchers.firstOrNull(
-                filter(lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.get(), ACL.SYSTEM,
-                    Collections.<DomainRequirement> emptyList()), withId(trimToEmpty(credentialsId))),
-                CredentialsMatchers.allOf(withId(credentialsId), allUsernamePasswordMatch()));
+            Injector injector = Guice.createInjector(new TuleapApiGuiceModule());
+            AccessKeyChecker checker = injector.getInstance(AccessKeyChecker.class);
+            TuleapAccessToken token = lookupScanCredentials(item, apiUri, credentialsId);
             try {
-                Boolean credentialsAreValid = TuleapClientCommandConfigurer.<Boolean>newInstance(
-                    defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl()))
-                    .withCredentials(cred)
-                    .withCommand(new TuleapClientRawCmd.IsCredentialsValid())
-                    .configure()
-                    .call();
-
-                if (credentialsAreValid) {
-                    return FormValidation.ok();
-                } else {
-                    return FormValidation.error("Failed to validate the provided credentials");
-                }
-            } catch (IOException | IllegalArgumentException e) {
-                return FormValidation.error(e, "Failed to validate the provided credentials");
+                checker.verifyAccessKey(Objects.requireNonNull(token).getToken());
+                return FormValidation.ok();
+            } catch (InvalidAccessKeyException | InvalidScopesForAccessKeyException exception) {
+                return FormValidation.error("Failed to validate the provided credentials");
             }
         }
     }
 
     @CheckForNull
-    public static StandardCredentials lookupScanCredentials(@CheckForNull Item context, @CheckForNull String apiUri,
+    public static TuleapAccessToken lookupScanCredentials(@CheckForNull Item context, @CheckForNull String apiUri,
         @CheckForNull String scanCredentialsId) {
         if (Util.fixEmpty(scanCredentialsId) == null) {
             return null;
         } else {
             return CredentialsMatchers
                 .firstOrNull(
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
+                    CredentialsProvider.lookupCredentials(TuleapAccessToken.class, context,
                         context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication()
                             : ACL.SYSTEM,
-                        OFDomainRequirements(apiUri)),
+                        TuleapDomainRequirements(apiUri)),
                     CredentialsMatchers.allOf(withId(scanCredentialsId),
-                                              allUsernamePasswordMatch()));
+                                              allTuleapAccessTokenMatch()));
         }
     }
 
-    private static List<DomainRequirement> OFDomainRequirements(@CheckForNull String apiUri) {
+    private static List<DomainRequirement> TuleapDomainRequirements(@CheckForNull String apiUri) {
         return URIRequirementBuilder.fromUri(defaultIfEmpty(apiUri, TuleapConfiguration.get().getApiBaseUrl())).build();
     }
 
-    public static CredentialsMatcher allUsernamePasswordMatch() {
-        return CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
+    private static CredentialsMatcher allTuleapAccessTokenMatch() {
+        return CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(TuleapAccessToken.class));
     }
 }

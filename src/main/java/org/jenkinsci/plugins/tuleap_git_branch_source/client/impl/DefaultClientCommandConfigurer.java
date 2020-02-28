@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.client.impl;
 import java.util.Optional;
 
 
+import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
@@ -20,7 +21,7 @@ public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandCon
     private String apiUrl;
     private String gitUrl;
     private TuleapClientRawCmd.Command command;
-    private StandardCredentials credentials;
+    private TuleapAccessToken credentials;
     private TaskListener listener;
 
 
@@ -49,7 +50,7 @@ public class DefaultClientCommandConfigurer<T> implements TuleapClientCommandCon
     }
 
     @Override
-    public final DefaultClientCommandConfigurer<T> withCredentials(StandardCredentials credentials) {
+    public final DefaultClientCommandConfigurer<T> withCredentials(TuleapAccessToken credentials) {
         this.credentials = credentials;
         return this;
     }

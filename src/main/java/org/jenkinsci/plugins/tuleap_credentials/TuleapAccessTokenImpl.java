@@ -24,6 +24,8 @@ public class TuleapAccessTokenImpl extends BaseStandardCredentials implements Tu
     @NonNull
     private final Secret token;
 
+    private String username;
+
     @DataBoundConstructor
     public TuleapAccessTokenImpl(
         @CheckForNull CredentialsScope scope,
@@ -39,6 +41,29 @@ public class TuleapAccessTokenImpl extends BaseStandardCredentials implements Tu
     @NonNull
     public Secret getToken() {
         return token;
+    }
+
+    @NonNull
+    @Override
+    public Secret getPassword() {
+        return this.getToken();
+    }
+
+    @NonNull
+    @Override
+    public String getUsername() {
+        if (username == null) {
+            username = fetchUsername();
+        }
+
+        return username;
+    }
+
+    private String fetchUsername() {
+        Injector injector = Guice.createInjector(new TuleapApiGuiceModule());
+        UsernameRetriever retriever = injector.getInstance(UsernameRetriever.class);
+
+        return retriever.getUsernameForToken(token);
     }
 
     @Extension

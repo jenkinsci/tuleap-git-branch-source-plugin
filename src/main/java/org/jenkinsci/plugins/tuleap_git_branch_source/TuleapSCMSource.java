@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -19,6 +18,7 @@ import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapBranches;
@@ -77,7 +77,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
      */
     private List<SCMSourceTrait> traits = new ArrayList<>();
     private String credentialsId;
-    private StandardCredentials credentials;
+    private TuleapAccessToken credentials;
 
     @DataBoundConstructor
     public TuleapSCMSource(TuleapProject project, TuleapGitRepository repository) {
@@ -119,7 +119,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer)
                 .withTraits(traits).wantBranches(true)
                 .newRequest(this, listener)) {
-            StandardCredentials credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
+            TuleapAccessToken credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
                 getCredentialsId());
             setCredentials(credentials);
             setRemoteUrl(getGitBaseUri() + repositoryPath);
@@ -195,7 +195,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         return false;
     }
 
-    public void setCredentials(StandardCredentials credentials) {
+    public void setCredentials(TuleapAccessToken credentials) {
         this.credentials = credentials;
     }
 
@@ -309,7 +309,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
             @QueryParameter String projectId, @QueryParameter String credentialsId) throws IOException {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
-            final StandardCredentials credentials = lookupScanCredentials(context, apiUri, credentialsId);
+            final TuleapAccessToken credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
             Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>> newInstance(apiUri)
                 .withCredentials(credentials)
@@ -330,7 +330,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             @QueryParameter String repositoryPath) throws IOException {
             ListBoxModel result = new ListBoxModel();
             final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
-            StandardCredentials credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
+            TuleapAccessToken credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
             Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
                 .<Stream<TuleapGitRepository>>newInstance(apiBaseUrl)
                 .withCredentials(credentials)
