@@ -1,0 +1,12 @@
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - tuleapAccessToken:
+              scope: SYSTEM
+              id: "whatever"
+              token: "tlp-k1-24.2dd47d2e9280a430f4eb862cfbc85e90e8b286818dcbe85bd60d8feb7162580a"
+
+unclassified:
+  tuleapConfiguration:
+    domainUrl: https://my.tuleap.instance.net
