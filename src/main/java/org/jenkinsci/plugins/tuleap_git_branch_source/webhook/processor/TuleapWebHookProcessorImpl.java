@@ -65,7 +65,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         try {
             this.jobFinder.triggerConcernedJob(representation);
         } catch (RepositoryNotFoundException | BranchNotFoundException | TuleapProjectNotFoundException e) {
-           e.printStackTrace();
+            LOGGER.log(Level.WARNING, e.getMessage());
         }
 
         return HttpResponses.ok();
