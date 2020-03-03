@@ -1,8 +1,11 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import hudson.model.CauseAction;
+import hudson.security.ACL;
+import hudson.security.ACLContext;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebHookCause;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
@@ -30,34 +33,37 @@ public class JobFinderImpl implements JobFinder {
 
     public void triggerConcernedJob(WebHookRepresentation representation) throws RepositoryNotFoundException, BranchNotFoundException, TuleapProjectNotFoundException {
         LOGGER.log(Level.FINEST, "Retrieve the concerned job...");
-        Optional<OrganizationFolder> tuleapOrganizationFolder = this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()
-            .filter(OrganizationFolder::isSingleOrigin)
-            .filter(organizationFolder -> organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class))
-            .filter(organizationFolder -> {
-                TuleapSCMNavigator tuleapSCMNavigator = (TuleapSCMNavigator) organizationFolder.getSCMNavigators().get(0);
-                String projectId = tuleapSCMNavigator.getprojectId();
-                return representation.getTuleapProjectId().equals(projectId);
-            })
-            .findFirst();
 
-        OrganizationFolder tuleapFolder = tuleapOrganizationFolder.orElseThrow(TuleapProjectNotFoundException::new);
-        MultiBranchProject multiBranchProject = tuleapFolder.getJob(representation.getRepositoryName());
+        try (ACLContext old = ACL.as(ACL.SYSTEM)) {
+            Optional<OrganizationFolder> tuleapOrganizationFolder = this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()
+                .filter(OrganizationFolder::isSingleOrigin)
+                .filter(organizationFolder -> organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class))
+                .filter(organizationFolder -> {
+                    TuleapSCMNavigator tuleapSCMNavigator = (TuleapSCMNavigator) organizationFolder.getSCMNavigators().get(0);
+                    String projectId = tuleapSCMNavigator.getprojectId();
+                    return representation.getTuleapProjectId().equals(projectId);
+                })
+                .findFirst();
 
-        if (multiBranchProject == null) {
-            throw new RepositoryNotFoundException();
+            OrganizationFolder tuleapFolder = tuleapOrganizationFolder.orElseThrow(TuleapProjectNotFoundException::new);
+            MultiBranchProject multiBranchProject = tuleapFolder.getJob(representation.getRepositoryName());
+
+            if (multiBranchProject == null) {
+                throw new RepositoryNotFoundException();
+            }
+
+            ParameterizedJob job = this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(multiBranchProject, representation);
+
+            if (job == null) {
+                throw new BranchNotFoundException();
+            }
+
+            if (job.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
+            )) != null) {
+                LOGGER.log(Level.FINEST, "The job has been successfully built");
+                return;
+            }
+            LOGGER.log(Level.FINEST, "No job was triggered");
         }
-
-        ParameterizedJob job = this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(multiBranchProject, representation);
-
-        if (job == null) {
-            throw new BranchNotFoundException();
-        }
-
-        if (job.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
-        )) != null) {
-            LOGGER.log(Level.FINEST, "The job has been successfully built");
-            return;
-        }
-        LOGGER.log(Level.FINEST, "No job was triggered");
     }
 }
