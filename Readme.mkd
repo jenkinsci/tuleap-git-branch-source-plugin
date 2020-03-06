@@ -24,9 +24,7 @@ Works with any recent version of Jenkins >= 2 (latest LTS preferred).
 
 ### How to configure
 On the Tuleap side:
-* Go on "Jenkins" pane from the Git Administration menu of your Tuleap project.
-* Click on "Add Jenkins server".
-* In the input add your Jenkins server URL.
+ * Please refer to the Tuleap [documentation](https://docs.tuleap.org/user-guide/code-versioning/git.html?#webhooks)
 
 If you do not want to trigger via Tuleap, you can use the `https://JENKINS_URL/tuleap-hook/` URL.
 If you use the URL you have to give the request body, for instance:
