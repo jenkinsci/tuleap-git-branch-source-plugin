@@ -18,6 +18,28 @@ Works with any recent version of Jenkins >= 2 (latest LTS preferred).
     * For each repo, scan all branches
     * For each branch, when there is a `Jenkinsfile` a job should be created and scheduled accordingly
 
+## Tuleap job webhook
+
+  When a push is done in a Tuleap git repository, the linked Jenkins job will be automatically built.
+
+### How to configure
+On the Tuleap side:
+* Go on "Jenkins" pane from the Git Administration menu of your Tuleap project.
+* Click on "Add Jenkins server".
+* In the input add your Jenkins server URL.
+
+If you do not want to trigger via Tuleap, you can use the `https://JENKINS_URL/tuleap-hook/` URL.
+If you use the URL you have to give the request body, for instance:
+
+```json
+{
+    "tuleapProjectId": "130",
+    "repositoryName": "repo001",
+    "branchName":"master"
+}
+```
+
+
 ## Report issues
 
 Issues must be reported in [Request tracker of the Tuleap project](https://tuleap.net/plugins/tracker/?report=1136) under the category "Jenkins Branch Source plugin".
