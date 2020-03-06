@@ -9,7 +9,7 @@
     <relativePath />
   </parent>
   <artifactId>tuleap-git-branch-source</artifactId>
-  <version>1.1.1-SNAPSHOT</version>
+  <version>1.0.8-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <properties>
