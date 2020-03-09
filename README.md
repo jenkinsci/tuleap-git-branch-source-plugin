@@ -6,17 +6,17 @@
 
 This jenkins plugin allow autodiscovery of Tuleap's git repositories and branches to automatically create jenkins jobs when branches have `Jenkinsfile`.
 
-Works with any recent version of Jenkins >= 2 (latest LTS preferred).
+Works with any recent version of Jenkins >= 2.150.3 (latest LTS preferred).
 
 # How to use
 
-* Install the plugin (!)
-* In Jenkins global configuration you should reference your Tuleap instance (only one server ATM)
+* Install the plugin
+* In Jenkins global configuration you should reference your Tuleap instance (There is a limitation of 1 Tuleap server per Jenkins instance)
 * Then any Jenkins user can create a new "Tuleap project" job type
-  * They should have a `username/password` jenkins credential with a user that can access the project you want to target
+  * They should have a `Tuleap Access Key` jenkins credential with a user that can access the project you want to target
   * They need to select the project they want to work on
   * Update the filters (by default all repositories are ignored), for instance remove the "*" in "Exclude"
-  * Save the conf
+  * Save the configuration
   * Then Jenkins should be automatically scanning the project
     * Find all matching git repositories
     * For each repo, scan all branches
@@ -28,7 +28,7 @@ Works with any recent version of Jenkins >= 2 (latest LTS preferred).
 
 ### How to configure
 On the Tuleap side:
- * Please refer to the Tuleap [documentation](https://docs.tuleap.org/user-guide/code-versioning/git.html?#webhooks)
+ * Please refer to the [Tuleap documentation](https://docs.tuleap.org/user-guide/code-versioning/git.html?#webhooks) for instructions
 
 If you do not want to trigger via Tuleap, you can use the `https://JENKINS_URL/tuleap-hook/` URL.
 If you use the URL you have to give the request body, for instance:
@@ -41,29 +41,18 @@ If you use the URL you have to give the request body, for instance:
 }
 ```
 
-
 ## Report issues
 
 Issues must be reported in [Request tracker of the Tuleap project](https://tuleap.net/plugins/tracker/?report=1136) under the category "Jenkins Branch Source plugin".
 
 # Development
 
-## Todo
-
-* Make use of Tuleap API key instead of basic auth (server relief)
-  This would be a really good stuff for better performances (basic auth is really CPU intensive) however we don't know
-  how to do that properly today. There are 2 pain points
-  - First, we should use "Secret key" (or token) to store the AccessKey (instead of user/password) but we didn't find
-    a good documentation for that ATM.
-  - Then the issue is that the same auth is used for API access and git operations (clone of repo, etc). However the access key
-    cannot be used to do git operation so we should have 2 separated creds here.
-
 ## On jenkins, connect to Tuleap
 
 Configure Jenkins to accept a tuleap dev environment certificate
 
     echo -n | openssl s_client -connect tuleap-web.tuleap-aio-dev.docker:443 |    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p'  > /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
-    keytool -keystore /docker-java-home/jre/lib/security/cacerts   -import -trustcacerts -storepass changeit -noprompt -alias tuleap-web-dev -file /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
+    keytool -keystore {$JAVA_HOME}/jre/lib/security/cacerts   -import -trustcacerts -storepass changeit -noprompt -alias tuleap-web-dev -file /usr/local/share/ca-certificates/tuleap-web.tuleap-aio-dev.docker.crt
     update-ca-certificates
 
 ## Build
@@ -84,3 +73,4 @@ Tested with OpenJDK 8
 * RAMBELONTSALAMA Haja (project's initiator)
 * ROBINSON Clarck
 * VACELET Manuel
+* GOYOT Martin
