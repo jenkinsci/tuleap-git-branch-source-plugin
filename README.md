@@ -13,7 +13,7 @@ Works with any recent version of Jenkins >= 2.150.3 (latest LTS preferred).
 * Install the plugin
 * In Jenkins global configuration you should reference your Tuleap instance (There is a limitation of 1 Tuleap server per Jenkins instance)
 * Then any Jenkins user can create a new "Tuleap project" job type
-  * They should have a `Tuleap Access Key` jenkins credential with a user that can access the project you want to target
+  * They should have a [`Tuleap Access Key` jenkins credential](https://docs.tuleap.org/user-guide/citizen.html#access-keys) with a user that can access the project you want to target
   * They need to select the project they want to work on
   * Update the filters (by default all repositories are ignored), for instance remove the "*" in "Exclude"
   * Save the configuration
