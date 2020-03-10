@@ -36,8 +36,12 @@
       <name>Manuel Vacelet</name>
     </developer>
     <developer>
-      <id>robinsc</id>
+      <id>robinsoc</id>
       <name>Clarck Robinson</name>
+    </developer>
+    <developer>
+      <id>erwyn</id>
+      <name>Martin GOYOT</name>
     </developer>
   </developers>
   <repositories>
