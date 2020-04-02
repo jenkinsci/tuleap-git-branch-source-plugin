@@ -4,8 +4,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import hudson.security.ACL;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
-import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 import org.junit.ClassRule;
 import org.junit.Test;
 
