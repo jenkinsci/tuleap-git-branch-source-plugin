@@ -3,12 +3,10 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.client.impl;
 import java.util.Optional;
 
 
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommandConfigurer;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
-import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
-
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 
 import static org.apache.commons.lang3.StringUtils.defaultString;
 

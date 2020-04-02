@@ -6,12 +6,12 @@ import static org.junit.Assert.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import hudson.util.Secret;
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.io.IOUtils;
-import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 

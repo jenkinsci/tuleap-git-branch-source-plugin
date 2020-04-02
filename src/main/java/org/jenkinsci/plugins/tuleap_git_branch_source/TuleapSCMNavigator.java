@@ -10,6 +10,7 @@ import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import jenkins.model.Jenkins;
 import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.scm.api.*;
@@ -29,7 +30,6 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientCommand
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.TuleapClientRawCmd;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitRepository;
 import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapProject;
-import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.UserForkRepositoryTrait;
 import org.kohsuke.accmod.Restricted;

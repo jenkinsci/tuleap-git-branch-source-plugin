@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.util.Secret;
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -12,7 +13,6 @@ import org.jenkinsci.plugins.tuleap_api.*;
 import org.jenkinsci.plugins.tuleap_api.internals.entities.AccessKeyEntity;
 import org.jenkinsci.plugins.tuleap_api.internals.entities.UserEntity;
 import org.jenkinsci.plugins.tuleap_api.internals.exceptions.InvalidTuleapResponseException;
-import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
 
 import java.io.IOException;
 import java.util.Objects;

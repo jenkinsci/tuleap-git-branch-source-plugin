@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.config;
 import java.io.IOException;
 
 
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

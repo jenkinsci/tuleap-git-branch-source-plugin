@@ -8,6 +8,7 @@ import java.util.Objects;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import org.jenkinsci.plugins.tuleap_api.TuleapApiGuiceModule;
 import org.jenkinsci.plugins.tuleap_credentials.AccessKeyChecker;
 import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;

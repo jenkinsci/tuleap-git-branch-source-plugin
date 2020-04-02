@@ -2,9 +2,9 @@ package org.jenkinsci.plugins.tuleap_api.internals.guice;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import jenkins.model.Jenkins;
 import okhttp3.OkHttpClient;
-import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConfiguration;
 
 import java.net.MalformedURLException;
 import java.net.Proxy;
