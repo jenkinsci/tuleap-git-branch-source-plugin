@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapProject;
-
+import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.metadata.AvatarMetadataAction;
 
 public class TuleapProjectMetadataAction extends AvatarMetadataAction {

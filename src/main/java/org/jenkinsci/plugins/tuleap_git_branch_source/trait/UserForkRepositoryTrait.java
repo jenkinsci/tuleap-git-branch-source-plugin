@@ -3,11 +3,11 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.trait;
 import javax.annotation.Nonnull;
 
 
+import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import org.jenkinsci.plugins.tuleap_git_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigatorContext;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitRepository;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
