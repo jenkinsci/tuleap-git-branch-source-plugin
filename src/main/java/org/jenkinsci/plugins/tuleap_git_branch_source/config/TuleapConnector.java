@@ -1,18 +1,17 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.config;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jenkinsci.plugins.tuleap_api.TuleapApiGuiceModule;
-import org.jenkinsci.plugins.tuleap_credentials.AccessKeyChecker;
-import org.jenkinsci.plugins.tuleap_credentials.TuleapAccessToken;
-import org.jenkinsci.plugins.tuleap_credentials.exceptions.InvalidAccessKeyException;
-import org.jenkinsci.plugins.tuleap_credentials.exceptions.InvalidScopesForAccessKeyException;
+import io.jenkins.plugins.tuleap_api.client.TuleapApiGuiceModule;
+import io.jenkins.plugins.tuleap_credentials.AccessKeyChecker;
+import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
+import io.jenkins.plugins.tuleap_credentials.exceptions.InvalidAccessKeyException;
+import io.jenkins.plugins.tuleap_credentials.exceptions.InvalidScopesForAccessKeyException;
+import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -23,11 +22,8 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.filter;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
-import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Util;

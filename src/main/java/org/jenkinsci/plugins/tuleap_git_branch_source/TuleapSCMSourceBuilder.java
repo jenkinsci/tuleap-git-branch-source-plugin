@@ -1,9 +1,8 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapGitRepository;
-import org.jenkinsci.plugins.tuleap_git_branch_source.client.api.TuleapProject;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
+import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.trait.SCMSourceBuilder;
 
 public class TuleapSCMSourceBuilder extends SCMSourceBuilder<TuleapSCMSourceBuilder, TuleapSCMSource> {
