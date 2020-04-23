@@ -6,7 +6,7 @@
 
 This jenkins plugin allow autodiscovery of Tuleap's git repositories and branches to automatically create jenkins jobs when branches have `Jenkinsfile`.
 
-Works with any recent version of Jenkins >= 2.150.3 (latest LTS preferred).
+Works with any recent version of Jenkins >= 2.164.1 (latest LTS preferred).
 
 # How to use
 
