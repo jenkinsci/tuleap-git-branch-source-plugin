@@ -33,11 +33,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,7 +47,7 @@ import static org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnec
  */
 public class TuleapSCMSource extends AbstractGitSCMSource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TuleapSCMSource.class);
+    private static final Logger LOGGER = Logger.getLogger(TuleapSCMSource.class.getName());
 
     /**
      * Project Id of the source to be manipulated
@@ -124,7 +123,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             setCredentials(credentials);
             setRemoteUrl(getGitBaseUri() + repositoryPath);
             if (request.isFetchBranches()) {
-                LOGGER.info("Fecthing branches for repository at {}", repositoryPath);
+                LOGGER.info(String.format("Fecthing branches for repository at %s", repositoryPath));
                 Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
                     .withCredentials(credentials)
                     .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
