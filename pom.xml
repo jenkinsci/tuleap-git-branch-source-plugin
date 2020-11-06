@@ -80,7 +80,7 @@
       <dependency>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-support</artifactId>
-        <version>3.5</version>
+        <version>3.6</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
