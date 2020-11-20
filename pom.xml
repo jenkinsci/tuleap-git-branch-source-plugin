@@ -70,7 +70,7 @@
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib-common</artifactId>
-        <version>1.4.10</version>
+        <version>1.4.20</version>
       </dependency>
       <dependency>
         <groupId>org.jenkins-ci.plugins</groupId>
