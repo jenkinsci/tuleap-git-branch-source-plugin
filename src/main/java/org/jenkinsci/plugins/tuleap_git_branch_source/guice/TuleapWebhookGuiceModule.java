@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.guice;
 
 import com.google.inject.AbstractModule;
+import hudson.model.queue.QueueListener;
+import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapPipelineStatusNotifier;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookCheckerImpl;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor.*;
