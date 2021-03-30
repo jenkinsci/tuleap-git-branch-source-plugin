@@ -13,16 +13,14 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientCommandConfigurer;
 import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientRawCmd;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapBranches;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapFileContent;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
+import io.jenkins.plugins.tuleap_api.deprecated_client.api.*;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
 import jenkins.scm.api.*;
+import jenkins.scm.api.mixin.ChangeRequestSCMRevision;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
@@ -48,6 +46,7 @@ import static org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnec
 public class TuleapSCMSource extends AbstractGitSCMSource {
 
     private static final Logger LOGGER = Logger.getLogger(TuleapSCMSource.class.getName());
+    public static final String JENKINS_FILE_PATH = "Jenkinsfile";
 
     /**
      * Project Id of the source to be manipulated
@@ -116,41 +115,67 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
         @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
         try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer)
-                .withTraits(traits).wantBranches(true)
+                .withTraits(traits)
                 .newRequest(this, listener)) {
             TuleapAccessToken credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
                 getCredentialsId());
             setCredentials(credentials);
             setRemoteUrl(getGitBaseUri() + repositoryPath);
-            if (request.isFetchBranches()) {
-                LOGGER.info(String.format("Fecthing branches for repository at %s", repositoryPath));
-                Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
+            LOGGER.info(String.format("Fecthing branches for repository at %s", repositoryPath));
+            Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
+                .withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
+                .configure()
+                .call();
+            int countBranches = 0;
+            for (TuleapBranches branch : branches.collect(Collectors.toList())) {
+                countBranches++;
+                request.listener().getLogger().println("Get the Jenkinsfile from Tuleap.");
+                Optional<TuleapFileContent> file = TuleapClientCommandConfigurer.<Optional<TuleapFileContent>>newInstance(getApiBaseUri())
                     .withCredentials(credentials)
-                    .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
+                    .withCommand(new TuleapClientRawCmd.GetJenkinsFile(repository.getId(), JENKINS_FILE_PATH, branch.getName()))
                     .configure()
                     .call();
-                request.setBranchesFromTuleapApi(branches);
-                int count = 0;
-                for (TuleapBranches branch : branches.collect(Collectors.toList())) {
-                    count++;
-                    request.listener().getLogger().println("Get the Jenkinsfile from Tuleap.");
-                    Optional<TuleapFileContent> file = TuleapClientCommandConfigurer.<Optional<TuleapFileContent>>newInstance(getApiBaseUri())
-                        .withCredentials(credentials)
-                        .withCommand(new TuleapClientRawCmd.GetJenkinsFile(repository.getId(), "Jenkinsfile", branch.getName()))
-                        .configure()
-                        .call();
-                    if (file.get().getName() != null) {
-                        request.listener().getLogger().format("Search at '%s'", branch.getName());
-                        TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
-                        if (request.process(head, new SCMRevisionImpl(head, branch.getCommit().getId()),
-                            TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
-                            request.listener().getLogger()
-                                .format("%n  %d branches were processed (query completed)%n", count).println();
-                        }
-                    } else {
-                        request.listener().getLogger().format("There is no Jenkinsfile at the branch: %s %n", branch.getName());
+                if (file.get().getName() != null) {
+                    request.listener().getLogger().format("Search at '%s'", branch.getName());
+                    TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
+                    if (request.process(head, new SCMRevisionImpl(head, branch.getCommit().getId()),
+                        TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
+                        request.listener().getLogger()
+                            .format("%n  %d branches were processed (query completed)%n", countBranches).println();
                     }
+                } else {
+                    request.listener().getLogger().format("There is no Jenkinsfile at the branch: %s %n", branch.getName());
+                }
 
+            }
+
+            LOGGER.info(String.format("Fetching PullRequests for repository at %s", repositoryPath));
+            Stream<TuleapPullRequests> pullRequests = TuleapClientCommandConfigurer.<Stream<TuleapPullRequests>>newInstance(getApiBaseUri())
+                .withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.PullRequests(this.repository.getId()))
+                .configure()
+                .call();
+            int countPullRequests = 0;
+            for (TuleapPullRequests pullRequest : pullRequests.collect(Collectors.toList())) {
+                countPullRequests++;
+                request.listener().getLogger().println("Get the Jenkinsfile from Tuleap.");
+                Optional<TuleapFileContent> file = TuleapClientCommandConfigurer.<Optional<TuleapFileContent>>newInstance(getApiBaseUri())
+                    .withCredentials(credentials)
+                    .withCommand(new TuleapClientRawCmd.GetJenkinsFile(repository.getId(), JENKINS_FILE_PATH, pullRequest.getHead().getId()))
+                    .configure()
+                    .call();
+                if (file.get().getName() != null) {
+                    request.listener().getLogger().format("Search at '%s'", pullRequest.getTitle());
+                    TuleapPullRequestSCMHead head = new TuleapPullRequestSCMHead(pullRequest.getId(), pullRequest.getTitle(), pullRequest.getBranchSrc(), pullRequest.getHead().getId());
+                    if (request.process(head, new TuleapPullRequestSCMRevision(head, new SCMRevisionImpl(head, pullRequest.getHead().getId())) {
+                        },
+                        TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
+                        request.listener().getLogger()
+                            .format("%n  %d pullRequests were processed (query completed)%n", countPullRequests).println();
+                    }
+                } else {
+                    request.listener().getLogger().format("There is no Jenkinsfile at the Pull Request: %s %n", pullRequest.getTitle());
                 }
 
             }
