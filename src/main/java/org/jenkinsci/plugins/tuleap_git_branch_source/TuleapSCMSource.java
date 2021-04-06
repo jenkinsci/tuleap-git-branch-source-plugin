@@ -282,15 +282,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         return this.repository;
     }
 
-    @Nullable
-    public TuleapAccessToken getCredentials() {
-        return lookupScanCredentials(
-            getOwner(),
-            getApiBaseUri(),
-            getCredentialsId()
-        );
-    }
-
     @Symbol("Tuleap")
     @Extension
     public static class DescriptorImpl extends SCMSourceDescriptor {

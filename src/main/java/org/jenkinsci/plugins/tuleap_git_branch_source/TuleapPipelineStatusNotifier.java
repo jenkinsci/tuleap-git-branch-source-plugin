@@ -7,6 +7,7 @@ import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 
 import jenkins.scm.api.SCMSource;
+import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
@@ -34,7 +35,7 @@ public class TuleapPipelineStatusNotifier {
             return;
         }
 
-        final TuleapAccessToken token = source.getCredentials();
+        final TuleapAccessToken token = getAccessKey(source);
         if (token == null) {
             throw new RuntimeException(
                 "Access key for project not found. Please check your project configuration."
@@ -59,6 +60,15 @@ public class TuleapPipelineStatusNotifier {
             gitData.lastBuild.getSHA1().name(),
             status,
             token
+        );
+    }
+
+    @Nullable
+    private TuleapAccessToken getAccessKey(TuleapSCMSource source) {
+        return TuleapConnector.lookupScanCredentials(
+            source.getOwner(),
+            source.getApiBaseUri(),
+            source.getCredentialsId()
         );
     }
 }
