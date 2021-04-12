@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.tuleap_git_branch_source;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Action;
@@ -275,6 +276,10 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
     public String getGitBaseUri() {
         return TuleapConfiguration.get().getGitBaseUrl();
+    }
+
+    public TuleapGitRepository getTuleapGitRepository() {
+        return this.repository;
     }
 
     @Symbol("Tuleap")
