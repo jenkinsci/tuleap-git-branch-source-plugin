@@ -17,6 +17,6 @@ public class OrganizationFolderRetrieverImpl implements OrganizationFolderRetrie
 
     @Override
     public ParameterizedJobMixIn.ParameterizedJob retrieveBranchJobFromRepositoryName(MultiBranchProject multiBranchProject, WebHookRepresentation representation){
-        return (ParameterizedJobMixIn.ParameterizedJob) multiBranchProject.getItem(representation.getBranchName());
+        return (ParameterizedJobMixIn.ParameterizedJob) multiBranchProject.getItemByBranchName(representation.getBranchName());
     }
 }

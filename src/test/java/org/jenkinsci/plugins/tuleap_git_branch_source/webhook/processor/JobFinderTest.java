@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import hudson.model.CauseAction;
+import hudson.model.Queue;
 import hudson.model.queue.QueueTaskFuture;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
@@ -9,6 +10,7 @@ import jenkins.scm.api.SCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryScanFailedException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapProjectNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
 import org.junit.Before;
@@ -31,7 +33,7 @@ public class JobFinderTest {
     }
 
     @Test(expected = TuleapProjectNotFoundException.class)
-    public void testThrowsTuleapProjectNotFoundExceptionWhenThereIsNoTuleapOrganizationFolder() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException {
+    public void testThrowsTuleapProjectNotFoundExceptionWhenThereIsNoTuleapOrganizationFolder() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException, RepositoryScanFailedException {
         OrganizationFolder folderWithSeveralOrigin = mock(OrganizationFolder.class);
         when(folderWithSeveralOrigin.isSingleOrigin()).thenReturn(false);
 
@@ -58,7 +60,7 @@ public class JobFinderTest {
     }
 
     @Test(expected = RepositoryNotFoundException.class)
-    public void testThrowRepositoryNotFoundExceptionWhenTheRepositoryDoesNotExist() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException {
+    public void testThrowRepositoryNotFoundExceptionWhenTheRepositoryDoesNotExist() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException, RepositoryScanFailedException {
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
         when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
@@ -73,8 +75,8 @@ public class JobFinderTest {
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
         when(representation.getTuleapProjectId()).thenReturn("204");
 
-        MultiBranchProject multiBranchProject = mock(MultiBranchProject.class);
-        verify(multiBranchProject, never()).getItem(anyString());
+        MultiBranchProject repositoryProject = mock(MultiBranchProject.class);
+        verify(repositoryProject, never()).getItem(anyString());
 
         ParameterizedJob job = mock(ParameterizedJob.class);
         verify(job, never()).scheduleBuild2(anyInt(), any());
@@ -85,7 +87,7 @@ public class JobFinderTest {
     }
 
     @Test(expected = BranchNotFoundException.class)
-    public void testThrowBranchNotFoundExceptionWhenTheBranchDoesNotExist() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testThrowBranchNotFoundExceptionWhenTheBranchDoesNotExistEvenAfterARescanOfTheRepository() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
         when(representation.getTuleapProjectId()).thenReturn("204");
         when(representation.getRepositoryName()).thenReturn("C63");
@@ -103,18 +105,48 @@ public class JobFinderTest {
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
 
-        ParameterizedJob job = mock(ParameterizedJob.class);
-        verify(job, never()).scheduleBuild2(anyInt(), any());
+        MultiBranchProject repositoryProject = mock(MultiBranchProject.class);
+        when(tuleapFolder.getJob(representation.getRepositoryName())).thenReturn(repositoryProject);
 
-        MultiBranchProject multiBranchProject = mock(MultiBranchProject.class);
-        when(tuleapFolder.getJob(representation.getRepositoryName())).thenReturn(multiBranchProject);
+        Queue.Item item = mock(Queue.Item.class);
+        when(repositoryProject.scheduleBuild2(eq(0), any(CauseAction.class))).thenReturn(item);
+        when(this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(repositoryProject, representation)).thenReturn(null, null);
+
+        JobFinderImpl jobFinder = new JobFinderImpl(this.organizationFolderRetriever);
+        jobFinder.triggerConcernedJob(representation);
+    }
+
+    @Test(expected = RepositoryScanFailedException.class)
+    public void testThrowRepositoryScanFailedExceptionWhenTheRescanOfTheRepositoryFail() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
+        WebHookRepresentation representation = mock(WebHookRepresentation.class);
+        when(representation.getTuleapProjectId()).thenReturn("204");
+        when(representation.getRepositoryName()).thenReturn("C63");
+        when(representation.getBranchName()).thenReturn("W204");
+
+        OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
+        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
+        List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
+        TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
+        tuleapScmNavigatorList.add(tuleapNavigator);
+        when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
+        when(tuleapNavigator.getprojectId()).thenReturn("204");
+
+
+        Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
+        when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
+
+        MultiBranchProject repositoryProject = mock(MultiBranchProject.class);
+        when(tuleapFolder.getJob(representation.getRepositoryName())).thenReturn(repositoryProject);
+
+        when(repositoryProject.scheduleBuild2(eq(0), any(CauseAction.class))).thenReturn(null);
+        when(this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(repositoryProject, representation)).thenReturn(null);
 
         JobFinderImpl jobFinder = new JobFinderImpl(this.organizationFolderRetriever);
         jobFinder.triggerConcernedJob(representation);
     }
 
     @Test
-    public void testTheBuildIsScheduled() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testTheBuildIsScheduledWhenTheBranchAlreadyExist() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
         when(representation.getTuleapProjectId()).thenReturn("204");
         when(representation.getRepositoryName()).thenReturn("C63");
@@ -130,14 +162,46 @@ public class JobFinderTest {
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
 
-        MultiBranchProject multiBranchProject = mock(MultiBranchProject.class);
+        MultiBranchProject repositoryProject = mock(MultiBranchProject.class);
 
-        when(tuleapFolder.getJob(representation.getRepositoryName())).thenReturn(multiBranchProject);
+        when(tuleapFolder.getJob(representation.getRepositoryName())).thenReturn(repositoryProject);
 
-        ParameterizedJob job = mock(ParameterizedJob.class);
+        ParameterizedJob branchJob = mock(ParameterizedJob.class);
         QueueTaskFuture task = mock(QueueTaskFuture.class);
-        when(this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(multiBranchProject, representation)).thenReturn(job);
-        when(job.scheduleBuild2(eq(0), any(CauseAction.class))).thenReturn(task);
+        when(this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(repositoryProject, representation)).thenReturn(branchJob);
+        when(branchJob.scheduleBuild2(eq(0), any(CauseAction.class))).thenReturn(task);
+
+        JobFinderImpl jobFinder = new JobFinderImpl(this.organizationFolderRetriever);
+        jobFinder.triggerConcernedJob(representation);
+    }
+
+    @Test
+    public void testTheBuildIsScheduledWhenTheBranchIsDiscoverAfterRepositoryRescan() throws TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
+        WebHookRepresentation representation = mock(WebHookRepresentation.class);
+        when(representation.getTuleapProjectId()).thenReturn("204");
+        when(representation.getRepositoryName()).thenReturn("C63");
+
+        OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
+        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
+        List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
+        TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
+        tuleapScmNavigatorList.add(tuleapNavigator);
+        when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
+        when(tuleapNavigator.getprojectId()).thenReturn("204");
+
+        Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
+        when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
+
+        MultiBranchProject repositoryProject = mock(MultiBranchProject.class);
+
+        when(tuleapFolder.getJob(representation.getRepositoryName())).thenReturn(repositoryProject);
+
+        ParameterizedJob branchJob = mock(ParameterizedJob.class);
+        Queue.Item item = mock(Queue.Item.class);
+        QueueTaskFuture task = mock(QueueTaskFuture.class);
+        when(this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(repositoryProject, representation)).thenReturn(null, branchJob);
+        when(repositoryProject.scheduleBuild2(eq(0), any(CauseAction.class))).thenReturn(item);
+        when(branchJob.scheduleBuild2(eq(0), any(CauseAction.class))).thenReturn(task);
 
         JobFinderImpl jobFinder = new JobFinderImpl(this.organizationFolderRetriever);
         jobFinder.triggerConcernedJob(representation);
