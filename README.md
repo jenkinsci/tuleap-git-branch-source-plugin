@@ -66,7 +66,11 @@ Tested with OpenJDK 8
 
 ### With docker
 
-    docker run -it --rm -v ~/.m2:/var/maven/.m2 -u $(id -u) -e MAVEN_CONFIG=/var/maven/.m2 -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn -Duser.home=/var/maven clean install
+    docker run -it --rm -u $(id -u) \
+           -v ~/.m2:/var/maven/.m2 -e MAVEN_CONFIG=/var/maven/.m2 \
+           -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven \
+           maven:3.3-jdk-8 \
+           mvn -Duser.home=/var/maven clean install
 
 ## Authors
 
