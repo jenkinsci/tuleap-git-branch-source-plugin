@@ -1,4 +1,4 @@
-<source class="org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource" plugin="tuleap-git-branch-source@1.0.0-SNAPSHOT">
+<source class="org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource">
 	<id>https://www.tuleap.example.test/projects::3280sample-simpleproject</id>
 	<projectId>3280</projectId>
 	<repository>
@@ -21,8 +21,7 @@
 	<traits>
 	</traits>
 	<credentialsId>fe09fd0e-7287-44a1-b0b5-746accd227c1</credentialsId>
-	<credentials class="com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
-				 plugin="credentials@2.1.16">
+	<credentials class="com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl">
 		<scope>GLOBAL</scope>
 		<id>fe09fd0e-7287-44a1-b0b5-746accd227c1</id>
 		<description></description>

@@ -1,11 +1,11 @@
-<org.jenkinsci.plugins.tuleap__git__branch__source.TuleapSCMNavigator plugin="tuleap-git-branch-source@1.0.0-SNAPSHOT">
+<org.jenkinsci.plugins.tuleap__git__branch__source.TuleapSCMNavigator>
 	<projectId>3280</projectId>
 	<traits>
 		<org.jenkinsci.plugins.tuleap__git__branch__source.trait.BranchDiscoveryTrait/>
 		<org.jenkinsci.plugins.tuleap__git__branch__source.trait.UserForkRepositoryTrait>
-			<strategy>1</strategy>
+			<strategy>2</strategy>
 		</org.jenkinsci.plugins.tuleap__git__branch__source.trait.UserForkRepositoryTrait>
-		<jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait plugin="scm-api@2.2.3">
+		<jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait>
 			<includes>*</includes>
 			<excludes>*tool* *doc* *chef*</excludes>
 		</jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait>

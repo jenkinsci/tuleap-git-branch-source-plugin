@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
+import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
@@ -15,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TuleapSCMNavigatorTest extends TuleapBranchSourceTest<TuleapSCMNavigator>{
+public class TuleapSCMNavigatorConfigurationLoadingTest extends TuleapBranchSourceTest<TuleapSCMNavigator>{
 
     @Test
     public void new_project_by_default(){
@@ -34,7 +35,7 @@ public class TuleapSCMNavigatorTest extends TuleapBranchSourceTest<TuleapSCMNavi
                        Matchers.<SCMTrait<?>>allOf(
                            instanceOf(WildcardSCMSourceFilterTrait.class),
                            hasProperty("includes", is("*")),
-                           hasProperty("excludes", is("*")))
+                           hasProperty("excludes", is("")))
                    )
         );
         assertThat(instance.getTraits(), not(hasItem(Matchers.instanceOf(RegexSCMSourceFilterTrait.class))));
