@@ -300,7 +300,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
             TuleapSCMNavigator navigator = new TuleapSCMNavigator(projectId);
             List<SCMTrait<? extends SCMTrait<?>>> someTraits = getTraitsDefaults();
             someTraits.add(new UserForkRepositoryTrait(1));
-            someTraits.add(new WildcardSCMSourceFilterTrait("", "*"));
+            someTraits.add(new WildcardSCMSourceFilterTrait("", ""));
             navigator.setTraits(someTraits);
             return navigator;
         }
