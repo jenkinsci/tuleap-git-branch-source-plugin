@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.is;
 
-public class TuleapSCMNavigatorTest {
+public class TuleapSCMNavigatorDefaultConfigurationTest {
 
     @ClassRule
     public static JenkinsRule jenkins = new JenkinsRule();
