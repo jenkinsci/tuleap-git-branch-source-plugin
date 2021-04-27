@@ -72,6 +72,10 @@ Tested with OpenJDK 8
            maven:3.3-jdk-8 \
            mvn -Duser.home=/var/maven clean install
 
+## See also
+
+* [tuleap-oauth-plugin](https://github.com/jenkinsci/tuleap-oauth-plugin) a plugin to link Jenkins to Tuleap's OAuth, coupling identification and authorisation on Tuleap, reducing users management effort.
+
 ## Authors
 
 * RAMBELONTSALAMA Haja (project's initiator)
