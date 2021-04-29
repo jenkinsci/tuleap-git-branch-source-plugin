@@ -31,7 +31,6 @@ import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.UserForkRepositoryTrait;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -102,11 +101,15 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 .call();
 
             for (TuleapGitRepository repo : repos.collect(Collectors.toList())) {
-                repositories.put(repo.getName(), repo);
-                SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
-                if (request.process(repo.getName(), sourceFactory, null, witness)) {
-                    listener.getLogger().format("%d repositories were processed (query completed)%n",
-                        witness.getCount());
+                if(! repo.getPath().contains("/u/")) {
+                    repositories.put(repo.getName(), repo);
+                    SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
+                    if (request.process(repo.getName(), sourceFactory, null, witness)) {
+                        listener.getLogger().format("%d repositories were processed (query completed)%n",
+                            witness.getCount());
+                    }
+                } else {
+                    listener.getLogger().format("%s is ignored because it is a user fork%n", repo.getName());
                 }
             }
             listener.getLogger().format("%d repositories were processed%n", witness.getCount());
@@ -299,7 +302,6 @@ public class TuleapSCMNavigator extends SCMNavigator {
         public SCMNavigator newInstance(@CheckForNull String projectId) {
             TuleapSCMNavigator navigator = new TuleapSCMNavigator(projectId);
             List<SCMTrait<? extends SCMTrait<?>>> someTraits = getTraitsDefaults();
-            someTraits.add(new UserForkRepositoryTrait(1));
             someTraits.add(new WildcardSCMSourceFilterTrait("", ""));
             navigator.setTraits(someTraits);
             return navigator;

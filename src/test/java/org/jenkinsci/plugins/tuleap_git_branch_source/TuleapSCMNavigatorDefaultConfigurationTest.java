@@ -6,7 +6,6 @@ import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import org.hamcrest.Matchers;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.UserForkRepositoryTrait;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -33,9 +32,6 @@ public class TuleapSCMNavigatorDefaultConfigurationTest {
 
         assertThat(newInstance.getTraits(),
             containsInAnyOrder(
-                Matchers.<SCMTrait<?>>allOf(
-                    instanceOf(UserForkRepositoryTrait.class),
-                    hasProperty("strategy", is(1))),
                 Matchers.<SCMTrait<?>>allOf(
                     instanceOf(WildcardSCMSourceFilterTrait.class),
                     hasProperty("includes", is("*")),
