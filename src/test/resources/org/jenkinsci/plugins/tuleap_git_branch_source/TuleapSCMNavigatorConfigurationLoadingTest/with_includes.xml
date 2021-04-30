@@ -2,9 +2,6 @@
 	<projectId>3280</projectId>
 	<traits>
 		<org.jenkinsci.plugins.tuleap__git__branch__source.trait.BranchDiscoveryTrait/>
-		<org.jenkinsci.plugins.tuleap__git__branch__source.trait.UserForkRepositoryTrait>
-			<strategy>1</strategy>
-		</org.jenkinsci.plugins.tuleap__git__branch__source.trait.UserForkRepositoryTrait>
 		<jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait>
 			<includes>*manager*</includes>
 			<excludes>*</excludes>

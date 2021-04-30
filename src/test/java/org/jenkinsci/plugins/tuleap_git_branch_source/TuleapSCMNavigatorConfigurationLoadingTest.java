@@ -5,7 +5,6 @@ import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import org.hamcrest.Matchers;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.UserForkRepositoryTrait;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -28,10 +27,7 @@ public class TuleapSCMNavigatorConfigurationLoadingTest extends TuleapBranchSour
         assertThat(instance.getGitBaseUri(), is("https://www.tuleap.example.test/plugins/git/"));
         assertThat(instance.getRepositories(), is(Collections.emptyMap()));
         assertThat(instance.getTraits(),
-                   containsInAnyOrder(
-                       Matchers.<SCMTrait<?>>allOf(
-                           instanceOf(UserForkRepositoryTrait.class),
-                           hasProperty("strategy", is(1))),
+                   contains(
                        Matchers.<SCMTrait<?>>allOf(
                            instanceOf(WildcardSCMSourceFilterTrait.class),
                            hasProperty("includes", is("*")),
@@ -60,15 +56,6 @@ public class TuleapSCMNavigatorConfigurationLoadingTest extends TuleapBranchSour
                 hasProperty("includes", is("*manager*")),
                 hasProperty("excludes", is("*"))
             )
-        ));
-    }
-
-    @Test
-    public void do_not_exclude_user_fork(){
-        assertThat(instance.getTraits(), hasItem(
-            Matchers.<SCMTrait<?>>allOf(
-                instanceOf(UserForkRepositoryTrait.class),
-                hasProperty("strategy", is(2)))
         ));
     }
 }
