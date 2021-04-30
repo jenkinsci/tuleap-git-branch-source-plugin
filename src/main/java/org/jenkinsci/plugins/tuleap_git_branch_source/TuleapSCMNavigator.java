@@ -52,6 +52,8 @@ import static org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnec
 
 public class TuleapSCMNavigator extends SCMNavigator {
 
+    private static final String TULEAP_FORK_PARTIAL_PATH = "/u/";
+
     private String projectId;
     private List<SCMTrait<? extends SCMTrait<?>>> traits;
     private String credentialsId;
@@ -101,7 +103,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 .call();
 
             for (TuleapGitRepository repo : repos.collect(Collectors.toList())) {
-                if(! repo.getPath().contains("/u/")) {
+                if(! repo.getPath().contains(TULEAP_FORK_PARTIAL_PATH)) {
                     repositories.put(repo.getName(), repo);
                     SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
                     if (request.process(repo.getName(), sourceFactory, null, witness)) {
