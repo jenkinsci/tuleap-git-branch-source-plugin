@@ -8,7 +8,9 @@ import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebHookCause;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebhookRetriggerRepositoryScanCause;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryScanFailedException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapProjectNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
@@ -31,7 +33,7 @@ public class JobFinderImpl implements JobFinder {
         this.organizationFolderRetriever = organizationFolderRetriever;
     }
 
-    public void triggerConcernedJob(WebHookRepresentation representation) throws RepositoryNotFoundException, BranchNotFoundException, TuleapProjectNotFoundException {
+    public void triggerConcernedJob(WebHookRepresentation representation) throws RepositoryNotFoundException, BranchNotFoundException, TuleapProjectNotFoundException, RepositoryScanFailedException {
         LOGGER.log(Level.FINEST, "Retrieve the concerned job...");
 
         try (ACLContext old = ACL.as(ACL.SYSTEM)) {
@@ -46,24 +48,38 @@ public class JobFinderImpl implements JobFinder {
                 .findFirst();
 
             OrganizationFolder tuleapFolder = tuleapOrganizationFolder.orElseThrow(TuleapProjectNotFoundException::new);
-            MultiBranchProject multiBranchProject = tuleapFolder.getJob(representation.getRepositoryName());
+            MultiBranchProject gitRepositoryFolder = tuleapFolder.getJob(representation.getRepositoryName());
 
-            if (multiBranchProject == null) {
+            if (gitRepositoryFolder == null) {
                 throw new RepositoryNotFoundException();
             }
 
-            ParameterizedJob job = this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(multiBranchProject, representation);
+            ParameterizedJob branchJob = this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(gitRepositoryFolder, representation);
 
-            if (job == null) {
-                throw new BranchNotFoundException();
+            if (branchJob == null) {
+                branchJob = this.reScanRepository(gitRepositoryFolder, representation);
             }
 
-            if (job.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
+            if (branchJob.scheduleBuild2(0, new CauseAction(new TuleapWebHookCause(representation)
             )) != null) {
                 LOGGER.log(Level.FINEST, "The job has been successfully built");
                 return;
             }
             LOGGER.log(Level.FINEST, "No job was triggered");
         }
+    }
+
+    private ParameterizedJob reScanRepository(MultiBranchProject repositoryToScan, WebHookRepresentation representation) throws BranchNotFoundException, RepositoryScanFailedException {
+        LOGGER.log(Level.FINEST, "Branch not found, rescanning the repository");
+        if (repositoryToScan.scheduleBuild2(0, new CauseAction(new TuleapWebhookRetriggerRepositoryScanCause(representation))) == null) {
+            throw new RepositoryScanFailedException();
+        }
+
+        ParameterizedJob job = this.organizationFolderRetriever.retrieveBranchJobFromRepositoryName(repositoryToScan, representation);
+        if (job == null) {
+            throw new BranchNotFoundException();
+        }
+        return job;
+
     }
 }

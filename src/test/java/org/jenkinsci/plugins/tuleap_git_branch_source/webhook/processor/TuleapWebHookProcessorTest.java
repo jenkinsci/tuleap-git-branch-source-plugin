@@ -2,10 +2,10 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import com.google.gson.Gson;
 import hudson.util.HttpResponses;
-import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebHook;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryScanFailedException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapProjectNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.helper.TuleapWebHookHelper;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
@@ -17,7 +17,6 @@ import org.kohsuke.stapler.StaplerRequest;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 import static org.mockito.Mockito.*;
 
@@ -40,7 +39,7 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
-    public void testItShouldReturn400WhenTheContentTypeIsNotSupported() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn400WhenTheContentTypeIsNotSupported() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
 
         StaplerRequest request = mock(StaplerRequest.class);
         when(request.getContentType()).thenReturn(null);
@@ -62,7 +61,7 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
-    public void testItShouldReturn400WhenThePayloadIsEmpty() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn400WhenThePayloadIsEmpty() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         StaplerRequest request = mock(StaplerRequest.class);
         when(request.getContentType()).thenReturn("application/x-www-form-urlencoded");
 
@@ -84,7 +83,7 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
-    public void testItShouldReturn400WhenBadFormatPayload() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn400WhenBadFormatPayload() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         String payload = "{Bad format}";
 
         StaplerRequest request = mock(StaplerRequest.class);
@@ -111,7 +110,7 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
-    public void testItShouldReturn200AndLogWhenTheRepositoryIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn200AndLogWhenTheRepositoryIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         String payload = "{Ok format}";
 
         StaplerRequest request = mock(StaplerRequest.class);
@@ -139,7 +138,7 @@ public class TuleapWebHookProcessorTest {
 
 
     @Test
-    public void testItShouldReturn200AndLogWhenTheBranchIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn200AndLogWhenTheBranchIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         String payload = "{Ok format}";
 
         StaplerRequest request = mock(StaplerRequest.class);
@@ -165,7 +164,7 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
-    public void testItShouldReturn200AndLogWhenTheTuleapProjectIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn200AndLogWhenTheTuleapProjectIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         String payload = "{Ok format}";
 
         StaplerRequest request = mock(StaplerRequest.class);
@@ -192,7 +191,7 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
-    public void testItShouldReturn200WhenTheJobIsTriggered() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException {
+    public void testItShouldReturn200WhenTheJobIsTriggered() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         String payload = "{Ok format}";
 
         StaplerRequest request = mock(StaplerRequest.class);

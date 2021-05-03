@@ -5,6 +5,7 @@ import hudson.util.HttpResponses;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
+import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryScanFailedException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapProjectNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.helper.TuleapWebHookHelper;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
@@ -64,7 +65,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         }
         try {
             this.jobFinder.triggerConcernedJob(representation);
-        } catch (RepositoryNotFoundException | BranchNotFoundException | TuleapProjectNotFoundException e) {
+        } catch (RepositoryNotFoundException | BranchNotFoundException | TuleapProjectNotFoundException | RepositoryScanFailedException e) {
             LOGGER.log(Level.WARNING, e.toString());
         }
         return HttpResponses.ok();
