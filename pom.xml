@@ -17,7 +17,7 @@
     <java.level>8</java.level>
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <jcasc.version>1.46</jcasc.version>
+    <jcasc.version>1.51</jcasc.version>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
@@ -63,7 +63,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-2.222.x</artifactId>
-        <version>23</version>
+        <version>831.v9814430e6383</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
