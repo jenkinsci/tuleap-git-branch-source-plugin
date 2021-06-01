@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.tuleap_git_branch_source;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Action;
@@ -27,6 +26,7 @@ import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapBranchDiscoveryTrait;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -116,9 +116,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @Override
     protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
         @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
-        try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer)
-                .withTraits(traits).wantBranches(true)
-                .newRequest(this, listener)) {
+        try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer).withTraits(traits).newRequest(this, listener)) {
             TuleapAccessToken credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
                 getCredentialsId());
             setCredentials(credentials);
@@ -130,7 +128,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
                     .configure()
                     .call();
-                request.setBranchesFromTuleapApi(branches);
                 int count = 0;
                 for (TuleapBranches branch : branches.collect(Collectors.toList())) {
                     count++;
@@ -292,7 +289,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
 
         public List<SCMSourceTrait> getTraitsDefaults() {
-            return Arrays.asList(new RefSpecsSCMSourceTrait());
+            return Arrays.asList(new TuleapBranchDiscoveryTrait(), new RefSpecsSCMSourceTrait());
         }
 
         @RequirePOST
