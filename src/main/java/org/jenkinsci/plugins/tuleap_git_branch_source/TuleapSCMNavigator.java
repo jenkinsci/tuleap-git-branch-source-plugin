@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -81,7 +82,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
             getApiUri(), credentialsId);
 
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
-                .withTraits(traits).newRequest(this, observer)) {
+            .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener, this);
             Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>>newInstance(getApiUri())
                 .withCredentials(credentials)
@@ -92,18 +93,18 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 this.project = project.get();
             } else {
                 //Should never happen though
-                listener.getLogger().format("No project match projectId "+ projectId +"... it's weird%n");
+                listener.getLogger().format("No project match projectId " + projectId + "... it's weird%n");
                 return;
             }
-            Stream<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<Stream<TuleapGitRepository>> newInstance
+            Stream<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<Stream<TuleapGitRepository>>newInstance
                 (getApiUri())
-				.withCredentials(credentials)
+                .withCredentials(credentials)
                 .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
                 .configure()
                 .call();
 
             for (TuleapGitRepository repo : repos.collect(Collectors.toList())) {
-                if(! repo.getPath().contains(TULEAP_FORK_PARTIAL_PATH)) {
+                if (!repo.getPath().contains(TULEAP_FORK_PARTIAL_PATH)) {
                     repositories.put(repo.getName(), repo);
                     SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
                     if (request.process(repo.getName(), sourceFactory, null, witness)) {
@@ -121,14 +122,14 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @NonNull
     @Override
     protected List<Action> retrieveActions(@NonNull SCMNavigatorOwner owner, @CheckForNull SCMNavigatorEvent event,
-        @NonNull TaskListener listener) throws IOException, InterruptedException {
+                                           @NonNull TaskListener listener) throws IOException, InterruptedException {
         listener.getLogger().printf("Looking up details of %s...%n", getprojectId());
         List<Action> actions = new ArrayList<>();
 
         final TuleapAccessToken credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
         Optional<TuleapProject> project = TuleapClientCommandConfigurer
-            .<Optional<TuleapProject>> newInstance(getApiUri())
-			.withCredentials(credentials)
+            .<Optional<TuleapProject>>newInstance(getApiUri())
+            .withCredentials(credentials)
             .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
             .configure()
             .call();
@@ -150,8 +151,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
      * discovers. The new traits will take affect on the next navigation through any of the
      * {@link #visitSources(SCMSourceObserver)} overloads or {@link #visitSource(String, SCMSourceObserver)}.
      *
-     * @param traits
-     *            the new behavioural traits.
+     * @param traits the new behavioural traits.
      */
     @DataBoundSetter
     public void setTraits(@CheckForNull List<SCMTrait<? extends SCMTrait<?>>> traits) {
@@ -163,7 +163,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
      * default credentials to use for checking out).
      *
      * @return the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also
-     *         the default credentials to use for checking out).
+     * the default credentials to use for checking out).
      * @since 2.2.0
      */
     @CheckForNull
@@ -175,9 +175,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
      * Sets the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also the
      * default credentials to use for checking out).
      *
-     * @param credentialsId
-     *            the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also
-     *            the default credentials to use for checking out).
+     * @param credentialsId the {@link StandardCredentials#getId()} of the credentials to use when accessing Tuleap (and also
+     *                      the default credentials to use for checking out).
      * @since 2.2.0
      */
     @DataBoundSetter
@@ -320,8 +319,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
         @NonNull
         protected SCMSourceCategory[] createCategories() {
-            return new SCMSourceCategory[] {
-                new UncategorizedSCMSourceCategory(Messages._SCMNavigator_depotSourceCategory()) };
+            return new SCMSourceCategory[]{
+                new UncategorizedSCMSourceCategory(Messages._SCMNavigator_depotSourceCategory())};
         }
 
         /**
@@ -352,41 +351,30 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @RequirePOST
         @Restricted(NoExternalUse.class) // stapler
         public FormValidation doCheckCredentialsId(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String apiUri, @QueryParameter String credentialsId) {
+                                                   @QueryParameter String apiUri, @QueryParameter String credentialsId) {
 
-            return checkCredentials(context, apiUri ,credentialsId);
+            return checkCredentials(context, apiUri, credentialsId);
         }
 
-        @Restricted(NoExternalUse.class) // stapler
-        public FormValidation doCheckProjectId(@Nonnull @AncestorInPath Item context,
-            @QueryParameter String projectId, @QueryParameter String includes, @QueryParameter String excludes) {
-
-
-            Optional<SCMNavigator> navigator = ((SCMNavigatorOwner) context).getSCMNavigators().stream().filter(n
-                                                                                                                       -> n
-                instanceof TuleapSCMNavigator).findFirst();
-            if (navigator.isPresent()) {
-                if (((TuleapSCMNavigator)navigator.get()).isIncludeExcludesDefault()) {
-                    return FormValidation.warning("Without modifications of include/exlude parameters everything will be ignored");
-                } else {
-                    return FormValidation.ok();
-                }
-            } else {
-                return FormValidation.error("Error fetching navigator ... weird");
+        @RequirePOST
+        @Restricted(NoExternalUse.class)
+        public FormValidation doCheckTuleapProjectId(@QueryParameter String tuleapProjectId) {
+            if (Util.fixEmpty(tuleapProjectId) == null) {
+                return FormValidation.error(Messages.SCMNavigator_aTuleapProjectIsRequiredWarning());
             }
+            return FormValidation.ok();
         }
 
         /**
          * Populates the drop-down list of credentials.
          *
-         * @param context
-         *            the context.
+         * @param context the context.
          * @return the drop-down list.
          * @since 2.2.0
          */
         @Restricted(NoExternalUse.class) // stapler
         public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String apiUri, @QueryParameter String credentialsId) {
+                                                     @QueryParameter String apiUri, @QueryParameter String credentialsId) {
             return listScanCredentials(context, apiUri, credentialsId, true);
         }
 
@@ -412,11 +400,12 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
         @Restricted(NoExternalUse.class) // stapler
         @SuppressWarnings("unused") // stapler
-        public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String credentialsId) throws IOException {
+        public ListBoxModel doFillTuleapProjectIdItems(@CheckForNull @AncestorInPath Item context,
+                                                       @QueryParameter String credentialsId) throws IOException {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final TuleapAccessToken credentials = lookupScanCredentials(context, apiUri, credentialsId);
-            ListBoxModel result = new ListBoxModel();
+            StandardListBoxModel result = new StandardListBoxModel();
+            result.includeEmptyValue();
             try {
                 TuleapClientCommandConfigurer.<Stream<TuleapProject>>newInstance(apiUri)
                     .withCredentials(credentials)
@@ -452,7 +441,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @SuppressWarnings("unused") // jelly
         public List<NamedArrayList<? extends SCMTraitDescriptor<?>>> getTraitsDescriptorLists() {
             TuleapSCMSource.DescriptorImpl sourceDescriptor = Jenkins.get()
-                                                                     .getDescriptorByType(TuleapSCMSource.DescriptorImpl.class);
+                .getDescriptorByType(TuleapSCMSource.DescriptorImpl.class);
             List<SCMTraitDescriptor<?>> all = new ArrayList<>();
             all.addAll(SCMNavigatorTrait._for(this, TuleapSCMNavigatorContext.class, TuleapSCMSourceBuilder.class));
             all.addAll(SCMSourceTrait._for(sourceDescriptor, TuleapSCMSourceContext.class, null));
@@ -463,7 +452,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
             NamedArrayList.select(distinct, "Repositories",
                 scmTraitDescriptor -> scmTraitDescriptor instanceof SCMNavigatorTraitDescriptor, true, result);
             NamedArrayList.select(distinct, "Within repository", NamedArrayList
-                .anyOf(NamedArrayList.withAnnotation(Discovery.class), NamedArrayList.withAnnotation(Selection.class)),
+                    .anyOf(NamedArrayList.withAnnotation(Discovery.class), NamedArrayList.withAnnotation(Selection.class)),
                 true, result);
             NamedArrayList.select(distinct, "Additional", null, true, result);
             return result;
@@ -501,7 +490,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
             } else {
                 TuleapGitRepository repo = navigator.getRepositories().get(name);
                 listener.getLogger().format("Ignoring %s (reason : private user fork is excluded, URL : %s)%n",
-                                            name, repo.getPath());
+                    name, repo.getPath());
             }
         }
 
