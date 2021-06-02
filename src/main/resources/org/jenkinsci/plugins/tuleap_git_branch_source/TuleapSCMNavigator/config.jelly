@@ -5,8 +5,8 @@
         <c:select checkMethod="post"/>
     </f:entry>
 
-    <f:entry title="${%Project}" field="projectId">
-        <f:select/>
+    <f:entry title="${%Project}" field="tuleapProjectId">
+        <f:select checkMethod="post"/>
     </f:entry>
 
     <f:entry title="${%Behaviors}">
