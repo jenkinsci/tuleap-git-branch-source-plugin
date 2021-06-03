@@ -5,9 +5,7 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSourceContext;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class TuleapBranchDiscoveryTraitTest {
 
@@ -21,6 +19,6 @@ public class TuleapBranchDiscoveryTraitTest {
 
         tuleapSourceContext.withTrait(branchDiscoveryTrait);
 
-        assertThat(tuleapSourceContext.wantBranches(), is(true));
+        assertTrue(tuleapSourceContext.wantBranches());
     }
 }
