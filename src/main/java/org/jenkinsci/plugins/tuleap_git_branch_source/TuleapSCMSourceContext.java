@@ -27,8 +27,6 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
 
     /**
      * Returns {@code true} if the {@link TuleapSCMSourceRequest} will need information about branches.
-     *
-     * @return {@code true} if the {@link TuleapSCMSourceRequest} will need information about branches.
      */
     public final boolean wantBranches() {
         return wantBranches;
