@@ -50,7 +50,7 @@ public class JobFinderTest {
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolderWithAUnwantedName.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
-        when(tuleapNavigator.getprojectId()).thenReturn("204");
+        when(tuleapNavigator.getTuleapProjectId()).thenReturn("204");
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
         when(representation.getTuleapProjectId()).thenReturn("8");
@@ -67,7 +67,7 @@ public class JobFinderTest {
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
-        when(tuleapNavigator.getprojectId()).thenReturn("204");
+        when(tuleapNavigator.getTuleapProjectId()).thenReturn("204");
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
@@ -99,7 +99,7 @@ public class JobFinderTest {
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
-        when(tuleapNavigator.getprojectId()).thenReturn("204");
+        when(tuleapNavigator.getTuleapProjectId()).thenReturn("204");
 
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
@@ -129,7 +129,7 @@ public class JobFinderTest {
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
-        when(tuleapNavigator.getprojectId()).thenReturn("204");
+        when(tuleapNavigator.getTuleapProjectId()).thenReturn("204");
 
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
@@ -157,7 +157,7 @@ public class JobFinderTest {
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
-        when(tuleapNavigator.getprojectId()).thenReturn("204");
+        when(tuleapNavigator.getTuleapProjectId()).thenReturn("204");
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);
@@ -187,7 +187,7 @@ public class JobFinderTest {
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
         when(tuleapFolder.getSCMNavigators()).thenReturn(tuleapScmNavigatorList);
-        when(tuleapNavigator.getprojectId()).thenReturn("204");
+        when(tuleapNavigator.getTuleapProjectId()).thenReturn("204");
 
         Stream<OrganizationFolder> stream = Stream.<OrganizationFolder>builder().add(tuleapFolder).build();
         when(this.organizationFolderRetriever.retrieveTuleapOrganizationFolders()).thenReturn(stream);

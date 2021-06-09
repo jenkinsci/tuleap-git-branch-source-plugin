@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
-import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.RegexSCMSourceFilterTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
@@ -21,7 +20,7 @@ public class TuleapSCMNavigatorConfigurationLoadingTest extends TuleapBranchSour
     public void new_project_by_default(){
 
         assertThat(instance.id(), is("https://www.tuleap.example.test::3280"));
-        assertThat(instance.getprojectId(), is("3280"));
+        assertThat(instance.getTuleapProjectId(), is("3280"));
         assertThat(instance.getCredentialsId(), is("fe09fd0e-7287-44a1-b0b5-746accd227c1"));
         assertThat(instance.getApiUri(), is("https://www.tuleap.example.test/api"));
         assertThat(instance.getGitBaseUri(), is("https://www.tuleap.example.test/plugins/git/"));

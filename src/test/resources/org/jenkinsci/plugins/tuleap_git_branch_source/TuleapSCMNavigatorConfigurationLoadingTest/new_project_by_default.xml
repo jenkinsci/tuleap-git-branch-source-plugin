@@ -1,5 +1,5 @@
 <org.jenkinsci.plugins.tuleap__git__branch__source.TuleapSCMNavigator>
-	<projectId>3280</projectId>
+	<tuleapProjectId>3280</tuleapProjectId>
 	<traits>
 		<jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait>
 			<includes>*</includes>
