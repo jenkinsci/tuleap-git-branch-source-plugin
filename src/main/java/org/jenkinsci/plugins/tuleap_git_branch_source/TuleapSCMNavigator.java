@@ -40,7 +40,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
@@ -55,7 +54,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
     private static final String TULEAP_FORK_PARTIAL_PATH = "/u/";
 
-    private String projectId;
+    private String tuleapProjectId;
     private List<SCMTrait<? extends SCMTrait<?>>> traits;
     private String credentialsId;
     private String apiUri, gitBaseUri;
@@ -63,21 +62,21 @@ public class TuleapSCMNavigator extends SCMNavigator {
     private TuleapProject project;
 
     @DataBoundConstructor
-    public TuleapSCMNavigator(String projectId) {
-        this.projectId = projectId;
+    public TuleapSCMNavigator(String tuleapProjectId) {
+        this.tuleapProjectId = tuleapProjectId;
     }
 
     @NonNull
     @Override
     protected String id() {
-        return TuleapConfiguration.get().getDomainUrl() + "::" + projectId;
+        return TuleapConfiguration.get().getDomainUrl() + "::" + tuleapProjectId;
     }
 
     @Override
     public void visitSources(SCMSourceObserver observer) throws IOException, InterruptedException {
         TaskListener listener = observer.getListener();
 
-        listener.getLogger().printf("Visit Sources of %s...%n", getprojectId());
+        listener.getLogger().printf("Visit Sources of %s...%n", getTuleapProjectId());
         TuleapAccessToken credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
             getApiUri(), credentialsId);
 
@@ -86,20 +85,20 @@ public class TuleapSCMNavigator extends SCMNavigator {
             WitnessImpl witness = new WitnessImpl(listener, this);
             Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>>newInstance(getApiUri())
                 .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
+                .withCommand(new TuleapClientRawCmd.ProjectById(tuleapProjectId))
                 .configure()
                 .call();
             if (project.isPresent()) {
                 this.project = project.get();
             } else {
                 //Should never happen though
-                listener.getLogger().format("No project match projectId " + projectId + "... it's weird%n");
+                listener.getLogger().format("No project match projectId " + tuleapProjectId + "... it's weird%n");
                 return;
             }
             Stream<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<Stream<TuleapGitRepository>>newInstance
                 (getApiUri())
                 .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
+                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(tuleapProjectId))
                 .configure()
                 .call();
 
@@ -123,14 +122,14 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @Override
     protected List<Action> retrieveActions(@NonNull SCMNavigatorOwner owner, @CheckForNull SCMNavigatorEvent event,
                                            @NonNull TaskListener listener) throws IOException, InterruptedException {
-        listener.getLogger().printf("Looking up details of %s...%n", getprojectId());
+        listener.getLogger().printf("Looking up details of %s...%n", getTuleapProjectId());
         List<Action> actions = new ArrayList<>();
 
         final TuleapAccessToken credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
         Optional<TuleapProject> project = TuleapClientCommandConfigurer
             .<Optional<TuleapProject>>newInstance(getApiUri())
             .withCredentials(credentials)
-            .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
+            .withCommand(new TuleapClientRawCmd.ProjectById(tuleapProjectId))
             .configure()
             .call();
         if (project.isPresent()) {
@@ -213,15 +212,15 @@ public class TuleapSCMNavigator extends SCMNavigator {
     /**
      * Gets the Id of the project who's repositories will be navigated.
      *
-     * @return the Idof the project who's repositories will be navigated.
+     * @return the Id of the project who's repositories will be navigated.
      */
-    public String getprojectId() {
-        return projectId;
+    public String getTuleapProjectId() {
+        return this.tuleapProjectId;
     }
 
     @DataBoundSetter
-    public void setProjectId(final String projectId) {
-        this.projectId = projectId;
+    public void setTuleapProjectId(final String tuleapProjectId) {
+        this.tuleapProjectId = tuleapProjectId;
     }
 
     public Map<String, TuleapGitRepository> getRepositories() {

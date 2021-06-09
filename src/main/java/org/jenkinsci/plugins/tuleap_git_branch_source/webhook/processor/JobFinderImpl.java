@@ -5,7 +5,6 @@ import hudson.security.ACL;
 import hudson.security.ACLContext;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMNavigator;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebHookCause;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.TuleapWebhookRetriggerRepositoryScanCause;
@@ -42,7 +41,7 @@ public class JobFinderImpl implements JobFinder {
                 .filter(organizationFolder -> organizationFolder.getSCMNavigators().get(0).getClass().equals(TuleapSCMNavigator.class))
                 .filter(organizationFolder -> {
                     TuleapSCMNavigator tuleapSCMNavigator = (TuleapSCMNavigator) organizationFolder.getSCMNavigators().get(0);
-                    String projectId = tuleapSCMNavigator.getprojectId();
+                    String projectId = tuleapSCMNavigator.getTuleapProjectId();
                     return representation.getTuleapProjectId().equals(projectId);
                 })
                 .findFirst();
