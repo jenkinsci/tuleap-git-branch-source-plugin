@@ -22,6 +22,6 @@ jobs:
       - name: Build
         run: mvn -Dmaven.test.skip=true -Dspotbugs.skip=true --batch-mode --show-version clean install 
       - name: Archive
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v2.2.4
         with:
           path: target/tuleap-git-branch-source.hpi
