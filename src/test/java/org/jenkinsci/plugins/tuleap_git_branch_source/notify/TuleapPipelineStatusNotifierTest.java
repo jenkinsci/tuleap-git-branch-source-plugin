@@ -10,7 +10,6 @@ import jenkins.scm.api.SCMSource;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
-import org.jenkinsci.plugins.tuleap_git_branch_source.notify.TuleapPipelineStatusNotifier;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.After;
@@ -45,27 +44,6 @@ public class TuleapPipelineStatusNotifierTest {
         this.sourceByItem.close();
         this.tuleapConnector.close();
     }
-
-//    @Test
-//    public void testItDoesNotNotifyWhenItIsNotATuleapSCMBuild() {
-//        final FreeStyleBuild build = mock(FreeStyleBuild.class);
-//        final SCMSource source = mock(SCMSource.class);
-//        final PrintStream logger = mock(PrintStream.class);
-//        final FreeStyleProject freestyleProject = mock(FreeStyleProject.class);
-//
-//        when(build.getParent()).thenReturn(freestyleProject);
-//
-//        this.sourceByItem.when(() -> SCMSource.SourceByItem.findSource(freestyleProject)).thenReturn(source);
-//
-//        verify(this.gitApi, never()).sendBuildStatus(
-//            "5",
-//            "aeiouy123456",
-//            TuleapBuildStatus.success,
-//            this.accessKey
-//        );
-//
-//        this.notifier.sendBuildStatusToTuleap(build, logger, TuleapBuildStatus.success);
-//    }
 
     @Test(expected = RuntimeException.class)
     public void testItThrowsAnExceptionWhenAccessKeyNotFound() {
