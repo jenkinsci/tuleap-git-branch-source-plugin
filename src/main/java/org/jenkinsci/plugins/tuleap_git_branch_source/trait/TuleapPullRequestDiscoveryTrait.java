@@ -14,11 +14,12 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSourceContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class
-TuleapBranchDiscoveryTrait extends SCMSourceTrait {
+public class TuleapPullRequestDiscoveryTrait extends SCMSourceTrait {
 
     @DataBoundConstructor
-    public TuleapBranchDiscoveryTrait() {}
+    public TuleapPullRequestDiscoveryTrait() {
+    }
+
 
     /**
      * {@inheritDoc}
@@ -26,7 +27,7 @@ TuleapBranchDiscoveryTrait extends SCMSourceTrait {
     @Override
     protected void decorateContext(SCMSourceContext<?, ?> context) {
         TuleapSCMSourceContext tuleapSourceContext = (TuleapSCMSourceContext) context;
-        tuleapSourceContext.wantBranches(true);
+        tuleapSourceContext.wantPullRequests(true);
     }
 
     /**
@@ -37,7 +38,7 @@ TuleapBranchDiscoveryTrait extends SCMSourceTrait {
         return category.isUncategorized();
     }
 
-    @Symbol("tuleapBranchDiscovery")
+    @Symbol("tuleapPullRequestDiscovery")
     @Extension
     @Discovery
     public static class DescriptorImpl extends SCMSourceTraitDescriptor {
@@ -47,7 +48,7 @@ TuleapBranchDiscoveryTrait extends SCMSourceTrait {
          */
         @Override
         public String getDisplayName() {
-            return Messages.TuleapBranchDiscoveryTrait_displayName();
+            return Messages.TuleapPullRequestDiscoveryTrait_displayName();
         }
 
         /**
