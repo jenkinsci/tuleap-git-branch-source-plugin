@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.tuleap_git_branch_source;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.Action;
 import hudson.model.Actionable;
@@ -26,7 +27,10 @@ import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapSCMFileSystem;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapBranchDiscoveryTrait;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -139,9 +143,16 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                         .call();
                     if (file.get().getName() != null) {
                         request.listener().getLogger().format("Search at '%s'", branch.getName());
-                        TuleapBranchSCMHead head = new TuleapBranchSCMHead(branch.getName());
-                        if (request.process(head, new SCMRevisionImpl(head, branch.getCommit().getId()),
-                            TuleapSCMSource.this::fromSCMFileSystem, new OFWitness(listener))) {
+                        TuleapBranchSCMHead tuleapBranchSCMHead = new TuleapBranchSCMHead(branch.getName());
+                        if (request.process(tuleapBranchSCMHead, (SCMSourceRequest.RevisionLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>) head ->
+                                new TuleapBranchSCMRevision(head, branch.getCommit().getId()),
+                            new SCMSourceRequest.ProbeLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>() {
+                                @NotNull
+                                @Override
+                                public SCMSourceCriteria.Probe create(@NotNull TuleapBranchSCMHead head, @Nullable TuleapBranchSCMRevision revisionInfo) throws IOException, InterruptedException {
+                                    return createProbe(head, revisionInfo);
+                                }
+                            }, new OFWitness(listener))) {
                             request.listener().getLogger()
                                 .format("%n  %d branches were processed (query completed)%n", count).println();
                         }
@@ -153,6 +164,47 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
             }
         }
+    }
+
+    @NotNull
+    @Override
+    protected SCMProbe createProbe(@NonNull final SCMHead head, SCMRevision revision) throws IOException {
+        TuleapSCMFileSystem.BuilderImpl tuleapFileSystemBuilder = ExtensionList.lookup(SCMFileSystem.Builder.class).get(TuleapSCMFileSystem.BuilderImpl.class);
+        if (tuleapFileSystemBuilder == null) {
+            throw new IOException("Error while retrieving the tfs");
+        }
+        final SCMFileSystem fileSystem = tuleapFileSystemBuilder.build(this, head, revision);
+
+        return new SCMProbe() {
+            @NotNull
+            @Override
+            public SCMProbeStat stat(@NotNull String path) throws IOException {
+                try {
+                    return SCMProbeStat.fromType(fileSystem.child(path).getType());
+                } catch (InterruptedException e) {
+                    throw new IOException("Interrupted", e);
+                }
+            }
+
+            @Override
+            public void close() throws IOException {
+                Objects.requireNonNull(fileSystem).close();
+            }
+
+            @Override
+            public String name() {
+                return head.getName();
+            }
+
+            @Override
+            public long lastModified() {
+                try {
+                    return fileSystem == null ? 0L : fileSystem.lastModified();
+                } catch (IOException | InterruptedException exception) {
+                    return 0L;
+                }
+            }
+        };
     }
 
     @Override
