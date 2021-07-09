@@ -15,6 +15,8 @@ import hudson.scm.SCMRevisionState;
 import io.jenkins.plugins.tuleap_api.client.GitApi;
 import io.jenkins.plugins.tuleap_api.client.TuleapApiGuiceModule;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
+import org.jenkinsci.plugins.tuleap_git_branch_source.notify.TuleapPipelineStatusHandler;
+import org.jenkinsci.plugins.tuleap_git_branch_source.notify.TuleapPipelineStatusNotifier;
 
 import java.io.File;
 import java.util.logging.Level;
@@ -24,10 +26,12 @@ public class TuleapPipelineWatcher {
     private static final Logger LOGGER = Logger
         .getLogger(TuleapPipelineWatcher.class.getName());
 
-    private static TuleapPipelineStatusNotifier getNotifier() {
+    private static TuleapPipelineStatusHandler getHandler() {
         final Injector injector = Guice.createInjector(new TuleapApiGuiceModule());
-        return new TuleapPipelineStatusNotifier(
-            injector.getInstance(GitApi.class)
+        return new TuleapPipelineStatusHandler(
+            new TuleapPipelineStatusNotifier(
+                injector.getInstance(GitApi.class)
+            )
         );
     }
 
@@ -43,7 +47,7 @@ public class TuleapPipelineWatcher {
             SCMRevisionState pollingBaseline
         ) {
             LOGGER.log(Level.INFO, String.format("Tuleap build: Checkout > %s", build.getFullDisplayName()));
-            getNotifier().sendBuildStatusToTuleap(build, listener.getLogger(), TuleapBuildStatus.pending);
+            getHandler().handleCommitNotification(build, listener.getLogger(), TuleapBuildStatus.pending);
         }
     }
 
@@ -56,7 +60,7 @@ public class TuleapPipelineWatcher {
             final Result buildResult = build.getResult();
             final TuleapBuildStatus status = (buildResult == Result.SUCCESS) ? TuleapBuildStatus.success : TuleapBuildStatus.failure;
 
-            getNotifier().sendBuildStatusToTuleap(build, listener.getLogger(), status);
+            getHandler().handleCommitNotification(build, listener.getLogger(), status);
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.tuleap_git_branch_source;
+package org.jenkinsci.plugins.tuleap_git_branch_source.notify;
 
 import hudson.model.Run;
 import hudson.plugins.git.util.BuildData;
@@ -6,7 +6,7 @@ import io.jenkins.plugins.tuleap_api.client.GitApi;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 
-import jenkins.scm.api.SCMSource;
+import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,22 +19,7 @@ public class TuleapPipelineStatusNotifier {
         this.gitApi = gitApi;
     }
 
-    @Nullable
-    private TuleapSCMSource getTuleapSCMSource(Run<?, ?> build) {
-        final SCMSource source = SCMSource.SourceByItem.findSource(build.getParent());
-        if (!(source instanceof TuleapSCMSource)) {
-            return null;
-        }
-        return (TuleapSCMSource) source;
-    }
-
-    public void sendBuildStatusToTuleap(Run<?, ?> build, PrintStream logger, TuleapBuildStatus status) {
-        final TuleapSCMSource source = getTuleapSCMSource(build);
-        if (source == null) {
-            // Not a TuleapSCMSource, abort
-            return;
-        }
-
+    public void sendBuildStatusToTuleap(Run<?, ?> build, PrintStream logger, TuleapBuildStatus status, TuleapSCMSource source) {
         final TuleapAccessToken token = getAccessKey(source);
         if (token == null) {
             throw new RuntimeException(
