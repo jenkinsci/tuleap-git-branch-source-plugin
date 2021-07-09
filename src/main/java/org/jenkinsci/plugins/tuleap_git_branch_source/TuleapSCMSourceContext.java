@@ -17,6 +17,8 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
 
     private boolean notifyPullRequest = false;
 
+    private boolean wantPullRequests = false;
+
     public TuleapSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer) {
         super(criteria, observer);
     }
@@ -38,6 +40,8 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
         return this.notifyPullRequest;
     }
 
+    public final boolean wantPullRequests() {return this.wantPullRequests; }
+
     /**
      * Adds a requirement for branch details to any {@link TuleapSCMSourceContext} for this context.
      *
@@ -55,6 +59,12 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
     @NonNull
     public TuleapSCMSourceContext notifyPullRequest(boolean notify) {
         this.notifyPullRequest = this.notifyPullRequest || notify;
+        return this;
+    }
+
+    @NonNull
+    public TuleapSCMSourceContext wantPullRequests(boolean include) {
+        this.wantPullRequests = this.wantPullRequests || include;
         return this;
     }
 

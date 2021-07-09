@@ -163,6 +163,9 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 }
 
             }
+            if(request.isRetrievePullRequests()){
+                request.listener().getLogger().format("Retrieving pull request for repository at %s %n", repositoryPath);
+            }
         }
     }
 
