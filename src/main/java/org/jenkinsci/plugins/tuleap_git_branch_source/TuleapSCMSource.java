@@ -29,6 +29,7 @@ import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapSCMFileSystem;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapBranchDiscoveryTrait;
+import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapPullRequestDiscoveryTrait;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.accmod.Restricted;
@@ -344,7 +345,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
 
         public List<SCMSourceTrait> getTraitsDefaults() {
-            return Arrays.asList(new TuleapBranchDiscoveryTrait(), new RefSpecsSCMSourceTrait());
+            return Arrays.asList(new TuleapBranchDiscoveryTrait(), new TuleapPullRequestDiscoveryTrait(), new RefSpecsSCMSourceTrait());
         }
 
         @RequirePOST
