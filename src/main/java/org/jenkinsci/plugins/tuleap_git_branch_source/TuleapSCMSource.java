@@ -12,6 +12,7 @@ import hudson.model.TaskListener;
 import hudson.scm.SCM;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.plugins.tuleap_api.client.*;
 import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientCommandConfigurer;
 import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientRawCmd;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapBranches;
@@ -28,8 +29,9 @@ import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapSCMFileSystem;
+import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapBranchDiscoveryTrait;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapPullRequestDiscoveryTrait;
+import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapOriginPullRequestDiscoveryTrait;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.accmod.Restricted;
@@ -101,9 +103,15 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         if (owner instanceof Actionable) {
             TuleapLink repoLink = ((Actionable) owner).getAction(TuleapLink.class);
             if (repoLink != null) {
-                String canonicalRepoName = repositoryPath.replace(project.getShortname()+"/", "");
-                String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
-                result.add(new TuleapLink("icon-git-branch", url));
+                if(head instanceof TuleapBranchSCMHead) {
+                    String canonicalRepoName = repositoryPath.replace(project.getShortname() + "/", "");
+                    String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
+                    result.add(new TuleapLink("icon-git-branch", url));
+                } else if (head instanceof TuleapPullRequestSCMHead){
+                    TuleapPullRequestSCMHead tuleapPullRequestSCMHead = (TuleapPullRequestSCMHead) head;
+                    String prUrl = this.getGitBaseUri()+"?action=pull-requests&repo_id="+this.repository.getId()+"&group_id="+this.projectId+"#/pull-requests/"+tuleapPullRequestSCMHead.getId()+"/overview";
+                    result.add(new TuleapLink("icon-git-branch", prUrl));
+                }
             }
         }
         return result;
@@ -164,8 +172,54 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 }
 
             }
-            if(request.isRetrievePullRequests()){
-                request.listener().getLogger().format("Retrieving pull request for repository at %s %n", repositoryPath);
+            if (request.isRetrieveOriginPullRequests()) {
+                request.listener().getLogger().format("Fetching pull requests for repository at %s %n", this.repositoryPath);
+                GitApi gitApi = TuleapApiRetriever.getGitApi();
+
+                List<GitPullRequest> pullRequests = gitApi.getPullRequests(Integer.toString(this.repository.getId()), this.credentials);
+                int prCount = 0;
+                for (GitPullRequest pullRequest : pullRequests) {
+                    request.listener().getLogger().format("Check the PR id: '%s' %n", pullRequest.getId());
+                    prCount++;
+                    boolean isFork = !pullRequest.getSourceRepository().getId().equals(pullRequest.getDestinationRepository().getId());
+                    if (isFork) {
+                        request.listener().getLogger().println("Skipping: Pull Request from User fork are not supported yet");
+                        continue;
+                    }
+                    TuleapBranchSCMHead targetBranch = new TuleapBranchSCMHead(pullRequest.getDestinationBranch());
+                    SCMHeadOrigin origin = SCMHeadOrigin.DEFAULT;
+
+                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(pullRequest, origin, targetBranch);
+                    GitCommit targetLastCommit = gitApi.getCommit(Integer.toString(this.repository.getId()), targetBranch.getName(), this.credentials);
+                    if (request.process(tlpPRSCMHead,
+                        (SCMSourceRequest.RevisionLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>) head ->
+                            new TuleapPullRequestRevision(
+                                head,
+                                new TuleapBranchSCMRevision(
+                                    head.getTarget(),
+                                    targetLastCommit.getHash()
+                                ),
+                                new TuleapBranchSCMRevision(
+                                    new TuleapBranchSCMHead(head.getOriginName()),
+                                    pullRequest.getHead().getId()
+                                )
+                            ),
+                        new SCMSourceRequest.ProbeLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>() {
+                            @NotNull
+                            @Override
+                            public SCMSourceCriteria.Probe create(@NotNull TuleapPullRequestSCMHead head, @Nullable TuleapPullRequestRevision revisionInfo) throws IOException, InterruptedException {
+                                boolean isTrusted = request.isTrusted(head);
+                                if (!isTrusted) {
+                                    listener.getLogger().println("This pull request is not from a trusted source");
+                                }
+                                return createProbe(isTrusted ? head : head.getTarget(), revisionInfo);
+                            }
+                        },
+                        new OFWitness(listener))) {
+                        request.listener().getLogger()
+                            .format("%n  %d branches were processed (query completed)%n", prCount).println();
+                    }
+                }
             }
         }
     }
@@ -174,6 +228,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @Override
     protected SCMProbe createProbe(@NonNull final SCMHead head, SCMRevision revision) throws IOException {
         TuleapSCMFileSystem.BuilderImpl tuleapFileSystemBuilder = ExtensionList.lookup(SCMFileSystem.Builder.class).get(TuleapSCMFileSystem.BuilderImpl.class);
+
         if (tuleapFileSystemBuilder == null) {
             throw new IOException("Error while retrieving the tfs");
         }
@@ -211,27 +266,66 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         };
     }
 
+    @NonNull
+    @Override
+    public SCMRevision getTrustedRevision(@NonNull SCMRevision revision, @NonNull TaskListener listener)
+        throws IOException, InterruptedException {
+        if (revision instanceof TuleapPullRequestRevision) {
+            TuleapPullRequestSCMHead head = (TuleapPullRequestSCMHead) revision.getHead();
+
+            try (TuleapSCMSourceRequest request = new TuleapSCMSourceContext(null, SCMHeadObserver.none())
+                .withTraits(traits)
+                .newRequest(this, listener)) {
+                if (request.isTrusted(head)) {
+                    return revision;
+                }
+            }
+            TuleapPullRequestRevision rev = (TuleapPullRequestRevision) revision;
+            listener.getLogger().format("Loading trusted files from target branch %s at %s rather than %s%n",
+                head.getTarget().getName(), rev.getTarget(), rev.getOrigin().getHead().getName());
+            return rev.getTarget();
+        }
+        return revision;
+    }
+
     @Override
     protected SCMRevision retrieve(SCMHead head, TaskListener listener) throws IOException, InterruptedException {
-        Optional<String> revision = Optional.empty();
-        Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
-            .withCredentials(credentials)
-            .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
-            .configure()
-            .call();
-        Optional<TuleapBranches> branch = branches.filter(b -> b.getName().equals(head.getName()))
-                                                   .findFirst();
-        if (branch.isPresent()) {
-            revision = Optional.of(branch.get().getCommit().getId());
-        } else {
-            listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
+
+        if (head instanceof TuleapBranchSCMHead) {
+            Optional<String> revision = Optional.empty();
+            Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
+                .withCredentials(credentials)
+                .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
+                .configure()
+                .call();
+            Optional<TuleapBranches> branch = branches.filter(b -> b.getName().equals(head.getName()))
+                .findFirst();
+            if (branch.isPresent()) {
+                revision = Optional.of(branch.get().getCommit().getId());
+            } else {
+                listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
+            }
+            if (revision.isPresent()) {
+                return new SCMRevisionImpl(head, revision.get());
+            }
+        } else if (head instanceof TuleapPullRequestSCMHead) {
+            TuleapPullRequestSCMHead tlpSCMHead = (TuleapPullRequestSCMHead) head;
+            PullRequest pullRequest = TuleapApiRetriever.getPullRequestApi().getPullRequest(tlpSCMHead.getId(), this.credentials);
+            String targetReference = pullRequest.getDestinationReference();
+            return new TuleapPullRequestRevision(
+                tlpSCMHead,
+                new TuleapBranchSCMRevision(
+                    tlpSCMHead.getTarget(),
+                    targetReference),
+                new TuleapBranchSCMRevision(
+                    new TuleapBranchSCMHead(
+                        tlpSCMHead.getOriginName()),
+                    pullRequest.getHead().getId()
+                )
+            );
         }
-        if (revision.isPresent()) {
-            return new SCMRevisionImpl(head, revision.get());
-        } else {
-            listener.getLogger().format("Cannot resolve the hash of the revision in branch %s%n", head.getName());
-            return null;
-        }
+        listener.getLogger().format("Cannot resolve the hash of the revision in branch %s%n", head.getName());
+        return null;
     }
 
     /**
@@ -345,7 +439,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         }
 
         public List<SCMSourceTrait> getTraitsDefaults() {
-            return Arrays.asList(new TuleapBranchDiscoveryTrait(), new TuleapPullRequestDiscoveryTrait(), new RefSpecsSCMSourceTrait());
+            return Arrays.asList(new TuleapBranchDiscoveryTrait(), new TuleapOriginPullRequestDiscoveryTrait(), new RefSpecsSCMSourceTrait());
         }
 
         @RequirePOST

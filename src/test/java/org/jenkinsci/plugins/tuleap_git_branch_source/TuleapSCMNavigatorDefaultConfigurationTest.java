@@ -7,7 +7,7 @@ import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapBranchDiscoveryTrait;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapPullRequestDiscoveryTrait;
+import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapOriginPullRequestDiscoveryTrait;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -40,7 +40,7 @@ public class TuleapSCMNavigatorDefaultConfigurationTest {
                     hasProperty("excludes", is(""))),
                 Matchers.instanceOf(RefSpecsSCMSourceTrait.class),
                 Matchers.instanceOf(TuleapBranchDiscoveryTrait.class),
-                Matchers.instanceOf(TuleapPullRequestDiscoveryTrait.class)
+                Matchers.instanceOf(TuleapOriginPullRequestDiscoveryTrait.class)
             )
         );
     }

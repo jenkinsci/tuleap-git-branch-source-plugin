@@ -12,7 +12,9 @@ import io.jenkins.plugins.tuleap_api.client.TuleapApiGuiceModule;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import jenkins.scm.api.*;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapBranchSCMHead;
+import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapPullRequestSCMHead;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
+import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -46,10 +48,6 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
     @Extension
     public static class BuilderImpl extends Builder {
 
-        private GitApi getGitApi() {
-            return Guice.createInjector(new TuleapApiGuiceModule()).getInstance(GitApi.class);
-        }
-
         @Override
         public boolean supports(SCM source) {
             return false;
@@ -78,13 +76,18 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
         @Override
         public SCMFileSystem build(@NonNull SCMSource source, @NonNull SCMHead head,
                                    @CheckForNull SCMRevision rev) {
-            GitApi gitApi =  this.getGitApi();
+            GitApi gitApi = TuleapApiRetriever.getGitApi();
             TuleapSCMSource tuleapSCMSource = (TuleapSCMSource) source;
             TuleapAccessToken tuleapAccessToken = this.getAccessKey(tuleapSCMSource);
-            if (!(head instanceof TuleapBranchSCMHead)) {
+
+            String ref;
+            if ((head instanceof TuleapBranchSCMHead)) {
+                ref = head.getName();
+            } else if (head instanceof TuleapPullRequestSCMHead) {
+                ref = ((TuleapPullRequestSCMHead) head).getOriginName();
+            } else {
                 return null;
             }
-            String ref = head.getName();
             return new TuleapSCMFileSystem(gitApi, Integer.toString(tuleapSCMSource.getTuleapGitRepository().getId()), ref, tuleapAccessToken, rev);
         }
 
