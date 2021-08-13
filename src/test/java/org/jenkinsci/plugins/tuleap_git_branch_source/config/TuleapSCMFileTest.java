@@ -1,10 +1,7 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.config;
 
 import com.google.common.collect.ImmutableList;
-import io.jenkins.plugins.tuleap_api.client.GitApi;
-import io.jenkins.plugins.tuleap_api.client.GitCommit;
-import io.jenkins.plugins.tuleap_api.client.GitFileContent;
-import io.jenkins.plugins.tuleap_api.client.GitTreeContent;
+import io.jenkins.plugins.tuleap_api.client.*;
 import io.jenkins.plugins.tuleap_api.client.exceptions.git.FileContentNotFoundException;
 import io.jenkins.plugins.tuleap_api.client.exceptions.git.TreeNotFoundException;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
@@ -54,6 +51,11 @@ public class TuleapSCMFileTest {
             public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
                 return null;
             }
+
+            @Override
+            public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
         };
         TuleapSCMFile scmRootDirectory = new TuleapSCMFile(gitApi, "4", "master", new TuleapAccessTokenStub());
         TuleapSCMFile scmFile = (TuleapSCMFile) scmRootDirectory.newChild("whatever", false);
@@ -86,6 +88,11 @@ public class TuleapSCMFileTest {
 
             @Override
             public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
+                return null;
+            }
+
+            @Override
+            public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
         };
@@ -124,6 +131,11 @@ public class TuleapSCMFileTest {
 
             @Override
             public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
+                return null;
+            }
+
+            @Override
+            public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
         };
@@ -172,6 +184,11 @@ public class TuleapSCMFileTest {
             public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
                 return new GitFileContentStub("SSdtIGhlcmUsIEknbSBub3QgaGVyZQ==");
             }
+
+            @Override
+            public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
         };
 
         TuleapSCMFile scmRootDirectory = new TuleapSCMFile(gitApi, "4", "master", new TuleapAccessTokenStub());
@@ -216,6 +233,11 @@ public class TuleapSCMFileTest {
             @Override
             public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
                 throw new FileContentNotFoundException();
+            }
+
+            @Override
+            public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
+                return null;
             }
         };
 
