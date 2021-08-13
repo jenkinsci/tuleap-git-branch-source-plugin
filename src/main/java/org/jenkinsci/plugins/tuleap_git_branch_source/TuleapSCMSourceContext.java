@@ -19,6 +19,8 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
 
     private boolean wantOriginPullRequests = false;
 
+    private boolean wantForkPullRequests = false;
+
     public TuleapSCMSourceContext(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer) {
         super(criteria, observer);
     }
@@ -40,14 +42,19 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
         return this.notifyPullRequest;
     }
 
-    public final boolean wantOriginPullRequests() {return this.wantOriginPullRequests; }
+    public final boolean wantOriginPullRequests() {
+        return this.wantOriginPullRequests;
+    }
+
+    public final boolean wantForkPullRequests() {
+        return this.wantForkPullRequests;
+    }
 
     /**
      * Adds a requirement for branch details to any {@link TuleapSCMSourceContext} for this context.
      *
-     * @param include
-     *            {@code true} to add the requirement or {@code false} to leave the requirement as is (makes simpler
-     *            with method chaining)
+     * @param include {@code true} to add the requirement or {@code false} to leave the requirement as is (makes simpler
+     *                with method chaining)
      * @return {@code this} for method chaining.
      */
     @NonNull
@@ -65,6 +72,12 @@ public class TuleapSCMSourceContext extends SCMSourceContext<TuleapSCMSourceCont
     @NonNull
     public TuleapSCMSourceContext wantOriginPullRequests(boolean include) {
         this.wantOriginPullRequests = this.wantOriginPullRequests || include;
+        return this;
+    }
+
+    @NonNull
+    public TuleapSCMSourceContext wantForkPullRequests(boolean include) {
+        this.wantForkPullRequests = this.wantForkPullRequests || include;
         return this;
     }
 

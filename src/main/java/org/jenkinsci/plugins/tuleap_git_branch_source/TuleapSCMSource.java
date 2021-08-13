@@ -172,7 +172,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 }
 
             }
-            if (request.isRetrieveOriginPullRequests()) {
+            if (request.isRetrievePullRequests()) {
                 request.listener().getLogger().format("Fetching pull requests for repository at %s %n", this.repositoryPath);
                 GitApi gitApi = TuleapApiRetriever.getGitApi();
 
@@ -182,14 +182,25 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     request.listener().getLogger().format("Check the PR id: '%s' %n", pullRequest.getId());
                     prCount++;
                     boolean isFork = !pullRequest.getSourceRepository().getId().equals(pullRequest.getDestinationRepository().getId());
-                    if (isFork) {
-                        request.listener().getLogger().println("Skipping: Pull Request from User fork are not supported yet");
+
+                    if (isFork && !request.isRetrieveForkPullRequests()) {
+                        request.listener().getLogger().format("PR id: %s is skipped, Pull Requests from fork are excluded %n", pullRequest.getId());
                         continue;
                     }
-                    TuleapBranchSCMHead targetBranch = new TuleapBranchSCMHead(pullRequest.getDestinationBranch());
-                    SCMHeadOrigin origin = SCMHeadOrigin.DEFAULT;
+                    else if (!isFork && !request.isRetrieveOriginPullRequests()) {
+                        request.listener().getLogger().format("PR id: %s is skipped, Pull Requests from same origin are excluded %n", pullRequest.getId());
+                        continue;
+                    }
 
-                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(pullRequest, origin, targetBranch);
+                    SCMHeadOrigin origin = SCMHeadOrigin.DEFAULT;
+                    Integer originRepositoryId = this.repository.getId();
+                    if (isFork) {
+                        origin = new SCMHeadOrigin.Fork(pullRequest.getSourceRepository().getName());
+                        originRepositoryId = pullRequest.getSourceRepository().getId();
+                    }
+                    TuleapBranchSCMHead targetBranch = new TuleapBranchSCMHead(pullRequest.getDestinationBranch());
+
+                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(pullRequest, origin, targetBranch, originRepositoryId);
                     GitCommit targetLastCommit = gitApi.getCommit(Integer.toString(this.repository.getId()), targetBranch.getName(), this.credentials);
                     if (request.process(tlpPRSCMHead,
                         (SCMSourceRequest.RevisionLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>) head ->
@@ -210,7 +221,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                             public SCMSourceCriteria.Probe create(@NotNull TuleapPullRequestSCMHead head, @Nullable TuleapPullRequestRevision revisionInfo) throws IOException, InterruptedException {
                                 boolean isTrusted = request.isTrusted(head);
                                 if (!isTrusted) {
-                                    listener.getLogger().println("This pull request is not from a trusted source");
+                                    listener.getLogger().println("This pull request is not from a trusted source or it is from a fork repository");
                                 }
                                 return createProbe(isTrusted ? head : head.getTarget(), revisionInfo);
                             }
@@ -514,5 +525,4 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             }
         }
     }
-
 }

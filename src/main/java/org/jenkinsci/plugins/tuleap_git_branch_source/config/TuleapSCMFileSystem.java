@@ -8,7 +8,6 @@ import hudson.model.Item;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import io.jenkins.plugins.tuleap_api.client.GitApi;
-import io.jenkins.plugins.tuleap_api.client.TuleapApiGuiceModule;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import jenkins.scm.api.*;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapBranchSCMHead;
@@ -81,14 +80,19 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
             TuleapAccessToken tuleapAccessToken = this.getAccessKey(tuleapSCMSource);
 
             String ref;
+            String repositoryId;
             if ((head instanceof TuleapBranchSCMHead)) {
                 ref = head.getName();
-            } else if (head instanceof TuleapPullRequestSCMHead) {
-                ref = ((TuleapPullRequestSCMHead) head).getOriginName();
-            } else {
-                return null;
+                repositoryId = Integer.toString(tuleapSCMSource.getTuleapGitRepository().getId());
             }
-            return new TuleapSCMFileSystem(gitApi, Integer.toString(tuleapSCMSource.getTuleapGitRepository().getId()), ref, tuleapAccessToken, rev);
+           else if(head instanceof TuleapPullRequestSCMHead){
+               ref = ((TuleapPullRequestSCMHead) head).getOriginName();
+               repositoryId = Integer.toString(((TuleapPullRequestSCMHead) head).getOriginRepositoryId());
+           } else {
+               return null;
+            }
+
+            return new TuleapSCMFileSystem(gitApi, repositoryId , ref, tuleapAccessToken, rev);
         }
 
         private TuleapAccessToken getAccessKey(TuleapSCMSource source) {

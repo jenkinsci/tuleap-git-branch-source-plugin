@@ -17,12 +17,15 @@ public class TuleapSCMSourceRequest extends SCMSourceRequest {
 
     private final boolean retrieveOriginPullRequests;
 
+    private final boolean retrieveForkPullRequests;
+
     protected TuleapSCMSourceRequest(@NonNull SCMSource source, @NonNull TuleapSCMSourceContext context,
                                      @CheckForNull TaskListener listener) {
         super(source, context, listener);
 
         this.fetchBranches = context.wantBranches();
         this.retrieveOriginPullRequests = context.wantOriginPullRequests();
+        this.retrieveForkPullRequests = context.wantForkPullRequests();
         this.notifyPullRequest = context.isNotifyPullRequest();
     }
     public boolean isFetchBranches() {
@@ -35,5 +38,13 @@ public class TuleapSCMSourceRequest extends SCMSourceRequest {
 
     public boolean isRetrieveOriginPullRequests() {
         return retrieveOriginPullRequests;
+    }
+
+    public boolean isRetrieveForkPullRequests() {
+        return retrieveForkPullRequests;
+    }
+
+    public boolean isRetrievePullRequests(){
+        return this.retrieveForkPullRequests || this.retrieveOriginPullRequests;
     }
 }

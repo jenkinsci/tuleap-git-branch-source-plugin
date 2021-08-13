@@ -33,7 +33,7 @@ public class TuleapSCMBuilderTest {
         TuleapBranchSCMHead tlpScmHeadOrigin = new TuleapBranchSCMHead("tchiki-tchiki");
         TuleapBranchSCMRevision tlpRevisionOrigin = new TuleapBranchSCMRevision(tlpScmHeadOrigin, "h4shu_or1g1n");
 
-        TuleapPullRequestSCMHead tlpPrScmHead = new TuleapPullRequestSCMHead(this.getPullRequest(), SCMHeadOrigin.DEFAULT, tlpScmHeadTarget);
+        TuleapPullRequestSCMHead tlpPrScmHead = new TuleapPullRequestSCMHead(this.getPullRequest(), SCMHeadOrigin.DEFAULT, tlpScmHeadTarget,4);
         TuleapPullRequestRevision tlpPrRevision = new TuleapPullRequestRevision(tlpPrScmHead, tlpRevisionTarget, tlpRevisionOrigin);
 
         String remote = "https://tuleap.example.com/repo.git";
