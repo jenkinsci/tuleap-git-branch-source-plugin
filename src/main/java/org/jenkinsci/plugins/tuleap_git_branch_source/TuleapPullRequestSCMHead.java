@@ -26,7 +26,7 @@ public class TuleapPullRequestSCMHead extends SCMHead implements ChangeRequestSC
     @NotNull
     @Override
     public ChangeRequestCheckoutStrategy getCheckoutStrategy() {
-        return ChangeRequestCheckoutStrategy.MERGE;
+        return ChangeRequestCheckoutStrategy.HEAD;
     }
 
     @NotNull
