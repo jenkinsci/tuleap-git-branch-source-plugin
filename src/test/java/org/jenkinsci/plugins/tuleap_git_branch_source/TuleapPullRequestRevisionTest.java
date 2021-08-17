@@ -24,7 +24,7 @@ public class TuleapPullRequestRevisionTest {
         TuleapBranchSCMHead originBranch = new TuleapBranchSCMHead("origino-branchu");
         TuleapBranchSCMRevision originBranchRevision = new TuleapBranchSCMRevision(originBranch, "0r1g4n_h4sh");
 
-        TuleapPullRequestSCMHead pullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, targetBranch,101);
+        TuleapPullRequestSCMHead pullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, targetBranch, 101, 102);
 
         TuleapPullRequestRevision tuleapPullRequestRevision = new TuleapPullRequestRevision(pullRequestSCMHead, targetBranchRevision, originBranchRevision);
 
@@ -39,7 +39,7 @@ public class TuleapPullRequestRevisionTest {
         TuleapBranchSCMHead originBranch = new TuleapBranchSCMHead("origino-branchu");
         TuleapBranchSCMRevision originBranchRevision = new TuleapBranchSCMRevision(originBranch, "0r1g4n_h4sh");
 
-        TuleapPullRequestSCMHead pullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, targetBranch,101);
+        TuleapPullRequestSCMHead pullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, targetBranch, 101, 101);
 
         TuleapPullRequestRevision tuleapPullRequestRevision = new TuleapPullRequestRevision(pullRequestSCMHead, targetBranchRevision, originBranchRevision);
 
@@ -54,7 +54,7 @@ public class TuleapPullRequestRevisionTest {
         TuleapBranchSCMHead originBranch = new TuleapBranchSCMHead("origino-branchu");
         TuleapBranchSCMRevision originBranchRevision = new TuleapBranchSCMRevision(originBranch, "0r1g4n_h4sh");
 
-        TuleapPullRequestSCMHead pullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, targetBranch, 101);
+        TuleapPullRequestSCMHead pullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, targetBranch, 101, 102);
 
         TuleapPullRequestRevision tuleapPullRequestRevision = new TuleapPullRequestRevision(pullRequestSCMHead, targetBranchRevision, originBranchRevision);
 
@@ -64,7 +64,7 @@ public class TuleapPullRequestRevisionTest {
         TuleapBranchSCMHead otherOriginBranch = new TuleapBranchSCMHead("origino-0th3r-branchu");
         TuleapBranchSCMRevision otherOriginBranchRevision = new TuleapBranchSCMRevision(otherOriginBranch, "0r1g4n_h4sh_-0th3r");
 
-        TuleapPullRequestSCMHead otherPullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, otherTargetBranch, 101);
+        TuleapPullRequestSCMHead otherPullRequestSCMHead = new TuleapPullRequestSCMHead(this.getGitPullRequest(), SCMHeadOrigin.DEFAULT, otherTargetBranch, 101, 102);
 
         TuleapPullRequestRevision otherPullRequestRevision = new TuleapPullRequestRevision(otherPullRequestSCMHead, otherTargetBranchRevision,otherOriginBranchRevision);
         assertFalse(tuleapPullRequestRevision.equivalent(otherPullRequestRevision));

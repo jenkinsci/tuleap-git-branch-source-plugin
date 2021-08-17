@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.config;
 
-import com.google.inject.Guice;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -10,13 +9,14 @@ import hudson.scm.SCMDescriptor;
 import io.jenkins.plugins.tuleap_api.client.GitApi;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import jenkins.scm.api.*;
-import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapBranchSCMHead;
-import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapPullRequestSCMHead;
-import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
+import jenkins.scm.api.trait.SCMSourceTrait;
+import org.jenkinsci.plugins.tuleap_git_branch_source.*;
 import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
+import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapForkPullRequestDiscoveryTrait;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 
 public class TuleapSCMFileSystem extends SCMFileSystem {
 
@@ -84,12 +84,20 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
             if ((head instanceof TuleapBranchSCMHead)) {
                 ref = head.getName();
                 repositoryId = Integer.toString(tuleapSCMSource.getTuleapGitRepository().getId());
-            }
-           else if(head instanceof TuleapPullRequestSCMHead){
-               ref = ((TuleapPullRequestSCMHead) head).getOriginName();
-               repositoryId = Integer.toString(((TuleapPullRequestSCMHead) head).getOriginRepositoryId());
-           } else {
-               return null;
+            } else if (head instanceof TuleapPullRequestSCMHead) {
+                TuleapPullRequestSCMHead tlpHead = ((TuleapPullRequestSCMHead) head);
+                List<SCMSourceTrait> traits = source.getTraits();
+                assert traits != null;
+                boolean hasForkTrait = traits.stream().anyMatch(scmSourceTrait -> scmSourceTrait instanceof TuleapForkPullRequestDiscoveryTrait);
+                if (hasForkTrait) {
+                    ref = tlpHead.getTarget().getName();
+                    repositoryId = Integer.toString(tlpHead.getTargetRepositoryId());
+                } else {
+                    ref = ((TuleapPullRequestSCMHead) head).getOriginName();
+                    repositoryId = Integer.toString(((TuleapPullRequestSCMHead) head).getOriginRepositoryId());
+                }
+            } else {
+                return null;
             }
 
             return new TuleapSCMFileSystem(gitApi, repositoryId , ref, tuleapAccessToken, rev);

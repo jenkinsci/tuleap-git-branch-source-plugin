@@ -194,13 +194,15 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
                     SCMHeadOrigin origin = SCMHeadOrigin.DEFAULT;
                     Integer originRepositoryId = this.repository.getId();
+                    Integer targetRepositoryId = this.repository.getId();
                     if (isFork) {
                         origin = new SCMHeadOrigin.Fork(pullRequest.getSourceRepository().getName());
                         originRepositoryId = pullRequest.getSourceRepository().getId();
+                        targetRepositoryId = pullRequest.getDestinationRepository().getId();
                     }
                     TuleapBranchSCMHead targetBranch = new TuleapBranchSCMHead(pullRequest.getDestinationBranch());
 
-                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(pullRequest, origin, targetBranch, originRepositoryId);
+                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(pullRequest, origin, targetBranch, originRepositoryId, targetRepositoryId);
                     GitCommit targetLastCommit = gitApi.getCommit(Integer.toString(this.repository.getId()), targetBranch.getName(), this.credentials);
                     if (request.process(tlpPRSCMHead,
                         (SCMSourceRequest.RevisionLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>) head ->
@@ -292,9 +294,9 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 }
             }
             TuleapPullRequestRevision rev = (TuleapPullRequestRevision) revision;
-            listener.getLogger().format("Loading trusted files from target branch %s at %s rather than %s%n",
+            listener.getLogger().format("Loading trusted Jenkins files from target branch %s at %s rather than %s%n",
                 head.getTarget().getName(), rev.getTarget(), rev.getOrigin().getHead().getName());
-            return rev.getTarget();
+            return new SCMRevisionImpl(head.getTarget(), rev.getTargetHash());
         }
         return revision;
     }

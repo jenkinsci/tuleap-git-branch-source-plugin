@@ -8,10 +8,12 @@ import org.jetbrains.annotations.NotNull;
 public class TuleapPullRequestRevision extends ChangeRequestSCMRevision<TuleapPullRequestSCMHead> {
 
     private final TuleapBranchSCMRevision origin;
+    private final String targetHash;
 
     public TuleapPullRequestRevision(@NotNull TuleapPullRequestSCMHead head, @NotNull TuleapBranchSCMRevision target, @NonNull TuleapBranchSCMRevision origin) {
         super(head, target);
         this.origin = origin;
+        this.targetHash = target.getHash();
     }
 
     @Override
@@ -29,6 +31,10 @@ public class TuleapPullRequestRevision extends ChangeRequestSCMRevision<TuleapPu
     }
 
     public SCMRevision getOrigin() {
-        return origin;
+        return this.origin;
+    }
+
+    public String getTargetHash() {
+        return this.targetHash;
     }
 }

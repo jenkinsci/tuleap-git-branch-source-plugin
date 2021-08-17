@@ -14,13 +14,15 @@ public class TuleapPullRequestSCMHead extends SCMHead implements ChangeRequestSC
     private final SCMHeadOrigin origin;
     private final TuleapBranchSCMHead target;
     private final int originRepositoryId;
+    private final Integer targetRepositoryId;
 
-    public TuleapPullRequestSCMHead(GitPullRequest pullRequest, SCMHeadOrigin origin, TuleapBranchSCMHead target, Integer originRepositoryId) {
+    public TuleapPullRequestSCMHead(GitPullRequest pullRequest, SCMHeadOrigin origin, TuleapBranchSCMHead target, Integer originRepositoryId, Integer targetRepositoryId) {
         super("TLP-PR-" + pullRequest.getId());
         this.pullRequest = pullRequest;
         this.origin = origin;
         this.target = target;
         this.originRepositoryId = originRepositoryId;
+        this.targetRepositoryId = targetRepositoryId;
     }
 
     @NotNull
@@ -55,5 +57,9 @@ public class TuleapPullRequestSCMHead extends SCMHead implements ChangeRequestSC
 
     public int getOriginRepositoryId() {
         return this.originRepositoryId;
+    }
+
+    public Integer getTargetRepositoryId() {
+        return this.targetRepositoryId;
     }
 }
