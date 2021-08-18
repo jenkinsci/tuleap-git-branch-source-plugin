@@ -17,7 +17,7 @@
     <java.level>8</java.level>
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <jcasc.version>1.51</jcasc.version>
+    <jcasc.version>1.52</jcasc.version>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
