@@ -85,7 +85,7 @@ public class TuleapSCMSourceTest {
 
         SCMHeadOrigin originHead = SCMHeadOrigin.DEFAULT;
         TuleapBranchSCMHead targetHead = new TuleapBranchSCMHead("my-c63-tlp-branch");
-        TuleapPullRequestSCMHead head = new TuleapPullRequestSCMHead(pullRequest, originHead, targetHead);
+        TuleapPullRequestSCMHead head = new TuleapPullRequestSCMHead(pullRequest, originHead, targetHead,10,10);
 
         TuleapBranchSCMRevision target = new TuleapBranchSCMRevision(head.getTarget(), "h4sH_t4rG3t");
         TuleapBranchSCMRevision origin = new TuleapBranchSCMRevision(new TuleapBranchSCMHead(head.getOriginName()), "h4sH_or1g1n");
