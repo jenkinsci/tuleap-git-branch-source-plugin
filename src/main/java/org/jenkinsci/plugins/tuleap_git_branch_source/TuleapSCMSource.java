@@ -27,6 +27,8 @@ import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
 import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceRequest;
 import jenkins.scm.api.trait.SCMSourceTrait;
+import jenkins.scm.impl.ChangeRequestSCMHeadCategory;
+import jenkins.scm.impl.UncategorizedSCMHeadCategory;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapSCMFileSystem;
 import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
@@ -508,6 +510,15 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 result.add(newItem);
             }
             return result;
+        }
+
+        @NonNull
+        @Override
+        protected SCMHeadCategory[] createCategories(){
+            return new SCMHeadCategory[]{
+                UncategorizedSCMHeadCategory.DEFAULT,
+                new ChangeRequestSCMHeadCategory(Messages._TuleapSCMSource_ChangeRequestCategory())
+            };
         }
     }
 
