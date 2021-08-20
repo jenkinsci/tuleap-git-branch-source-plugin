@@ -19,7 +19,7 @@ public class TuleapSCMBuilderTest {
         String remote = "https://tuleap.example.com/repo.git";
         String credentialsId = "1581";
 
-        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpScmHead, tlpRevision, remote, credentialsId);
+        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpScmHead, tlpRevision, remote, credentialsId,"https://tuleap.example.com/plugins/git/somerepo");
         assertEquals(1, tuleapSCMBuilder.refSpecs().size());
         assertEquals("+refs/heads/jcomprendspas-branch:refs/remotes/@{remote}/jcomprendspas-branch", tuleapSCMBuilder.refSpecs().get(0));
         assertEquals("https://tuleap.example.com/repo.git", tuleapSCMBuilder.remote());
@@ -39,7 +39,7 @@ public class TuleapSCMBuilderTest {
         String remote = "https://tuleap.example.com/repo.git";
         String credentialsId = "1581";
 
-        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpPrScmHead, tlpPrRevision, remote, credentialsId);
+        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpPrScmHead, tlpPrRevision, remote, credentialsId, "https://tuleap.example.com/plugins/git/somerepo");
         assertEquals(1, tuleapSCMBuilder.refSpecs().size());
         assertEquals("+refs/tlpr/3/head:refs/remotes/@{remote}/TLP-PR-3", tuleapSCMBuilder.refSpecs().get(0));
         assertEquals("https://tuleap.example.com/repo.git", tuleapSCMBuilder.remote());
@@ -54,7 +54,7 @@ public class TuleapSCMBuilderTest {
         String remote = "https://tuleap.example.com/repo.git";
         String credentialsId = "1581";
 
-        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpPrScmHead, tlpPrRevision, remote, credentialsId);
+        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpPrScmHead, tlpPrRevision, remote, credentialsId, "https://tuleap.example.com/plugins/git/somerepo");
 
         tuleapSCMBuilder.build();
         verify(tlpPrRevision, atLeastOnce()).getOrigin();
@@ -72,7 +72,7 @@ public class TuleapSCMBuilderTest {
         String remote = "https://tuleap.example.com/repo.git";
         String credentialsId = "1581";
 
-        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpScmHead, tlpRevision, remote, credentialsId);
+        TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpScmHead, tlpRevision, remote, credentialsId, "https://tuleap.example.com/plugins/git/somerepo");
 
         tuleapSCMBuilder.build();
         assertEquals(tlpRevision, tuleapSCMBuilder.revision());
