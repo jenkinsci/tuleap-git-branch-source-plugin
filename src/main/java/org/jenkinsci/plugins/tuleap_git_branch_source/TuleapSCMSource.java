@@ -146,31 +146,20 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 int count = 0;
                 for (TuleapBranches branch : branches.collect(Collectors.toList())) {
                     count++;
-                    request.listener().getLogger().println("Get the Jenkinsfile from Tuleap.");
-                    Optional<TuleapFileContent> file = TuleapClientCommandConfigurer.<Optional<TuleapFileContent>>newInstance(getApiBaseUri())
-                        .withCredentials(credentials)
-                        .withCommand(new TuleapClientRawCmd.GetJenkinsFile(repository.getId(), "Jenkinsfile", branch.getName()))
-                        .configure()
-                        .call();
-                    if (file.get().getName() != null) {
-                        request.listener().getLogger().format("Search at '%s'", branch.getName());
-                        TuleapBranchSCMHead tuleapBranchSCMHead = new TuleapBranchSCMHead(branch.getName());
-                        if (request.process(tuleapBranchSCMHead, (SCMSourceRequest.RevisionLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>) head ->
-                                new TuleapBranchSCMRevision(head, branch.getCommit().getId()),
-                            new SCMSourceRequest.ProbeLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>() {
-                                @NotNull
-                                @Override
-                                public SCMSourceCriteria.Probe create(@NotNull TuleapBranchSCMHead head, @Nullable TuleapBranchSCMRevision revisionInfo) throws IOException, InterruptedException {
-                                    return createProbe(head, revisionInfo);
-                                }
-                            }, new OFWitness(listener))) {
-                            request.listener().getLogger()
-                                .format("%n  %d branches were processed (query completed)%n", count).println();
-                        }
-                    } else {
-                        request.listener().getLogger().format("There is no Jenkinsfile at the branch: %s %n", branch.getName());
+                    request.listener().getLogger().format("Search at '%s'", branch.getName());
+                    TuleapBranchSCMHead tuleapBranchSCMHead = new TuleapBranchSCMHead(branch.getName());
+                    if (request.process(tuleapBranchSCMHead, (SCMSourceRequest.RevisionLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>) head ->
+                            new TuleapBranchSCMRevision(head, branch.getCommit().getId()),
+                        new SCMSourceRequest.ProbeLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>() {
+                            @NotNull
+                            @Override
+                            public SCMSourceCriteria.Probe create(@NotNull TuleapBranchSCMHead head, @Nullable TuleapBranchSCMRevision revisionInfo) throws IOException, InterruptedException {
+                                return createProbe(head, revisionInfo);
+                            }
+                        }, new OFWitness(listener))) {
+                        request.listener().getLogger()
+                            .format("%n  %d branches were processed (query completed)%n", count).println();
                     }
-
                 }
 
             }
