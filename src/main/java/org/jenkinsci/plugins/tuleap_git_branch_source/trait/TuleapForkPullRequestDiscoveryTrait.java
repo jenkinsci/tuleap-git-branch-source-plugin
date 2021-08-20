@@ -8,6 +8,7 @@ import jenkins.scm.api.SCMRevision;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.mixin.ChangeRequestSCMHead2;
 import jenkins.scm.api.trait.*;
+import jenkins.scm.impl.ChangeRequestSCMHeadCategory;
 import jenkins.scm.impl.trait.Discovery;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.*;
@@ -37,7 +38,7 @@ public class TuleapForkPullRequestDiscoveryTrait extends SCMSourceTrait {
      */
     @Override
     public boolean includeCategory(@NonNull SCMHeadCategory category) {
-        return category.isUncategorized();
+        return category instanceof ChangeRequestSCMHeadCategory;
     }
 
     @Symbol("tuleapForkPullRequestDiscovery")
