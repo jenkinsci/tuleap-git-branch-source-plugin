@@ -22,7 +22,7 @@ public class TuleapBrowser extends GitRepositoryBrowser {
         super(repositoryUrl);
     }
 
-    private String getRepositoryUrl() {
+    public String getRepositoryUrl() {
         return super.getRepoUrl();
     }
 
