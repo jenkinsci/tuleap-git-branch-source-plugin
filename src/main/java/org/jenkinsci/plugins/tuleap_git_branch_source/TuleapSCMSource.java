@@ -353,7 +353,8 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @NotNull
     @Override
     public SCM build(@NonNull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
-        return new TuleapSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId).withTraits(traits).build();
+        String repositoryUri = this.getGitBaseUri() + this.project.getShortname() + "/" +this.repository.getName();
+        return new TuleapSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId, repositoryUri).withTraits(traits).build();
     }
 
     public List<SCMSourceTrait> getTraits() {

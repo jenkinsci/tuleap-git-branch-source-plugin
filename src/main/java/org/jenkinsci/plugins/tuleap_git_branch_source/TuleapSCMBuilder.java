@@ -8,7 +8,10 @@ import jenkins.scm.api.SCMRevision;
 import org.jetbrains.annotations.NotNull;
 
 public class TuleapSCMBuilder extends GitSCMBuilder<TuleapSCMBuilder> {
-    public TuleapSCMBuilder(@NotNull SCMHead head, SCMRevision revision, @NotNull String remote, String credentialsId) {
+
+    private String repositoryBaseUrl;
+
+    public TuleapSCMBuilder(@NotNull SCMHead head, SCMRevision revision, @NotNull String remote, String credentialsId, String repositoryBaseUrl) {
         super(head, revision, remote, credentialsId);
         withoutRefSpecs();
         if (head instanceof TuleapPullRequestSCMHead) {
@@ -17,6 +20,8 @@ public class TuleapSCMBuilder extends GitSCMBuilder<TuleapSCMBuilder> {
         } else {
             withRefSpec("+refs/heads/" + head.getName() + ":refs/remotes/@{remote}/" + head.getName());
         }
+        this.repositoryBaseUrl = repositoryBaseUrl;
+        withBrowser(new TuleapBrowser(repositoryBaseUrl));
     }
 
     @NonNull
@@ -32,6 +37,7 @@ public class TuleapSCMBuilder extends GitSCMBuilder<TuleapSCMBuilder> {
         } finally {
             withHead(head);
             withRevision(revision);
+            withBrowser(new TuleapBrowser(this.repositoryBaseUrl));
         }
     }
 }
