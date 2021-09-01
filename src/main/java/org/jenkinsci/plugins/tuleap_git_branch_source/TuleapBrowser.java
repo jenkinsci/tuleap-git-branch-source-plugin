@@ -54,7 +54,7 @@ public class TuleapBrowser extends GitRepositoryBrowser {
 
         @NonNull
         public String getDisplayName() {
-            return "Tuleap changeset";
+            return "Tuleap";
         }
 
         @Override
