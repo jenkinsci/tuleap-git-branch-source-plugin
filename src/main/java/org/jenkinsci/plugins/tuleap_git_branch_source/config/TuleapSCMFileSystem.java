@@ -86,15 +86,12 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
                 repositoryId = Integer.toString(tuleapSCMSource.getTuleapGitRepository().getId());
             } else if (head instanceof TuleapPullRequestSCMHead) {
                 TuleapPullRequestSCMHead tlpHead = ((TuleapPullRequestSCMHead) head);
-                List<SCMSourceTrait> traits = source.getTraits();
-                assert traits != null;
-                boolean hasForkTrait = traits.stream().anyMatch(scmSourceTrait -> scmSourceTrait instanceof TuleapForkPullRequestDiscoveryTrait);
-                if (hasForkTrait) {
-                    ref = tlpHead.getTarget().getName();
-                    repositoryId = Integer.toString(tlpHead.getTargetRepositoryId());
-                } else {
+                if (rev instanceof TuleapPullRequestRevision) {
                     ref = ((TuleapPullRequestSCMHead) head).getOriginName();
                     repositoryId = Integer.toString(((TuleapPullRequestSCMHead) head).getOriginRepositoryId());
+                } else {
+                    ref = tlpHead.getTarget().getName();
+                    repositoryId = Integer.toString(tlpHead.getTargetRepositoryId());
                 }
             } else {
                 return null;
