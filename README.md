@@ -4,42 +4,11 @@
 [![GitHub release](https://img.shields.io/github/release/jenkinsci/tuleap-git-branch-source.svg?label=changelog)](https://plugins.jenkins.io/tuleap-git-branch-source/releases/latest)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/tuleap-git-branch-source.svg?color=blue)](https://plugins.jenkins.io/tuleap-git-branch-source/)
 
+This Jenkins plugin is a community effort.
+
 This jenkins plugin allow autodiscovery of Tuleap's git repositories and branches to automatically create jenkins jobs when branches have `Jenkinsfile`.
 
-Works with any recent version of Jenkins >= 2.222.4 (latest LTS preferred).
-
-# How to use
-
-* Install the plugin
-* In Jenkins global configuration you should reference your Tuleap instance (There is a limitation of 1 Tuleap server per Jenkins instance)
-* Then any Jenkins user can create a new "Tuleap project" job type
-  * They should have a [`Tuleap Access Key` jenkins credential](https://docs.tuleap.org/user-guide/citizen.html#access-keys) with a user that can access the project you want to target
-  * They need to select the project they want to work on
-  * Update the filters (by default all repositories are ignored), for instance remove the "*" in "Exclude"
-  * Save the configuration
-  * Then Jenkins should be automatically scanning the project
-    * Find all matching git repositories
-    * For each repo, scan all branches
-    * For each branch, when there is a `Jenkinsfile` a job should be created and scheduled accordingly
-
-## Tuleap job webhook
-
-  When a push is done in a Tuleap git repository, the linked Jenkins job will be automatically built.
-
-### How to configure
-On the Tuleap side:
- * Please refer to the [Tuleap documentation](https://docs.tuleap.org/user-guide/code-versioning/git.html?#webhooks) for instructions
-
-If you do not want to trigger via Tuleap, you can use the `https://JENKINS_URL/tuleap-hook/` URL.
-If you use the URL you have to give the request body, for instance:
-
-```json
-{
-    "tuleapProjectId": "130",
-    "repositoryName": "repo001",
-    "branchName":"master"
-}
-```
+Please find the documentation at [https://docs.tuleap.org/user-guide/ci.html](https://docs.tuleap.org/user-guide/ci.html)
 
 ## Report issues
 
@@ -71,10 +40,6 @@ Tested with OpenJDK 8
            -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven \
            maven:3.3-jdk-8 \
            mvn -Duser.home=/var/maven clean install
-
-## See also
-
-* [tuleap-oauth-plugin](https://github.com/jenkinsci/tuleap-oauth-plugin) a plugin to link Jenkins to Tuleap's OAuth, coupling identification and authorisation on Tuleap, reducing users management effort.
 
 ## Authors
 
