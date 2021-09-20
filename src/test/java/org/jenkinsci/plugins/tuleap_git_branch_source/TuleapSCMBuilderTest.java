@@ -33,7 +33,7 @@ public class TuleapSCMBuilderTest {
         TuleapBranchSCMHead tlpScmHeadOrigin = new TuleapBranchSCMHead("tchiki-tchiki");
         TuleapBranchSCMRevision tlpRevisionOrigin = new TuleapBranchSCMRevision(tlpScmHeadOrigin, "h4shu_or1g1n");
 
-        TuleapPullRequestSCMHead tlpPrScmHead = new TuleapPullRequestSCMHead(this.getPullRequest(), SCMHeadOrigin.DEFAULT, tlpScmHeadTarget,4,4);
+        TuleapPullRequestSCMHead tlpPrScmHead = new TuleapPullRequestSCMHead(this.getPullRequest(), SCMHeadOrigin.DEFAULT, tlpScmHeadTarget,4,4, "refs/tlpr/4");
         TuleapPullRequestRevision tlpPrRevision = new TuleapPullRequestRevision(tlpPrScmHead, tlpRevisionTarget, tlpRevisionOrigin);
 
         String remote = "https://tuleap.example.com/repo.git";
@@ -41,7 +41,7 @@ public class TuleapSCMBuilderTest {
 
         TuleapSCMBuilder tuleapSCMBuilder = new TuleapSCMBuilder(tlpPrScmHead, tlpPrRevision, remote, credentialsId, "https://tuleap.example.com/plugins/git/somerepo");
         assertEquals(1, tuleapSCMBuilder.refSpecs().size());
-        assertEquals("+refs/tlpr/3/head:refs/remotes/@{remote}/TLP-PR-3", tuleapSCMBuilder.refSpecs().get(0));
+        assertEquals("+refs/tlpr/4:refs/remotes/@{remote}/TLP-PR-3", tuleapSCMBuilder.refSpecs().get(0));
         assertEquals("https://tuleap.example.com/repo.git", tuleapSCMBuilder.remote());
     }
 
