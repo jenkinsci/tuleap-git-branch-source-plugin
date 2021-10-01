@@ -167,9 +167,10 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 request.listener().getLogger().format("Fetching pull requests for repository at %s %n", this.repositoryPath);
                 GitApi gitApi = TuleapApiRetriever.getGitApi();
 
-                List<GitPullRequest> pullRequests = gitApi.getPullRequests(Integer.toString(this.repository.getId()), this.credentials);
+                List<GitPullRequest> partialPullRequests = gitApi.getPullRequests(Integer.toString(this.repository.getId()), this.credentials);
                 int prCount = 0;
-                for (GitPullRequest pullRequest : pullRequests) {
+                for (GitPullRequest partialPullRequest : partialPullRequests) {
+                    PullRequest pullRequest = TuleapApiRetriever.getPullRequestApi().getPullRequest(partialPullRequest.getId(), this.credentials);
                     request.listener().getLogger().format("Check the PR id: '%s' %n", pullRequest.getId());
                     prCount++;
                     boolean isFork = !pullRequest.getSourceRepository().getId().equals(pullRequest.getDestinationRepository().getId());
@@ -193,7 +194,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     }
                     TuleapBranchSCMHead targetBranch = new TuleapBranchSCMHead(pullRequest.getDestinationBranch());
 
-                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(pullRequest, origin, targetBranch, originRepositoryId, targetRepositoryId);
+                    TuleapPullRequestSCMHead tlpPRSCMHead = new TuleapPullRequestSCMHead(partialPullRequest, origin, targetBranch, originRepositoryId, targetRepositoryId, pullRequest.getHeadReference());
                     GitCommit targetLastCommit = gitApi.getCommit(Integer.toString(this.repository.getId()), targetBranch.getName(), this.credentials);
                     if (request.process(tlpPRSCMHead,
                         (SCMSourceRequest.RevisionLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>) head ->
@@ -205,7 +206,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                                 ),
                                 new TuleapBranchSCMRevision(
                                     new TuleapBranchSCMHead(head.getOriginName()),
-                                    pullRequest.getHead().getId()
+                                    partialPullRequest.getHead().getId()
                                 )
                             ),
                         new SCMSourceRequest.ProbeLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>() {
