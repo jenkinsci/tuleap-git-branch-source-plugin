@@ -1,0 +1,94 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<jenkins.branch.OrganizationFolder plugin="branch-api@2.6.2">
+  <actions/>
+  <description></description>
+  <properties>
+    <jenkins.branch.OrganizationChildHealthMetricsProperty>
+      <templates>
+        <com.cloudbees.hudson.plugins.folder.health.WorstChildHealthMetric plugin="cloudbees-folder@6.16">
+          <nonRecursive>false</nonRecursive>
+        </com.cloudbees.hudson.plugins.folder.health.WorstChildHealthMetric>
+      </templates>
+    </jenkins.branch.OrganizationChildHealthMetricsProperty>
+    <jenkins.branch.OrganizationChildOrphanedItemsProperty>
+      <strategy class="jenkins.branch.OrganizationChildOrphanedItemsProperty$Inherit"/>
+    </jenkins.branch.OrganizationChildOrphanedItemsProperty>
+    <jenkins.branch.OrganizationChildTriggersProperty>
+      <templates>
+        <com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger plugin="cloudbees-folder@6.16">
+          <spec>H H/4 * * *</spec>
+          <interval>86400000</interval>
+        </com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger>
+      </templates>
+    </jenkins.branch.OrganizationChildTriggersProperty>
+    <com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider_-FolderCredentialsProperty plugin="cloudbees-folder@6.16">
+      <domainCredentialsMap class="hudson.util.CopyOnWriteMap$Hash">
+        <entry>
+          <com.cloudbees.plugins.credentials.domains.Domain plugin="credentials@2.6.1">
+            <specifications/>
+          </com.cloudbees.plugins.credentials.domains.Domain>
+          <java.util.concurrent.CopyOnWriteArrayList>
+            <io.jenkins.plugins.tuleap__credentials.TuleapAccessTokenImpl plugin="tuleap-api@2.4.2">
+              <id>627eca5f-a6b1-4383-8e08-4674b52981ea</id>
+              <description></description>
+              <token>{AQAAABAAAABQWF+9ckmrFkPty2t6PI4EhGW/udzBu2KZv6Uzjd8B0hO79lIQfm2S2fVEAchMiHpE+Tj2ifLNKYDUb4SffOvRzolVymza5SbCDN2436a/c6DPzhjrsHsCSbqVV8vrh7Qm}</token>
+            </io.jenkins.plugins.tuleap__credentials.TuleapAccessTokenImpl>
+          </java.util.concurrent.CopyOnWriteArrayList>
+        </entry>
+      </domainCredentialsMap>
+    </com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider_-FolderCredentialsProperty>
+    <jenkins.branch.NoTriggerOrganizationFolderProperty>
+      <branches>.*</branches>
+    </jenkins.branch.NoTriggerOrganizationFolderProperty>
+  </properties>
+  <folderViews class="jenkins.branch.OrganizationFolderViewHolder">
+    <owner reference="../.."/>
+  </folderViews>
+  <healthMetrics/>
+  <icon class="jenkins.branch.MetadataActionFolderIcon">
+    <owner class="jenkins.branch.OrganizationFolder" reference="../.."/>
+  </icon>
+  <orphanedItemStrategy class="com.cloudbees.hudson.plugins.folder.computed.DefaultOrphanedItemStrategy" plugin="cloudbees-folder@6.16">
+    <pruneDeadBranches>true</pruneDeadBranches>
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>-1</numToKeep>
+  </orphanedItemStrategy>
+  <triggers>
+    <com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger plugin="cloudbees-folder@6.16">
+      <spec>H H/4 * * *</spec>
+      <interval>86400000</interval>
+    </com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger>
+  </triggers>
+  <disabled>false</disabled>
+  <navigators>
+    <org.jenkinsci.plugins.tuleap__git__branch__source.TuleapSCMNavigator plugin="tuleap-git-branch-source@3.2.1-SNAPSHOT">
+      <projectId>101</projectId>
+      <traits>
+        <jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait plugin="scm-api@2.6.5">
+          <includes>*</includes>
+          <excludes></excludes>
+        </jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait>
+        <org.jenkinsci.plugins.tuleap__git__branch__source.trait.TuleapBranchDiscoveryTrait/>
+        <org.jenkinsci.plugins.tuleap__git__branch__source.trait.TuleapOriginPullRequestDiscoveryTrait/>
+        <jenkins.plugins.git.traits.RefSpecsSCMSourceTrait plugin="git@4.6.0">
+          <templates>
+            <jenkins.plugins.git.traits.RefSpecsSCMSourceTrait_-RefSpecTemplate>
+              <value></value>
+            </jenkins.plugins.git.traits.RefSpecsSCMSourceTrait_-RefSpecTemplate>
+          </templates>
+        </jenkins.plugins.git.traits.RefSpecsSCMSourceTrait>
+      </traits>
+      <credentialsId>627eca5f-a6b1-4383-8e08-4674b52981ea</credentialsId>
+      <repositories/>
+    </org.jenkinsci.plugins.tuleap__git__branch__source.TuleapSCMNavigator>
+  </navigators>
+  <projectFactories>
+    <org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectFactory plugin="workflow-multibranch@2.24">
+      <scriptPath>Jenkinsfile</scriptPath>
+    </org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectFactory>
+  </projectFactories>
+  <buildStrategies/>
+  <strategy class="jenkins.branch.DefaultBranchPropertyStrategy">
+    <properties class="empty-list"/>
+  </strategy>
+</jenkins.branch.OrganizationFolder>
