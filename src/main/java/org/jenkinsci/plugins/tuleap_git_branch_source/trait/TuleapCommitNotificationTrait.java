@@ -7,7 +7,6 @@ import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.trait.SCMSourceContext;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import jenkins.scm.api.trait.SCMSourceTraitDescriptor;
-import jenkins.scm.impl.trait.Discovery;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;

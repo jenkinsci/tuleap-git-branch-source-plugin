@@ -58,6 +58,11 @@ public class TuleapSCMSourceTest {
             }
 
             @Override
+            public String getTitle() {
+                return "Tonight I smoke a big big teh";
+            }
+
+            @Override
             public GitRepositoryReference getSourceRepository() {
                 return null;
             }
