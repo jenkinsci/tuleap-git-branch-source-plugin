@@ -42,6 +42,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -55,6 +56,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
     private static final String TULEAP_FORK_PARTIAL_PATH = "/u/";
 
     private String tuleapProjectId;
+    private String projectId;
     private List<SCMTrait<? extends SCMTrait<?>>> traits;
     private String credentialsId;
     private String apiUri, gitBaseUri;
@@ -64,6 +66,15 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @DataBoundConstructor
     public TuleapSCMNavigator(String tuleapProjectId) {
         this.tuleapProjectId = tuleapProjectId;
+    }
+
+    private Object readResolve() throws ObjectStreamException {
+        if (! (this.projectId == null)) {
+            this.tuleapProjectId = this.projectId;
+            this.projectId = null;
+        }
+
+        return this;
     }
 
     @NonNull
