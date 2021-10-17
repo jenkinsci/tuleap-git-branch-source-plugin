@@ -85,6 +85,11 @@ public class TuleapPullRequestRevisionTest {
             }
 
             @Override
+            public String getTitle() {
+                return "President, in the hall I saw the stomer-cu to cast blank vote";
+            }
+
+            @Override
             public GitRepositoryReference getSourceRepository() {
                 return null;
             }

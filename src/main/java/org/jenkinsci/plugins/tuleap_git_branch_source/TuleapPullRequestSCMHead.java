@@ -18,7 +18,7 @@ public class TuleapPullRequestSCMHead extends SCMHead implements ChangeRequestSC
     private final String headReference;
 
     public TuleapPullRequestSCMHead(GitPullRequest pullRequest, SCMHeadOrigin origin, TuleapBranchSCMHead target, Integer originRepositoryId, Integer targetRepositoryId, String headReference) {
-        super("TLP-PR-" + pullRequest.getId());
+        super("(TLP-PR-" + pullRequest.getId() + ") " + pullRequest.getTitle());
         this.pullRequest = pullRequest;
         this.origin = origin;
         this.target = target;

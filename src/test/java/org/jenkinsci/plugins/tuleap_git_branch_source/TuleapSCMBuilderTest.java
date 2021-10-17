@@ -86,6 +86,11 @@ public class TuleapSCMBuilderTest {
             }
 
             @Override
+            public String getTitle() {
+                return "The life is weird I ... it, there is no mystery";
+            }
+
+            @Override
             public GitRepositoryReference getSourceRepository() {
                 return null;
             }
