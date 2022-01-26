@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.19</version>
+    <version>4.33</version>
     <relativePath />
   </parent>
   <artifactId>tuleap-git-branch-source</artifactId>
@@ -17,7 +17,7 @@
     <java.level>8</java.level>
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <jcasc.version>1.51</jcasc.version>
+    <jcasc.version>1.55.1</jcasc.version>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
@@ -147,16 +147,6 @@
       <artifactId>test-harness</artifactId>
       <version>${jcasc.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
