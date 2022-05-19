@@ -16,7 +16,6 @@ import io.jenkins.plugins.tuleap_api.client.*;
 import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientCommandConfigurer;
 import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientRawCmd;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapBranches;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapFileContent;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
@@ -311,7 +310,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                 listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
             }
             if (revision.isPresent()) {
-                return new SCMRevisionImpl(head, revision.get());
+                return new TuleapBranchSCMRevision(head, revision.get());
             }
         } else if (head instanceof TuleapPullRequestSCMHead) {
             TuleapPullRequestSCMHead tlpSCMHead = (TuleapPullRequestSCMHead) head;
