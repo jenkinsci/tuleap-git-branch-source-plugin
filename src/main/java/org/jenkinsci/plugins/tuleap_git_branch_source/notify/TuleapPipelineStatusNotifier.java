@@ -1,11 +1,14 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.notify;
 
 import hudson.model.Run;
-import hudson.plugins.git.util.BuildData;
 import io.jenkins.plugins.tuleap_api.client.GitApi;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 
+import jenkins.scm.api.SCMRevision;
+import jenkins.scm.api.SCMRevisionAction;
+import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapBranchSCMRevision;
+import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapPullRequestRevision;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +30,7 @@ public class TuleapPipelineStatusNotifier {
             );
         }
 
-        final BuildData gitData = build.getAction(BuildData.class);
-        if (gitData == null) {
-            throw new RuntimeException(
-                "Failed to retrieve Git Data. Please check the configuration."
-            );
-        }
+        String hash = this.getRevisionHash(source, build);
 
         final int repository_id = source.getTuleapGitRepository().getId();
         logger.printf(
@@ -42,7 +40,7 @@ public class TuleapPipelineStatusNotifier {
 
         this.gitApi.sendBuildStatus(
             Integer.toString(repository_id),
-            gitData.lastBuild.getSHA1().name(),
+            hash,
             status,
             token
         );
@@ -55,5 +53,19 @@ public class TuleapPipelineStatusNotifier {
             source.getApiBaseUri(),
             source.getCredentialsId()
         );
+    }
+
+    private String getRevisionHash(TuleapSCMSource source, Run<?,?> build){
+        SCMRevision revision = SCMRevisionAction.getRevision(source, build);
+        String hash;
+        if (revision instanceof TuleapBranchSCMRevision) {
+            hash = ((TuleapBranchSCMRevision) revision).getHash();
+        } else if (revision instanceof TuleapPullRequestRevision) {
+            TuleapBranchSCMRevision origin = (TuleapBranchSCMRevision) ((TuleapPullRequestRevision) revision).getOrigin();
+            hash = origin.getHash();
+        } else {
+            throw new InvalidRetrievedRevisionType();
+        }
+        return hash;
     }
 }
