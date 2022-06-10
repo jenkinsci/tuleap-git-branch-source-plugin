@@ -9,7 +9,7 @@
     <relativePath />
   </parent>
   <artifactId>tuleap-git-branch-source</artifactId>
-  <version>3.2.4-SNAPSHOT</version>
+  <version>3.2.4</version>
   <packaging>hpi</packaging>
 
   <properties>
@@ -29,7 +29,7 @@
     <connection>scm:git:ssh://github.com/jenkinsci/tuleap-git-branch-source-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/tuleap-git-branch-source-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/tuleap-git-branch-source-plugin</url>
-    <tag>HEAD</tag>
+    <tag>tuleap-git-branch-source-3.2.4</tag>
   </scm>
   <developers>
     <developer>
