@@ -34,7 +34,7 @@ public class TuleapPipelineStatusNotifier {
 
         final int repository_id = source.getTuleapGitRepository().getId();
         logger.printf(
-            "Notifying Tuleap about build status: %s",
+            "Notifying Tuleap about build status: %s \n",
             status.toString()
         );
 

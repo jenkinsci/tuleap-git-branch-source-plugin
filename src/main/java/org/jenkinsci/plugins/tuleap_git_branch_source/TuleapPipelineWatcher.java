@@ -4,21 +4,16 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import hudson.model.listeners.SCMListener;
-import hudson.scm.SCM;
-import hudson.scm.SCMRevisionState;
 import io.jenkins.plugins.tuleap_api.client.GitApi;
 import io.jenkins.plugins.tuleap_api.client.TuleapApiGuiceModule;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
 import org.jenkinsci.plugins.tuleap_git_branch_source.notify.TuleapPipelineStatusHandler;
 import org.jenkinsci.plugins.tuleap_git_branch_source.notify.TuleapPipelineStatusNotifier;
 
-import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,23 +31,14 @@ public class TuleapPipelineWatcher {
     }
 
     @Extension
-    public static class TuleapJobCheckOutListener extends SCMListener {
+    public static class TuleapJobCompletedListener extends RunListener<Run<?, ?>> {
+
         @Override
-        public void onCheckout(
-            Run<?, ?> build,
-            SCM scm,
-            FilePath workspace,
-            TaskListener listener,
-            File changelogFile,
-            SCMRevisionState pollingBaseline
-        ) {
-            LOGGER.log(Level.INFO, String.format("Tuleap build: Checkout > %s", build.getFullDisplayName()));
+        public void onStarted(Run<?, ?> build, @NonNull TaskListener listener) {
+            LOGGER.log(Level.INFO, String.format("Tuleap build: Start > %s", build.getFullDisplayName()));
             getHandler().handleCommitNotification(build, listener.getLogger(), TuleapBuildStatus.pending);
         }
-    }
 
-    @Extension
-    public static class TuleapJobCompletedListener extends RunListener<Run<?, ?>> {
         @Override
         public void onCompleted(Run<?, ?> build, @NonNull TaskListener listener) {
             LOGGER.log(Level.INFO, String.format("Tuleap build: Complete > %s", build.getFullDisplayName()));
