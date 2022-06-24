@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.jenkins.plugins.tuleap_api.client.GitRepository;
+import io.jenkins.plugins.tuleap_api.client.Project;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.trait.SCMSourceBuilder;
@@ -8,10 +10,10 @@ import jenkins.scm.api.trait.SCMSourceBuilder;
 public class TuleapSCMSourceBuilder extends SCMSourceBuilder<TuleapSCMSourceBuilder, TuleapSCMSource> {
     private final String id;
     private final String credentialsId;
-    private final TuleapProject project;
-    private final TuleapGitRepository repository;
+    private final Project project;
+    private final GitRepository repository;
 
-    public TuleapSCMSourceBuilder(String id, String credentialsId, TuleapProject project, TuleapGitRepository repository) {
+    public TuleapSCMSourceBuilder(String id, String credentialsId, Project project, GitRepository repository) {
         super(TuleapSCMSource.class, repository.getPath());
         this.id = id;
         this.credentialsId = credentialsId;

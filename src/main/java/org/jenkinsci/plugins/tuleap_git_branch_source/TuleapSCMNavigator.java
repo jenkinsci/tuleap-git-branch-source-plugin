@@ -11,10 +11,9 @@ import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientCommandConfigurer;
-import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientRawCmd;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
+import io.jenkins.plugins.tuleap_api.client.GitRepository;
+import io.jenkins.plugins.tuleap_api.client.Project;
+import io.jenkins.plugins.tuleap_api.client.ProjectApi;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import jenkins.model.Jenkins;
@@ -32,6 +31,7 @@ import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
+import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -60,8 +60,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
     private List<SCMTrait<? extends SCMTrait<?>>> traits;
     private String credentialsId;
     private String apiUri, gitBaseUri;
-    private Map<String, TuleapGitRepository> repositories = new HashMap<>();
-    private TuleapProject project;
+    private Map<String, GitRepository> repositories = new HashMap<>();
+    private Project project;
 
     @DataBoundConstructor
     public TuleapSCMNavigator(String tuleapProjectId) {
@@ -69,7 +69,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
     }
 
     private Object readResolve() throws ObjectStreamException {
-        if (! (this.projectId == null)) {
+        if (!(this.projectId == null)) {
             this.tuleapProjectId = this.projectId;
             this.projectId = null;
         }
@@ -94,28 +94,20 @@ public class TuleapSCMNavigator extends SCMNavigator {
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
             .withTraits(traits).newRequest(this, observer)) {
             WitnessImpl witness = new WitnessImpl(listener, this);
-            Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>>newInstance(getApiUri())
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.ProjectById(tuleapProjectId))
-                .configure()
-                .call();
-            if (project.isPresent()) {
-                this.project = project.get();
-            } else {
+
+            ProjectApi projectApi = TuleapApiRetriever.getProjectApi();
+            Project project = projectApi.getProjectById(this.tuleapProjectId, credentials);
+            if (project == null) {
                 //Should never happen though
-                listener.getLogger().format("No project match projectId " + tuleapProjectId + "... it's weird%n");
+                listener.getLogger().format("No project match projectId " + this.tuleapProjectId + "... it's weird%n");
                 return;
             }
-            Stream<TuleapGitRepository> repos = TuleapClientCommandConfigurer.<Stream<TuleapGitRepository>>newInstance
-                (getApiUri())
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(tuleapProjectId))
-                .configure()
-                .call();
+            this.project = project;
 
-            for (TuleapGitRepository repo : repos.collect(Collectors.toList())) {
+            List<GitRepository> repos = projectApi.getGitRepositories(Integer.parseInt(this.tuleapProjectId), credentials);
+            for (GitRepository repo : repos) {
                 if (!repo.getPath().contains(TULEAP_FORK_PARTIAL_PATH)) {
-                    repositories.put(repo.getName(), repo);
+                    this.repositories.put(repo.getName(), repo);
                     SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
                     if (request.process(repo.getName(), sourceFactory, null, witness)) {
                         listener.getLogger().format("%d repositories were processed (query completed)%n",
@@ -132,21 +124,17 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @NonNull
     @Override
     protected List<Action> retrieveActions(@NonNull SCMNavigatorOwner owner, @CheckForNull SCMNavigatorEvent event,
-                                           @NonNull TaskListener listener) throws IOException, InterruptedException {
+                                           @NonNull TaskListener listener) {
         listener.getLogger().printf("Looking up details of %s...%n", getTuleapProjectId());
         List<Action> actions = new ArrayList<>();
 
         final TuleapAccessToken credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
-        Optional<TuleapProject> project = TuleapClientCommandConfigurer
-            .<Optional<TuleapProject>>newInstance(getApiUri())
-            .withCredentials(credentials)
-            .withCommand(new TuleapClientRawCmd.ProjectById(tuleapProjectId))
-            .configure()
-            .call();
-        if (project.isPresent()) {
-            actions.add(new TuleapProjectMetadataAction(project.get()));
+        ProjectApi projectApi = TuleapApiRetriever.getProjectApi();
+        Project project = projectApi.getProjectById(this.tuleapProjectId, credentials);
+        if (project != null) {
+            actions.add(new TuleapProjectMetadataAction(project));
             actions.add(new TuleapLink("icon-tuleap-logo", TuleapConfiguration.get().getDomainUrl() + "/projects/" +
-                project.get().getShortname()));
+                project.getShortname()));
         }
         return actions;
     }
@@ -234,8 +222,8 @@ public class TuleapSCMNavigator extends SCMNavigator {
         this.tuleapProjectId = tuleapProjectId;
     }
 
-    public Map<String, TuleapGitRepository> getRepositories() {
-        return repositories;
+    public Map<String, GitRepository> getRepositories() {
+        return this.repositories;
     }
 
     public boolean isIncludeExcludesDefault() {
@@ -417,13 +405,9 @@ public class TuleapSCMNavigator extends SCMNavigator {
             StandardListBoxModel result = new StandardListBoxModel();
             result.includeEmptyValue();
             try {
-                TuleapClientCommandConfigurer.<Stream<TuleapProject>>newInstance(apiUri)
-                    .withCredentials(credentials)
-                    .withCommand(new TuleapClientRawCmd.AllUserProjects(true))
-                    .configure()
-                    .call()
-                    .forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
-            } catch (IOException | IllegalArgumentException e) {
+                List<Project> userProjects = TuleapApiRetriever.getProjectApi().getUserProjects(credentials);
+                userProjects.forEach(project -> result.add(project.getShortname(), String.valueOf(project.getId())));
+            } catch (IllegalArgumentException e) {
                 result.clear();
             }
             return result;
@@ -498,7 +482,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
                     count++;
                 }
             } else {
-                TuleapGitRepository repo = navigator.getRepositories().get(name);
+                GitRepository repo = this.navigator.getRepositories().get(name);
                 listener.getLogger().format("Ignoring %s (reason : private user fork is excluded, URL : %s)%n",
                     name, repo.getPath());
             }
@@ -517,10 +501,10 @@ public class TuleapSCMNavigator extends SCMNavigator {
     private class SourceFactory implements SCMNavigatorRequest.SourceLambda {
 
         private final TuleapSCMNavigatorRequest request;
-        private final TuleapGitRepository repo;
-        private final TuleapProject project;
+        private final GitRepository repo;
+        private final Project project;
 
-        public SourceFactory(TuleapSCMNavigatorRequest request, TuleapProject project, TuleapGitRepository repo) {
+        public SourceFactory(TuleapSCMNavigatorRequest request, Project project, GitRepository repo) {
             this.request = request;
             this.repo = repo;
             this.project = project;

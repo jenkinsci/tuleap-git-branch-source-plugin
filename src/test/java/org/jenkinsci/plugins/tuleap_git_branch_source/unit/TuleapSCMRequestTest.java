@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.unit;
 
 import hudson.model.TaskListener;
 import hudson.util.LogTaskListener;
+import io.jenkins.plugins.tuleap_api.client.GitRepository;
+import io.jenkins.plugins.tuleap_api.client.Project;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.SCMHeadObserver;
@@ -22,7 +24,7 @@ public class TuleapSCMRequestTest {
     @Test
     public void testWeWantToRetrievePullRequestWhenWeTheWantForkTraitIsEnabled() {
 
-        TuleapSCMSource source = new TuleapSCMSource(new TuleapProject(), new TuleapGitRepository());
+        TuleapSCMSource source = this.getTuleapSCMSource();
 
         SCMSourceCriteriaDefaultStub criteriaDefaultStub = new SCMSourceCriteriaDefaultStub();
         TuleapSCMSourceContext context = new TuleapSCMSourceContext(criteriaDefaultStub, SCMHeadObserver.none());
@@ -39,7 +41,7 @@ public class TuleapSCMRequestTest {
     @Test
     public void testWeWantToRetrievePullRequestWhenWeTheWantOriginTraitIsEnabled() {
 
-        TuleapSCMSource source = new TuleapSCMSource(new TuleapProject(), new TuleapGitRepository());
+        TuleapSCMSource source = this.getTuleapSCMSource();
 
         SCMSourceCriteriaDefaultStub criteriaDefaultStub = new SCMSourceCriteriaDefaultStub();
         TuleapSCMSourceContext context = new TuleapSCMSourceContext(criteriaDefaultStub, SCMHeadObserver.none());
@@ -56,7 +58,7 @@ public class TuleapSCMRequestTest {
     @Test
     public void testWeDoNotWantToRetrievePullRequestWhenAnyPullRequestTraitIsEnabled() {
 
-        TuleapSCMSource source = new TuleapSCMSource(new TuleapProject(), new TuleapGitRepository());
+        TuleapSCMSource source = this.getTuleapSCMSource();
 
         SCMSourceCriteriaDefaultStub criteriaDefaultStub = new SCMSourceCriteriaDefaultStub();
         TuleapSCMSourceContext context = new TuleapSCMSourceContext(criteriaDefaultStub, SCMHeadObserver.none());
@@ -68,5 +70,47 @@ public class TuleapSCMRequestTest {
         TuleapSCMSourceRequest request = context.newRequest(source,listener);
 
         assertFalse(request.isRetrievePullRequests());
+    }
+
+    private TuleapSCMSource getTuleapSCMSource() {
+        return new TuleapSCMSource(
+            new Project() {
+                @Override
+                public Integer getId() {
+                    return null;
+                }
+
+                @Override
+                public String getShortname() {
+                    return null;
+                }
+
+                @Override
+                public String getLabel() {
+                    return null;
+                }
+
+                @Override
+                public String getUri() {
+                    return null;
+                }
+            },
+            new GitRepository() {
+                @Override
+                public String getName() {
+                    return null;
+                }
+
+                @Override
+                public Integer getId() {
+                    return null;
+                }
+
+                @Override
+                public String getPath() {
+                    return null;
+                }
+            }
+        );
     }
 }

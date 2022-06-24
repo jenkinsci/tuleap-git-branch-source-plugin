@@ -1,14 +1,13 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.notify;
 
-import com.google.common.collect.ImmutableList;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.TaskListener;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.SCM;
+import io.jenkins.plugins.tuleap_api.client.GitRepository;
+import io.jenkins.plugins.tuleap_api.client.Project;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
@@ -95,7 +94,7 @@ public class TuleapPipelineStatusHandlerTest {
     @Test
     public void testItDoesNothingWhenTheTraitsIsNotSet() {
         final FreeStyleBuild build = mock(FreeStyleBuild.class);
-        final TuleapSCMSource source = new TuleapSCMSource(new TuleapProject(), new TuleapGitRepository());
+        final TuleapSCMSource source = this.getTuleapSCMSource();
 
         List<SCMSourceTrait> traits = Collections.emptyList();
         source.setTraits(traits);
@@ -124,7 +123,7 @@ public class TuleapPipelineStatusHandlerTest {
     @Test
     public void testItDoesNothingWhenTheCommitNotificationTraitsIsNotSet() {
         final FreeStyleBuild build = mock(FreeStyleBuild.class);
-        final TuleapSCMSource source = new TuleapSCMSource(new TuleapProject(), new TuleapGitRepository());
+        final TuleapSCMSource source = this.getTuleapSCMSource();
 
         List<SCMSourceTrait> traits = Collections.singletonList(new TuleapCommitNotificationTrait());
         source.setTraits(traits);
@@ -147,6 +146,48 @@ public class TuleapPipelineStatusHandlerTest {
             logger,
             TuleapBuildStatus.success,
             source
+        );
+    }
+
+    private TuleapSCMSource getTuleapSCMSource() {
+        return new TuleapSCMSource(
+            new Project() {
+                @Override
+                public Integer getId() {
+                    return null;
+                }
+
+                @Override
+                public String getShortname() {
+                    return null;
+                }
+
+                @Override
+                public String getLabel() {
+                    return null;
+                }
+
+                @Override
+                public String getUri() {
+                    return null;
+                }
+            },
+            new GitRepository() {
+                @Override
+                public String getName() {
+                    return null;
+                }
+
+                @Override
+                public Integer getId() {
+                    return null;
+                }
+
+                @Override
+                public String getPath() {
+                    return null;
+                }
+            }
         );
     }
 }

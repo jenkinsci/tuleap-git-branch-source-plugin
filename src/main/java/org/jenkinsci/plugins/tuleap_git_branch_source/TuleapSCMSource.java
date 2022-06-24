@@ -13,15 +13,9 @@ import hudson.scm.SCM;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.tuleap_api.client.*;
-import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientCommandConfigurer;
-import io.jenkins.plugins.tuleap_api.deprecated_client.TuleapClientRawCmd;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapBranches;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
-import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import jenkins.plugins.git.AbstractGitSCMSource;
-import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
 import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceRequest;
@@ -66,9 +60,9 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     /**
      * Tuleap repository to be manipulated (build URL from, build repoId, ...).
      */
-    private TuleapGitRepository repository;
+    private GitRepository repository;
 
-    private TuleapProject project;
+    private Project project;
 
     /**
      * Git Repository of the source to be manipulated
@@ -88,7 +82,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     private TuleapAccessToken credentials;
 
     @DataBoundConstructor
-    public TuleapSCMSource(TuleapProject project, TuleapGitRepository repository) {
+    public TuleapSCMSource(Project project, GitRepository repository) {
         this.repository = repository;
         this.project = project;
         this.projectId = String.valueOf(project.getId());
@@ -98,19 +92,19 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @NonNull
     @Override
     protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event,
-        @NonNull TaskListener listener) throws IOException, InterruptedException {
+                                           @NonNull TaskListener listener) throws IOException, InterruptedException {
         List<Action> result = new ArrayList<>();
         SCMSourceOwner owner = getOwner();
         if (owner instanceof Actionable) {
             TuleapLink repoLink = ((Actionable) owner).getAction(TuleapLink.class);
             if (repoLink != null) {
-                if(head instanceof TuleapBranchSCMHead) {
+                if (head instanceof TuleapBranchSCMHead) {
                     String canonicalRepoName = repositoryPath.replace(project.getShortname() + "/", "");
                     String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
                     result.add(new TuleapLink("icon-git-branch", url));
-                } else if (head instanceof TuleapPullRequestSCMHead){
+                } else if (head instanceof TuleapPullRequestSCMHead) {
                     TuleapPullRequestSCMHead tuleapPullRequestSCMHead = (TuleapPullRequestSCMHead) head;
-                    String prUrl = this.getGitBaseUri()+"?action=pull-requests&repo_id="+this.repository.getId()+"&group_id="+this.projectId+"#/pull-requests/"+tuleapPullRequestSCMHead.getId()+"/overview";
+                    String prUrl = this.getGitBaseUri() + "?action=pull-requests&repo_id=" + this.repository.getId() + "&group_id=" + this.projectId + "#/pull-requests/" + tuleapPullRequestSCMHead.getId() + "/overview";
                     result.add(new TuleapLink("icon-git-branch", prUrl));
                 }
             }
@@ -129,7 +123,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
     @Override
     protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
-        @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
+                            @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
         try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer).withTraits(traits).newRequest(this, listener)) {
             TuleapAccessToken credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
                 getCredentialsId());
@@ -137,18 +131,14 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             setRemoteUrl(getGitBaseUri() + repositoryPath);
             if (request.isFetchBranches()) {
                 LOGGER.info(String.format("Fecthing branches for repository at %s", repositoryPath));
-                Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
-                    .withCredentials(credentials)
-                    .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
-                    .configure()
-                    .call();
+                List<GitBranch> branches = TuleapApiRetriever.getGitApi().getBranches(this.repository.getId().toString(), credentials);
                 int count = 0;
-                for (TuleapBranches branch : branches.collect(Collectors.toList())) {
+                for (GitBranch branch : branches) {
                     count++;
                     request.listener().getLogger().format("Search at '%s'", branch.getName());
                     TuleapBranchSCMHead tuleapBranchSCMHead = new TuleapBranchSCMHead(branch.getName());
                     if (request.process(tuleapBranchSCMHead, (SCMSourceRequest.RevisionLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>) head ->
-                            new TuleapBranchSCMRevision(head, branch.getCommit().getId()),
+                            new TuleapBranchSCMRevision(head, branch.getCommit().getHash()),
                         new SCMSourceRequest.ProbeLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>() {
                             @NotNull
                             @Override
@@ -177,8 +167,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     if (isFork && !request.isRetrieveForkPullRequests()) {
                         request.listener().getLogger().format("PR id: %s is skipped, Pull Requests from fork are excluded %n", pullRequest.getId());
                         continue;
-                    }
-                    else if (!isFork && !request.isRetrieveOriginPullRequests()) {
+                    } else if (!isFork && !request.isRetrieveOriginPullRequests()) {
                         request.listener().getLogger().format("PR id: %s is skipped, Pull Requests from same origin are excluded %n", pullRequest.getId());
                         continue;
                     }
@@ -297,15 +286,11 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
         if (head instanceof TuleapBranchSCMHead) {
             Optional<String> revision = Optional.empty();
-            Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.Branches(this.repository.getId()))
-                .configure()
-                .call();
-            Optional<TuleapBranches> branch = branches.filter(b -> b.getName().equals(head.getName()))
+            List<GitBranch> branches = TuleapApiRetriever.getGitApi().getBranches(this.repository.getId().toString(), credentials);
+            Optional<GitBranch> branch = branches.stream().filter(b -> b.getName().equals(head.getName()))
                 .findFirst();
             if (branch.isPresent()) {
-                revision = Optional.of(branch.get().getCommit().getId());
+                revision = Optional.of(branch.get().getCommit().getHash());
             } else {
                 listener.getLogger().format("Cannot find the branch %s in repo : %s", head.getName(), repositoryPath);
             }
@@ -353,7 +338,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @NotNull
     @Override
     public SCM build(@NonNull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
-        String repositoryUri = this.getGitBaseUri() + this.project.getShortname() + "/" +this.repository.getName();
+        String repositoryUri = this.getGitBaseUri() + this.project.getShortname() + "/" + this.repository.getName();
         return new TuleapSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId, repositoryUri).withTraits(traits).build();
     }
 
@@ -391,8 +376,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
      * Sets the credentials used to access the Tuleap REST API (also used as the default credentials for checking
      * out sources.
      *
-     * @param credentialsId
-     *            the credentials used to access the Tuleap REST API
+     * @param credentialsId the credentials used to access the Tuleap REST API
      * @since 2.2.0
      */
     @DataBoundSetter
@@ -431,7 +415,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         return TuleapConfiguration.get().getGitBaseUrl();
     }
 
-    public TuleapGitRepository getTuleapGitRepository() {
+    public GitRepository getTuleapGitRepository() {
         return this.repository;
     }
 
@@ -451,31 +435,27 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         @RequirePOST
         @Restricted(NoExternalUse.class) // stapler
         public FormValidation doCheckCredentialsId(@AncestorInPath Item item, @QueryParameter String apiUri,
-            @QueryParameter String credentialsId) {
+                                                   @QueryParameter String credentialsId) {
 
             return checkCredentials(item, apiUri, credentialsId);
         }
 
         public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String apiUri, @QueryParameter String credentialsId) {
+                                                     @QueryParameter String apiUri, @QueryParameter String credentialsId) {
             return listScanCredentials(context, apiUri, credentialsId, false);
         }
 
         @Restricted(NoExternalUse.class) // stapler
         @SuppressWarnings("unused") // stapler
         public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String projectId, @QueryParameter String credentialsId) throws IOException {
+                                                 @QueryParameter String projectId, @QueryParameter String credentialsId) throws IOException {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final TuleapAccessToken credentials = lookupScanCredentials(context, apiUri, credentialsId);
             ListBoxModel result = new ListBoxModel();
-            Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>> newInstance(apiUri)
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
-                .configure()
-                .call();
-            if (project.isPresent()) {
-                ListBoxModel.Option newItem = new ListBoxModel.Option(project.get().getShortname(),
-                    String.valueOf(project.get().getId()));
+            Project project = TuleapApiRetriever.getProjectApi().getProjectById(projectId, credentials);
+            if (project != null) {
+                ListBoxModel.Option newItem = new ListBoxModel.Option(project.getShortname(),
+                    String.valueOf(project.getId()));
                 result.add(newItem);
             }
             return result;
@@ -483,18 +463,13 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
         @Restricted(NoExternalUse.class) // stapler
         public ListBoxModel doFillRepositoryPathItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String projectId, @QueryParameter String credentialsId,
-            @QueryParameter String repositoryPath) throws IOException {
+                                                      @QueryParameter String projectId, @QueryParameter String credentialsId,
+                                                      @QueryParameter String repositoryPath) throws IOException {
             ListBoxModel result = new ListBoxModel();
             final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
             TuleapAccessToken credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
-            Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
-                .<Stream<TuleapGitRepository>>newInstance(apiBaseUrl)
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
-                .configure()
-                .call()
-                .distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
+            List<GitRepository> repositories = TuleapApiRetriever.getProjectApi().getGitRepositories(Integer.parseInt(projectId), credentials);
+            Optional<GitRepository> repo = repositories.stream().distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
             if (repo.isPresent()) {
                 final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.get().getName(), repo.get().getPath());
                 result.add(newItem);
@@ -504,7 +479,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
         @NonNull
         @Override
-        protected SCMHeadCategory[] createCategories(){
+        protected SCMHeadCategory[] createCategories() {
             return new SCMHeadCategory[]{
                 UncategorizedSCMHeadCategory.DEFAULT,
                 new ChangeRequestSCMHeadCategory(Messages._TuleapSCMSource_ChangeRequestCategory())

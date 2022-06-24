@@ -2,9 +2,7 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.unit;
 
 import hudson.model.TaskListener;
 import hudson.util.LogTaskListener;
-import io.jenkins.plugins.tuleap_api.client.GitHead;
-import io.jenkins.plugins.tuleap_api.client.GitPullRequest;
-import io.jenkins.plugins.tuleap_api.client.GitRepositoryReference;
+import io.jenkins.plugins.tuleap_api.client.*;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.SCMHead;
@@ -39,9 +37,7 @@ public class TuleapSCMSourceTest {
 
         TaskListener listener = new LogTaskListener(Logger.getLogger(getClass().getName()), Level.FINE);
 
-        TuleapProject project = new TuleapProject();
-        TuleapGitRepository repository = new TuleapGitRepository();
-        TuleapSCMSource tlpSCMSource = new TuleapSCMSource(project, repository);
+        TuleapSCMSource tlpSCMSource = this.getTuleapSCMSource();
 
         SCMRevision resultRevision = tlpSCMSource.getTrustedRevision(revision, listener);
 
@@ -98,12 +94,52 @@ public class TuleapSCMSourceTest {
 
         TaskListener listener = new LogTaskListener(Logger.getLogger(getClass().getName()), Level.FINE);
 
-        TuleapProject project = new TuleapProject();
-        TuleapGitRepository repository = new TuleapGitRepository();
-        TuleapSCMSource tlpSCMSource = new TuleapSCMSource(project, repository);
+        TuleapSCMSource tlpSCMSource = this.getTuleapSCMSource();
 
         SCMRevision resultRevision = tlpSCMSource.getTrustedRevision(revision, listener);
 
         assertEquals(revision.getTarget().getHead().getName(), resultRevision.getHead().getName());
+    }
+
+    private TuleapSCMSource getTuleapSCMSource() {
+        return new TuleapSCMSource(
+            new Project() {
+                @Override
+                public Integer getId() {
+                    return null;
+                }
+
+                @Override
+                public String getShortname() {
+                    return null;
+                }
+
+                @Override
+                public String getLabel() {
+                    return null;
+                }
+
+                @Override
+                public String getUri() {
+                    return null;
+                }
+            },
+            new GitRepository() {
+                @Override
+                public String getName() {
+                    return null;
+                }
+
+                @Override
+                public Integer getId() {
+                    return null;
+                }
+
+                @Override
+                public String getPath() {
+                    return null;
+                }
+            }
+        );
     }
 }

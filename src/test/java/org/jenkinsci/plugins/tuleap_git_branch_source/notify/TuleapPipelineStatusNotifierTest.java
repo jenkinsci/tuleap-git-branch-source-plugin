@@ -1,9 +1,6 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.notify;
 
-import io.jenkins.plugins.tuleap_api.client.GitApi;
-import io.jenkins.plugins.tuleap_api.client.GitHead;
-import io.jenkins.plugins.tuleap_api.client.GitPullRequest;
-import io.jenkins.plugins.tuleap_api.client.GitRepositoryReference;
+import io.jenkins.plugins.tuleap_api.client.*;
 import io.jenkins.plugins.tuleap_api.client.internals.entities.TuleapBuildStatus;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
@@ -144,9 +141,7 @@ public class TuleapPipelineStatusNotifierTest {
         final PrintStream logger = mock(PrintStream.class);
         final WorkflowJob workflowJob = mock(WorkflowJob.class);
         final TuleapAccessToken accessKey = mock(TuleapAccessToken.class);
-        final TuleapGitRepository repository = new TuleapGitRepository();
-
-        repository.setId(5);
+        final GitRepository repository = this.getGitRepositoryStub();
 
         when(build.getParent()).thenReturn(workflowJob);
         this.scmRevisionAction.when(() -> SCMRevisionAction.getRevision(
@@ -179,9 +174,7 @@ public class TuleapPipelineStatusNotifierTest {
         final PrintStream logger = mock(PrintStream.class);
         final WorkflowJob workflowJob = mock(WorkflowJob.class);
         final TuleapAccessToken accessKey = mock(TuleapAccessToken.class);
-        final TuleapGitRepository repository = new TuleapGitRepository();
-
-        repository.setId(5);
+        final GitRepository repository = this.getGitRepositoryStub();
 
         when(build.getParent()).thenReturn(workflowJob);
 
@@ -255,6 +248,25 @@ public class TuleapPipelineStatusNotifierTest {
 
             @Override
             public GitHead getHead() {
+                return null;
+            }
+        };
+    }
+
+    private GitRepository getGitRepositoryStub() {
+        return new GitRepository() {
+            @Override
+            public String getName() {
+                return null;
+            }
+
+            @Override
+            public Integer getId() {
+                return 5;
+            }
+
+            @Override
+            public String getPath() {
                 return null;
             }
         };
