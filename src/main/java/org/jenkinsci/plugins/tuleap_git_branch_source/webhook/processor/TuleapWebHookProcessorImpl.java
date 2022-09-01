@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import com.google.gson.Gson;
 import hudson.util.HttpResponses;
+import io.jenkins.plugins.tuleap_api.client.authentication.WebhookTokenApi;
+import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
@@ -59,13 +61,20 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         LOGGER.log(Level.FINEST, "Checking the payload content...");
 
         WebHookRepresentation representation = this.gson.fromJson(decodedPayload, WebHookRepresentation.class);
-        if (representation == null || !this.webHookChecker.checkPayloadContent(representation)){
+
+        if (representation == null || !this.webHookChecker.checkPayloadContent(representation)) {
             LOGGER.log(Level.WARNING, "Bad payload format");
             return HttpResponses.error(400, "Bad payload format");
         }
+
+        if (!this.webHookChecker.checkRequestToken(representation)) {
+            LOGGER.log(Level.WARNING, "Webhook token is invalid, stop processing");
+            return HttpResponses.error(403, "Invalid Token");
+        }
         try {
             this.jobFinder.triggerConcernedJob(representation);
-        } catch (RepositoryNotFoundException | BranchNotFoundException | TuleapProjectNotFoundException | RepositoryScanFailedException e) {
+        } catch (RepositoryNotFoundException | BranchNotFoundException | TuleapProjectNotFoundException |
+                 RepositoryScanFailedException e) {
             LOGGER.log(Level.WARNING, e.toString());
         }
         return HttpResponses.ok();

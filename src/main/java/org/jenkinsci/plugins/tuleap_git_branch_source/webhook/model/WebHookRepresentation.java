@@ -4,6 +4,7 @@ public class WebHookRepresentation {
     private String tuleapProjectId;
     private String repositoryName;
     private String branchName;
+    private String token;
 
     public String getTuleapProjectId() {
         return tuleapProjectId;
@@ -17,4 +18,7 @@ public class WebHookRepresentation {
         return branchName;
     }
 
+    public String getToken() {
+        return token;
+    }
 }

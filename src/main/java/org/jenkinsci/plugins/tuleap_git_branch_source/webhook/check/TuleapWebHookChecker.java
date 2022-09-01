@@ -5,4 +5,5 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepre
 public interface TuleapWebHookChecker {
     boolean checkRequestHeaderContentType(String contentType);
     boolean checkPayloadContent(WebHookRepresentation content);
+    boolean checkRequestToken(WebHookRepresentation representation);
 }
