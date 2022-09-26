@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import com.google.gson.Gson;
 import hudson.util.HttpResponses;
+import io.jenkins.plugins.tuleap_api.client.authentication.WebhookTokenApi;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
@@ -95,7 +96,8 @@ public class TuleapWebHookProcessorTest {
 
         TuleapWebHookProcessorImpl tuleapWebHookProcessor = new TuleapWebHookProcessorImpl(this.gson, this.checker, this.jobFinder, this.webHookHelper);
 
-        WebHookRepresentation representation = new WebHookRepresentation();
+        WebHookRepresentation representation = mock(WebHookRepresentation.class);
+
         when(this.gson.fromJson(payload, WebHookRepresentation.class)).thenReturn(representation);
         when(this.checker.checkPayloadContent(representation)).thenReturn(false);
 
@@ -110,6 +112,36 @@ public class TuleapWebHookProcessorTest {
     }
 
     @Test
+    public void testItShouldReturn403WhenBadWhenhookToken() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
+        String payload = "{OK format}";
+
+        StaplerRequest request = mock(StaplerRequest.class);
+        when(request.getContentType()).thenReturn("application/x-www-form-urlencoded");
+
+        when(this.checker.checkRequestHeaderContentType(request.getContentType())).thenReturn(true);
+        when(this.checker.checkRequestToken(any())).thenReturn(false);
+        when(this.webHookHelper.getStringPayload(request)).thenReturn(payload);
+        when(this.webHookHelper.getUTF8DecodedPayload(payload)).thenReturn(payload);
+
+        TuleapWebHookProcessorImpl tuleapWebHookProcessor = new TuleapWebHookProcessorImpl(this.gson, this.checker, this.jobFinder, this.webHookHelper);
+
+        WebHookRepresentation representation = mock(WebHookRepresentation.class);
+
+        when(this.gson.fromJson(payload, WebHookRepresentation.class)).thenReturn(representation);
+        when(this.checker.checkPayloadContent(representation)).thenReturn(true);
+
+        HttpResponse expectedResponse;
+        expectedResponse = HttpResponses.error(403, "Invalid Token");
+
+        HttpResponse response = tuleapWebHookProcessor.process(request);
+
+        verify(this.jobFinder, never()).triggerConcernedJob(any());
+
+        assertEquals(expectedResponse.toString(), response.toString());
+    }
+
+
+    @Test
     public void testItShouldReturn200AndLogWhenTheRepositoryIsNotFound() throws IOException, TuleapProjectNotFoundException, BranchNotFoundException, RepositoryNotFoundException, RepositoryScanFailedException {
         String payload = "{Ok format}";
 
@@ -117,12 +149,14 @@ public class TuleapWebHookProcessorTest {
         when(request.getContentType()).thenReturn("application/x-www-form-urlencoded");
 
         when(this.checker.checkRequestHeaderContentType(request.getContentType())).thenReturn(true);
+        when(this.checker.checkRequestToken(any())).thenReturn(true);
         when(this.webHookHelper.getStringPayload(request)).thenReturn(payload);
         when(this.webHookHelper.getUTF8DecodedPayload(payload)).thenReturn(payload);
 
         TuleapWebHookProcessorImpl tuleapWebHookProcessor = new TuleapWebHookProcessorImpl(this.gson, this.checker, this.jobFinder, this.webHookHelper);
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
+
         when(this.gson.fromJson(payload, WebHookRepresentation.class)).thenReturn(representation);
         when(this.checker.checkPayloadContent(representation)).thenReturn(true);
 
@@ -145,12 +179,14 @@ public class TuleapWebHookProcessorTest {
         when(request.getContentType()).thenReturn("application/x-www-form-urlencoded");
 
         when(this.checker.checkRequestHeaderContentType(request.getContentType())).thenReturn(true);
+        when(this.checker.checkRequestToken(any())).thenReturn(true);
         when(this.webHookHelper.getStringPayload(request)).thenReturn(payload);
         when(this.webHookHelper.getUTF8DecodedPayload(payload)).thenReturn(payload);
 
         TuleapWebHookProcessorImpl tuleapWebHookProcessor = new TuleapWebHookProcessorImpl(this.gson, this.checker, this.jobFinder, this.webHookHelper);
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
+
         when(this.gson.fromJson(payload, WebHookRepresentation.class)).thenReturn(representation);
         when(this.checker.checkPayloadContent(representation)).thenReturn(true);
 
@@ -171,12 +207,14 @@ public class TuleapWebHookProcessorTest {
         when(request.getContentType()).thenReturn("application/x-www-form-urlencoded");
 
         when(this.checker.checkRequestHeaderContentType(request.getContentType())).thenReturn(true);
+        when(this.checker.checkRequestToken(any())).thenReturn(true);
         when(this.webHookHelper.getStringPayload(request)).thenReturn(payload);
         when(this.webHookHelper.getUTF8DecodedPayload(payload)).thenReturn(payload);
 
         TuleapWebHookProcessorImpl tuleapWebHookProcessor = new TuleapWebHookProcessorImpl(this.gson, this.checker, this.jobFinder, this.webHookHelper);
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
+
         when(this.gson.fromJson(payload, WebHookRepresentation.class)).thenReturn(representation);
         when(this.checker.checkPayloadContent(representation)).thenReturn(true);
 
@@ -198,12 +236,14 @@ public class TuleapWebHookProcessorTest {
         when(request.getContentType()).thenReturn("application/x-www-form-urlencoded");
 
         when(this.checker.checkRequestHeaderContentType(request.getContentType())).thenReturn(true);
+        when(this.checker.checkRequestToken(any())).thenReturn(true);
         when(this.webHookHelper.getStringPayload(request)).thenReturn(payload);
         when(this.webHookHelper.getUTF8DecodedPayload(payload)).thenReturn(payload);
 
         TuleapWebHookProcessorImpl tuleapWebHookProcessor = new TuleapWebHookProcessorImpl(this.gson, this.checker, this.jobFinder, this.webHookHelper);
 
         WebHookRepresentation representation = mock(WebHookRepresentation.class);
+
         when(this.gson.fromJson(payload, WebHookRepresentation.class)).thenReturn(representation);
         when(this.checker.checkPayloadContent(representation)).thenReturn(true);
         verify(this.jobFinder, atMostOnce()).triggerConcernedJob(representation);

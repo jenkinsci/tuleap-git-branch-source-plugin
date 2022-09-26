@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.guice;
 
 import com.google.inject.AbstractModule;
+import io.jenkins.plugins.tuleap_api.client.authentication.TuleapAuthenticationApiGuiceModule;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookCheckerImpl;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor.*;
@@ -12,5 +13,6 @@ public class TuleapWebhookGuiceModule extends AbstractModule {
         bind(TuleapWebHookProcessor.class).to(TuleapWebHookProcessorImpl.class);
         bind(JobFinder.class).to(JobFinderImpl.class);
         bind(OrganizationFolderRetriever.class).to(OrganizationFolderRetrieverImpl.class);
+        install(new TuleapAuthenticationApiGuiceModule());
     }
 }
