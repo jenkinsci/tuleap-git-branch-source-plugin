@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-java@v3.3.0
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '11'
       - name: Build
         run: mvn -Dmaven.test.skip=true -Dspotbugs.skip=true --batch-mode --show-version clean install 
       - name: Archive
