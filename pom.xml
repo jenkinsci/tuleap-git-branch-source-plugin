@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.33</version>
+    <version>4.53</version>
     <relativePath />
   </parent>
   <artifactId>tuleap-git-branch-source</artifactId>
@@ -13,11 +13,10 @@
   <packaging>hpi</packaging>
 
   <properties>
-    <jenkins.version>2.249.3</jenkins.version>
-    <java.level>8</java.level>
+    <jenkins.version>2.361.4</jenkins.version>
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <jcasc.version>1.55.1</jcasc.version>
+    <jcasc.version>1569.vb_72405b_80249</jcasc.version>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
@@ -62,8 +61,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.249.x</artifactId>
-        <version>961.vf0c9f6f59827</version>
+        <artifactId>bom-2.361.x</artifactId>
+        <version>1742.vb_70478c1b_25f</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
