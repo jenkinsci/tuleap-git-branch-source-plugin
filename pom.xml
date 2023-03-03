@@ -106,7 +106,7 @@
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
       <artifactId>tuleap-api</artifactId>
-      <version>2.4.6</version>
+      <version>2.5.1</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
