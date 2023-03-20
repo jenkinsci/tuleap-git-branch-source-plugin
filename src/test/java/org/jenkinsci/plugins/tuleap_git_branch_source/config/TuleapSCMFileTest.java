@@ -56,6 +56,11 @@ public class TuleapSCMFileTest {
             public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
+
+            @Override
+            public List<GitBranch> getBranches(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
         };
         TuleapSCMFile scmRootDirectory = new TuleapSCMFile(gitApi, "4", "master", new TuleapAccessTokenStub());
         TuleapSCMFile scmFile = (TuleapSCMFile) scmRootDirectory.newChild("whatever", false);
@@ -93,6 +98,11 @@ public class TuleapSCMFileTest {
 
             @Override
             public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
+
+            @Override
+            public List<GitBranch> getBranches(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
         };
@@ -136,6 +146,11 @@ public class TuleapSCMFileTest {
 
             @Override
             public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
+
+            @Override
+            public List<GitBranch> getBranches(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
         };
@@ -189,6 +204,11 @@ public class TuleapSCMFileTest {
             public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
+
+            @Override
+            public List<GitBranch> getBranches(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
         };
 
         TuleapSCMFile scmRootDirectory = new TuleapSCMFile(gitApi, "4", "master", new TuleapAccessTokenStub());
@@ -237,6 +257,11 @@ public class TuleapSCMFileTest {
 
             @Override
             public List<GitPullRequest> getPullRequests(String repositoryId, TuleapAccessToken token) {
+                return null;
+            }
+
+            @Override
+            public List<GitBranch> getBranches(String repositoryId, TuleapAccessToken token) {
                 return null;
             }
         };
