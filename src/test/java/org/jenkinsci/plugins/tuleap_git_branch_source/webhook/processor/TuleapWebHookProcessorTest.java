@@ -77,7 +77,7 @@ public class TuleapWebHookProcessorTest {
 
         HttpResponse response = tuleapWebHookProcessor.process(request);
 
-        verify(this.gson, never()).fromJson(anyString(), any());
+        verify(this.gson, never()).fromJson("", WebHookRepresentation.class);
         verify(this.jobFinder, never()).triggerConcernedJob(any());
 
         assertEquals(expectedResponse.toString(), response.toString());
