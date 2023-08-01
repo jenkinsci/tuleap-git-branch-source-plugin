@@ -21,7 +21,6 @@ import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import io.jenkins.plugins.tuleap_server_configuration.TuleapConfiguration;
 import jenkins.plugins.git.AbstractGitSCMSource;
-import jenkins.plugins.git.GitSCMBuilder;
 import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
 import jenkins.scm.api.*;
 import jenkins.scm.api.trait.SCMSourceRequest;
@@ -98,24 +97,12 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @NonNull
     @Override
     protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event,
-        @NonNull TaskListener listener) throws IOException, InterruptedException {
-        List<Action> result = new ArrayList<>();
+                                           @NonNull TaskListener listener) throws IOException, InterruptedException {
         SCMSourceOwner owner = getOwner();
         if (owner instanceof Actionable) {
-            TuleapLink repoLink = ((Actionable) owner).getAction(TuleapLink.class);
-            if (repoLink != null) {
-                if(head instanceof TuleapBranchSCMHead) {
-                    String canonicalRepoName = repositoryPath.replace(project.getShortname() + "/", "");
-                    String url = repoLink.getUrl() + "?p=" + canonicalRepoName + "&a=shortlog&h=" + head.getName();
-                    result.add(new TuleapLink("icon-git-branch", url));
-                } else if (head instanceof TuleapPullRequestSCMHead){
-                    TuleapPullRequestSCMHead tuleapPullRequestSCMHead = (TuleapPullRequestSCMHead) head;
-                    String prUrl = this.getGitBaseUri()+"?action=pull-requests&repo_id="+this.repository.getId()+"&group_id="+this.projectId+"#/pull-requests/"+tuleapPullRequestSCMHead.getId()+"/overview";
-                    result.add(new TuleapLink("icon-git-branch", prUrl));
-                }
-            }
+            return TuleapRepositoryActionBuilder.buildTuleapRepositoryActions((Actionable) owner, head,this.repository, this.projectId, this.getGitBaseUri());
         }
-        return result;
+        return Collections.emptyList();
     }
 
     @NonNull
