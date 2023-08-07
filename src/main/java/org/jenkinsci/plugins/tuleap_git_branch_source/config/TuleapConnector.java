@@ -47,7 +47,7 @@ public class TuleapConnector {
         if (includeEmpty) {
             model.includeEmptyValue();
         }
-        return model.includeMatchingAs(
+        return model.includeEmptyValue().includeMatchingAs(
             context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication() : ACL.SYSTEM,
             context, TuleapAccessToken.class, TuleapDomainRequirements(apiUri), allTuleapAccessTokenMatch());
     }

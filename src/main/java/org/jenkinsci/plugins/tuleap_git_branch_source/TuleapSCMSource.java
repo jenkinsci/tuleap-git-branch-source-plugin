@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source;
 
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -44,6 +45,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,12 +88,43 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     private String credentialsId;
     private TuleapAccessToken credentials;
 
-    @DataBoundConstructor
     public TuleapSCMSource(TuleapProject project, TuleapGitRepository repository) {
         this.repository = repository;
         this.project = project;
         this.projectId = String.valueOf(project.getId());
         this.repositoryPath = repository.getPath();
+    }
+
+    @DataBoundConstructor
+    public TuleapSCMSource(String projectId, String repositoryPath) {
+        this.projectId = projectId;
+        this.repositoryPath = repositoryPath;
+    }
+
+    private void setTuleapProject(TuleapAccessToken accessToken) throws IOException {
+        if (this.project == null) {
+            // Keep compatibility with TuleapProject which is only used by the old api
+            Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>>newInstance(this.getApiBaseUri())
+                .withCredentials(accessToken)
+                .withCommand(new TuleapClientRawCmd.ProjectById(this.projectId))
+                .configure()
+                .call();
+            project.ifPresent(tuleapProject -> this.project = tuleapProject);
+        }
+    }
+
+    private void setTuleapRepository(TuleapAccessToken accessToken) throws IOException {
+        if (this.repository == null) {
+            // Keep compatibility with TuleapGitRepository which is only used by the old api
+            Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
+                .<Stream<TuleapGitRepository>>newInstance(this.getApiBaseUri())
+                .withCredentials(accessToken)
+                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(this.projectId))
+                .configure()
+                .call()
+                .distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
+            repo.ifPresent(repository -> this.repository = repository);
+        }
     }
 
     @NonNull
@@ -116,12 +149,14 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
     @Override
     protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
-        @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
+                            @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
         try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer).withTraits(traits).newRequest(this, listener)) {
             TuleapAccessToken credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
                 getCredentialsId());
             setCredentials(credentials);
             setRemoteUrl(getGitBaseUri() + repositoryPath);
+            setTuleapProject(credentials);
+            setTuleapRepository(credentials);
             if (request.isFetchBranches()) {
                 LOGGER.info(String.format("Fecthing branches for repository at %s", repositoryPath));
                 Stream<TuleapBranches> branches = TuleapClientCommandConfigurer.<Stream<TuleapBranches>>newInstance(getApiBaseUri())
@@ -164,8 +199,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     if (isFork && !request.isRetrieveForkPullRequests()) {
                         request.listener().getLogger().format("PR id: %s is skipped, Pull Requests from fork are excluded %n", pullRequest.getId());
                         continue;
-                    }
-                    else if (!isFork && !request.isRetrieveOriginPullRequests()) {
+                    } else if (!isFork && !request.isRetrieveOriginPullRequests()) {
                         request.listener().getLogger().format("PR id: %s is skipped, Pull Requests from same origin are excluded %n", pullRequest.getId());
                         continue;
                     }
@@ -340,7 +374,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @NotNull
     @Override
     public SCM build(@NonNull SCMHead scmHead, @CheckForNull SCMRevision scmRevision) {
-        String repositoryUri = this.getGitBaseUri() + this.project.getShortname() + "/" +this.repository.getName();
+        String repositoryUri = this.getGitBaseUri() + this.project.getShortname() + "/" + this.repository.getName();
         return new TuleapSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId, repositoryUri).withTraits(traits).build();
     }
 
@@ -378,8 +412,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
      * Sets the credentials used to access the Tuleap REST API (also used as the default credentials for checking
      * out sources.
      *
-     * @param credentialsId
-     *            the credentials used to access the Tuleap REST API
+     * @param credentialsId the credentials used to access the Tuleap REST API
      * @since 2.2.0
      */
     @DataBoundSetter
@@ -438,60 +471,102 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         @RequirePOST
         @Restricted(NoExternalUse.class) // stapler
         public FormValidation doCheckCredentialsId(@AncestorInPath Item item, @QueryParameter String apiUri,
-            @QueryParameter String credentialsId) {
+                                                   @QueryParameter String credentialsId) {
 
             return checkCredentials(item, apiUri, credentialsId);
         }
 
+        @RequirePOST
         public ListBoxModel doFillCredentialsIdItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String apiUri, @QueryParameter String credentialsId) {
+                                                     @QueryParameter String apiUri, @QueryParameter String credentialsId) {
             return listScanCredentials(context, apiUri, credentialsId, false);
+        }
+
+        @RequirePOST
+        @Restricted(NoExternalUse.class) // stapler
+        public FormValidation doCheckProjectId(
+            @QueryParameter String projectId) {
+            return TuleapSCMSourceFormValidator.doCheckProjectId(projectId);
         }
 
         @Restricted(NoExternalUse.class) // stapler
         @SuppressWarnings("unused") // stapler
+        @RequirePOST
         public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String projectId, @QueryParameter String credentialsId) throws IOException {
+                                                 @QueryParameter String credentialsId) throws IOException {
+            if (credentialsId.isEmpty()) {
+                return new StandardListBoxModel().includeEmptyValue();
+            }
+
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final TuleapAccessToken credentials = lookupScanCredentials(context, apiUri, credentialsId);
-            ListBoxModel result = new ListBoxModel();
-            Optional<TuleapProject> project = TuleapClientCommandConfigurer.<Optional<TuleapProject>> newInstance(apiUri)
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.ProjectById(projectId))
-                .configure()
-                .call();
-            if (project.isPresent()) {
-                ListBoxModel.Option newItem = new ListBoxModel.Option(project.get().getShortname(),
-                    String.valueOf(project.get().getId()));
-                result.add(newItem);
+            ProjectApi projectApi = TuleapApiRetriever.getProjectApi();
+
+            StandardListBoxModel result = new StandardListBoxModel();
+            result.includeEmptyValue();
+            try {
+                projectApi.getUserProjects(credentials)
+                    .forEach(project -> {
+                        ListBoxModel.Option newItem = new ListBoxModel.Option(
+                            project.getShortname(),
+                            String.valueOf(project.getId()));
+                        result.add(newItem);
+                    });
+            } catch (RuntimeException e) {
+                result.clear();
+                result.includeEmptyValue();
+                LOGGER.log(Level.INFO, String.format("Project cannot be retrieved: %s", e.getCause().getMessage()));
             }
             return result;
         }
 
+        @RequirePOST
         @Restricted(NoExternalUse.class) // stapler
-        public ListBoxModel doFillRepositoryPathItems(@CheckForNull @AncestorInPath Item context,
-            @QueryParameter String projectId, @QueryParameter String credentialsId,
-            @QueryParameter String repositoryPath) throws IOException {
-            ListBoxModel result = new ListBoxModel();
+        public FormValidation doCheckRepositoryPath(
+            @QueryParameter String repositoryPath) {
+            return TuleapSCMSourceFormValidator.doCheckRepositoryPath(repositoryPath);
+        }
+
+        @Restricted(NoExternalUse.class) // stapler
+        @RequirePOST
+        public ListBoxModel doFillRepositoryPathItems(
+            @CheckForNull @AncestorInPath Item context,
+            @QueryParameter String projectId,
+            @QueryParameter String credentialsId
+        ) {
             final String apiBaseUrl = TuleapConfiguration.get().getApiBaseUrl();
             TuleapAccessToken credentials = lookupScanCredentials(context, apiBaseUrl, credentialsId);
-            Optional<TuleapGitRepository> repo = TuleapClientCommandConfigurer
-                .<Stream<TuleapGitRepository>>newInstance(apiBaseUrl)
-                .withCredentials(credentials)
-                .withCommand(new TuleapClientRawCmd.AllRepositoriesByProject(projectId))
-                .configure()
-                .call()
-                .distinct().filter(r -> r.getPath().equals(repositoryPath)).findFirst();
-            if (repo.isPresent()) {
-                final ListBoxModel.Option newItem = new ListBoxModel.Option(repo.get().getName(), repo.get().getPath());
-                result.add(newItem);
+            ProjectApi projectApi = TuleapApiRetriever.getProjectApi();
+
+            StandardListBoxModel result = new StandardListBoxModel();
+            result.includeEmptyValue();
+
+            if (credentialsId.isEmpty()) {
+                return result;
+            }
+            if (projectId.isEmpty()) {
+                return result;
+            }
+
+            try {
+                List<GitRepository> repositories = projectApi.getGitRepositories(Integer.parseInt(projectId), credentials);
+                repositories.forEach(gitRepository -> {
+                    final ListBoxModel.Option newItem = new ListBoxModel.Option(
+                        gitRepository.getName(),
+                        gitRepository.getPath());
+                    result.add(newItem);
+                });
+            } catch (RuntimeException e) {
+                result.clear();
+                result.includeEmptyValue();
+                LOGGER.log(Level.INFO, String.format("Git repositories' project cannot be retrieved: %s", e.getCause().getMessage()));
             }
             return result;
         }
 
         @NonNull
         @Override
-        protected SCMHeadCategory[] createCategories(){
+        protected SCMHeadCategory[] createCategories() {
             return new SCMHeadCategory[]{
                 UncategorizedSCMHeadCategory.DEFAULT,
                 new ChangeRequestSCMHeadCategory(Messages._TuleapSCMSource_ChangeRequestCategory())
