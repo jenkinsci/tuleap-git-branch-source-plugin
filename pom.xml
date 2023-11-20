@@ -16,7 +16,7 @@
     <jenkins.version>2.361.4</jenkins.version>
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <jcasc.version>1625.v27444588cc3d</jcasc.version>
+    <jcasc.version>1738.v2d8b_a_b_8a_54b_1</jcasc.version>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
