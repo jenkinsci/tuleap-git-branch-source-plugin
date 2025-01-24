@@ -22,6 +22,6 @@ jobs:
       - name: Build
         run: mvn -Pjacoco clean verify --batch-mode --show-version
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@5a605bd92782ce0810fa3b8acc235c921b497052 # v5.2.0
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
         with:
           file: ./target/site/jacoco/jacoco.xml
