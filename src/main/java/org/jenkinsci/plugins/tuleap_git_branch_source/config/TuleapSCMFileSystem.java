@@ -9,14 +9,9 @@ import hudson.scm.SCMDescriptor;
 import io.jenkins.plugins.tuleap_api.client.GitApi;
 import io.jenkins.plugins.tuleap_credentials.TuleapAccessToken;
 import jenkins.scm.api.*;
-import jenkins.scm.api.trait.SCMSourceTrait;
 import org.jenkinsci.plugins.tuleap_git_branch_source.*;
 import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
-import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapForkPullRequestDiscoveryTrait;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.List;
 
 public class TuleapSCMFileSystem extends SCMFileSystem {
 
@@ -34,7 +29,7 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
     }
 
     @Override
-    public long lastModified() throws IOException, InterruptedException {
+    public long lastModified() {
         return this.gitApi.getCommit(this.repositoryId, this.commitReference, this.tuleapAccessToken).getCommitDate().toInstant().toEpochMilli();
     }
 
@@ -68,7 +63,7 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
         }
 
         @Override
-        public SCMFileSystem build(@NotNull Item owner, @NotNull SCM scm, SCMRevision rev) throws IOException, InterruptedException {
+        public SCMFileSystem build(@NotNull Item owner, @NotNull SCM scm, SCMRevision rev) {
             return null;
         }
 
@@ -84,8 +79,7 @@ public class TuleapSCMFileSystem extends SCMFileSystem {
             if ((head instanceof TuleapBranchSCMHead)) {
                 ref = head.getName();
                 repositoryId = Integer.toString(tuleapSCMSource.getTuleapGitRepository().getId());
-            } else if (head instanceof TuleapPullRequestSCMHead) {
-                TuleapPullRequestSCMHead tlpHead = ((TuleapPullRequestSCMHead) head);
+            } else if (head instanceof TuleapPullRequestSCMHead tlpHead) {
                 if (rev instanceof TuleapPullRequestRevision) {
                     ref = ((TuleapPullRequestSCMHead) head).getOriginName();
                     repositoryId = Integer.toString(((TuleapPullRequestSCMHead) head).getOriginRepositoryId());

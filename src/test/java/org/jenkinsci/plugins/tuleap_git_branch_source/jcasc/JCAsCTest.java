@@ -23,10 +23,10 @@ public class JCAsCTest {
 
     @Test
     public void itShouldImportTheTuleapAccessToken() {
-        final List<TuleapAccessToken> tokens = CredentialsProvider.lookupCredentials(
+        final List<TuleapAccessToken> tokens = CredentialsProvider.lookupCredentialsInItemGroup(
             TuleapAccessToken.class,
             jenkins.jenkins,
-            ACL.SYSTEM,
+            ACL.SYSTEM2,
             Collections.emptyList()
         );
 

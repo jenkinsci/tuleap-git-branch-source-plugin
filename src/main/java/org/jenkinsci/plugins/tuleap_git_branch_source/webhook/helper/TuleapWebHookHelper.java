@@ -4,17 +4,16 @@ import org.apache.commons.io.IOUtils;
 import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
-import static com.google.common.base.Charsets.UTF_8;
 
 public class TuleapWebHookHelper {
     public String getStringPayload(StaplerRequest2 request) throws IOException {
-        return IOUtils.toString(request.getInputStream());
+        return IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
     }
 
-    public String getUTF8DecodedPayload(String payload) throws UnsupportedEncodingException {
-        return URLDecoder.decode(payload,  UTF_8.name());
+    public String getUTF8DecodedPayload(String payload) {
+        return URLDecoder.decode(payload, StandardCharsets.UTF_8);
     }
 }

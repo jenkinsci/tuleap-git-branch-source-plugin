@@ -78,21 +78,12 @@ public class TuleapSCMFile extends SCMFile {
         return treeContent
             .stream()
             .map(item -> {
-                Type type;
-
-                switch (item.getType()) {
-                    case TREE:
-                        type = Type.DIRECTORY;
-                        break;
-                    case BLOB:
-                        type = Type.REGULAR_FILE;
-                        break;
-                    case SYMLINK:
-                        type = Type.LINK;
-                        break;
-                    default:
-                        type = Type.OTHER;
-                }
+                Type type = switch (item.getType()) {
+                    case TREE -> Type.DIRECTORY;
+                    case BLOB -> Type.REGULAR_FILE;
+                    case SYMLINK -> Type.LINK;
+                    default -> Type.OTHER;
+                };
 
                 return new TuleapSCMFile(this, item.getName(), type);
             })
@@ -100,14 +91,14 @@ public class TuleapSCMFile extends SCMFile {
     }
 
     @Override
-    public long lastModified() throws IOException, InterruptedException {
+    public long lastModified() {
         // Unsupported
         return 0L;
     }
 
     @NonNull
     @Override
-    protected Type type() throws IOException, InterruptedException {
+    protected Type type() {
         if (isDirectory) {
             return Type.DIRECTORY;
         }

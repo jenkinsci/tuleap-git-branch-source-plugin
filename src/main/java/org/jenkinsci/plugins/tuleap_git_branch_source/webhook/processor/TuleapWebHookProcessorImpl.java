@@ -49,13 +49,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
             return HttpResponses.error(400, "Jenkins job cannot be triggered. The request is empty");
         }
 
-        String decodedPayload;
-        try {
-            decodedPayload = helper.getUTF8DecodedPayload(payload);
-        } catch (UnsupportedEncodingException e) {
-            return HttpResponses.error(500, "Error while decoding the payload");
-        }
-
+        String decodedPayload = helper.getUTF8DecodedPayload(payload);
         LOGGER.log(Level.FINEST, "Checking the payload content...");
 
         WebHookRepresentation representation = this.gson.fromJson(decodedPayload, WebHookRepresentation.class);

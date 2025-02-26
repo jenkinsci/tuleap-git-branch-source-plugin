@@ -14,8 +14,7 @@ public class TuleapSCMBuilder extends GitSCMBuilder<TuleapSCMBuilder> {
     public TuleapSCMBuilder(@NotNull SCMHead head, SCMRevision revision, @NotNull String remote, String credentialsId, String repositoryBaseUrl) {
         super(head, revision, remote, credentialsId);
         withoutRefSpecs();
-        if (head instanceof TuleapPullRequestSCMHead) {
-            TuleapPullRequestSCMHead tuleapPullRequestSCMHead = (TuleapPullRequestSCMHead) head;
+        if (head instanceof TuleapPullRequestSCMHead tuleapPullRequestSCMHead) {
             withRefSpec("+" + tuleapPullRequestSCMHead.getHeadReference() + ":refs/remotes/@{remote}/TLP-PR-" + tuleapPullRequestSCMHead.getId());
         } else {
             withRefSpec("+refs/heads/" + head.getName() + ":refs/remotes/@{remote}/" + head.getName());

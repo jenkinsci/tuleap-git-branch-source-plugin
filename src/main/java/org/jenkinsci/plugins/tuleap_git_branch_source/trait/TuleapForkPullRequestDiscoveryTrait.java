@@ -15,8 +15,6 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.*;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.IOException;
-
 public class TuleapForkPullRequestDiscoveryTrait extends SCMSourceTrait {
 
     @DataBoundConstructor
@@ -49,6 +47,7 @@ public class TuleapForkPullRequestDiscoveryTrait extends SCMSourceTrait {
         /**
          * {@inheritDoc}
          */
+        @NotNull
         @Override
         public String getDisplayName() {
             return Messages.TuleapForkPullRequestDiscoveryTrait_displayName();
@@ -74,7 +73,7 @@ public class TuleapForkPullRequestDiscoveryTrait extends SCMSourceTrait {
     public static class TrustNobody extends SCMHeadAuthority<SCMSourceRequest, ChangeRequestSCMHead2, SCMRevision> {
 
         @Override
-        protected boolean checkTrusted(@NotNull SCMSourceRequest request, @NotNull ChangeRequestSCMHead2 head) throws IOException, InterruptedException {
+        protected boolean checkTrusted(@NotNull SCMSourceRequest request, @NotNull ChangeRequestSCMHead2 head) {
             return false;
         }
 

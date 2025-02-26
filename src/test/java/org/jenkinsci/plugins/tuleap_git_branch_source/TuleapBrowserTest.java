@@ -5,7 +5,6 @@ import hudson.scm.EditType;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +102,7 @@ public class TuleapBrowserTest {
     }
 
     @Test
-    public void testItDoesNotReturnTheFileLinkContentIfTheFileIsInDeleteMode() throws IOException, URISyntaxException {
+    public void testItDoesNotReturnTheFileLinkContentIfTheFileIsInDeleteMode() throws IOException {
         GitChangeSet.Path path = mock(GitChangeSet.Path.class);
         when(path.getEditType()).thenReturn(EditType.DELETE);
 
@@ -113,7 +112,7 @@ public class TuleapBrowserTest {
     }
 
     @Test
-    public void testItReturnsTheFileLinkContentIfTheFileIsNotInDeleteMode() throws IOException, URISyntaxException {
+    public void testItReturnsTheFileLinkContentIfTheFileIsNotInDeleteMode() throws IOException {
         String commitIdLine = "commit h4sh_s0m3";
         List<String> lines = Collections.singletonList(commitIdLine);
         GitChangeSet changeSet = new GitChangeSet(lines, false);

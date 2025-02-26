@@ -5,7 +5,6 @@ import hudson.util.LogTaskListener;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapGitRepository;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.SCMHeadObserver;
-import jenkins.scm.api.SCMSourceCriteria;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSourceContext;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSourceRequest;
