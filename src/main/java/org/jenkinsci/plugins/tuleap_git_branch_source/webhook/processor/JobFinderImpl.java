@@ -14,7 +14,7 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapP
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;

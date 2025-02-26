@@ -9,7 +9,7 @@ import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -58,7 +58,7 @@ public class TuleapBrowser extends GitRepositoryBrowser {
         }
 
         @Override
-        public TuleapBrowser newInstance(StaplerRequest req, @NonNull JSONObject jsonObject)
+        public TuleapBrowser newInstance(StaplerRequest2 req, @NonNull JSONObject jsonObject)
             throws FormException {
             return req.bindJSON(TuleapBrowser.class, jsonObject);
         }
