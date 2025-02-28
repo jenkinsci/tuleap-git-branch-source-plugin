@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.tuleap_git_branch_source.notify;
 
-import com.google.common.collect.ImmutableList;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.TaskListener;
@@ -20,13 +19,11 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.never;
 
 public class TuleapPipelineStatusHandlerTest {
 
@@ -53,7 +50,7 @@ public class TuleapPipelineStatusHandlerTest {
         final FreeStyleBuild build = mock(FreeStyleBuild.class);
         final SCMSource source = new SCMSource() {
             @Override
-            protected void retrieve(SCMSourceCriteria criteria, @NotNull SCMHeadObserver observer, SCMHeadEvent<?> event, @NotNull TaskListener listener) throws IOException, InterruptedException {
+            protected void retrieve(SCMSourceCriteria criteria, @NotNull SCMHeadObserver observer, SCMHeadEvent<?> event, @NotNull TaskListener listener) {
             }
 
             @NotNull
