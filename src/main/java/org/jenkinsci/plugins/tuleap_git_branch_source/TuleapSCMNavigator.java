@@ -32,6 +32,7 @@ import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -40,9 +41,8 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -68,7 +68,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         this.tuleapProjectId = tuleapProjectId;
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    private Object readResolve() {
         if (! (this.projectId == null)) {
             this.tuleapProjectId = this.projectId;
             this.projectId = null;
@@ -88,7 +88,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         TaskListener listener = observer.getListener();
 
         listener.getLogger().printf("Visit Sources of %s...%n", getTuleapProjectId());
-        TuleapAccessToken credentials = TuleapConnector.lookupScanCredentials((Item) observer.getContext(),
+        TuleapAccessToken credentials = TuleapConnector.lookupScanCredentials(observer.getContext(),
             getApiUri(), credentialsId);
 
         try (final TuleapSCMNavigatorRequest request = new TuleapSCMNavigatorContext()
@@ -113,7 +113,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
                 .configure()
                 .call();
 
-            for (TuleapGitRepository repo : repos.collect(Collectors.toList())) {
+            for (TuleapGitRepository repo : repos.toList()) {
                 if (!repo.getPath().contains(TULEAP_FORK_PARTIAL_PATH)) {
                     repositories.put(repo.getName(), repo);
                     SourceFactory sourceFactory = new SourceFactory(request, this.project, repo);
@@ -132,11 +132,11 @@ public class TuleapSCMNavigator extends SCMNavigator {
     @NonNull
     @Override
     protected List<Action> retrieveActions(@NonNull SCMNavigatorOwner owner, @CheckForNull SCMNavigatorEvent event,
-                                           @NonNull TaskListener listener) throws IOException, InterruptedException {
+                                           @NonNull TaskListener listener) throws IOException {
         listener.getLogger().printf("Looking up details of %s...%n", getTuleapProjectId());
         List<Action> actions = new ArrayList<>();
 
-        final TuleapAccessToken credentials = lookupScanCredentials((Item) owner, getApiUri(), credentialsId);
+        final TuleapAccessToken credentials = lookupScanCredentials(owner, getApiUri(), credentialsId);
         Optional<TuleapProject> project = TuleapClientCommandConfigurer
             .<Optional<TuleapProject>>newInstance(getApiUri())
             .withCredentials(credentials)
@@ -388,10 +388,10 @@ public class TuleapSCMNavigator extends SCMNavigator {
             return listScanCredentials(context, apiUri, credentialsId, true);
         }
 
+        @NotNull
         @SuppressWarnings("unused") // jelly
         public List<SCMTrait<? extends SCMTrait<?>>> getTraitsDefaults() {
-            List<SCMTrait<? extends SCMTrait<?>>> result = new ArrayList<>();
-            result.addAll(delegate.getTraitsDefaults());
+            List<SCMTrait<? extends SCMTrait<?>>> result = new ArrayList<>(delegate.getTraitsDefaults());
             return result;
         }
 
@@ -411,7 +411,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
         @Restricted(NoExternalUse.class) // stapler
         @SuppressWarnings("unused") // stapler
         public ListBoxModel doFillTuleapProjectIdItems(@CheckForNull @AncestorInPath Item context,
-                                                       @QueryParameter String credentialsId) throws IOException {
+                                                       @QueryParameter String credentialsId) {
             String apiUri = TuleapConfiguration.get().getApiBaseUrl();
             final TuleapAccessToken credentials = lookupScanCredentials(context, apiUri, credentialsId);
             StandardListBoxModel result = new StandardListBoxModel();
@@ -528,7 +528,7 @@ public class TuleapSCMNavigator extends SCMNavigator {
 
         @NonNull
         @Override
-        public SCMSource create(@NonNull String repositoryName) throws IOException, InterruptedException {
+        public SCMSource create(@NonNull String repositoryName) {
             return new TuleapSCMSourceBuilder(getId() + repositoryName, credentialsId, project, repo)
                 .withRequest(request).build();
         }

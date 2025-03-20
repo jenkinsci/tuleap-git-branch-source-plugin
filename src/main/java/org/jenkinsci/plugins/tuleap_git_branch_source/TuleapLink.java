@@ -4,6 +4,7 @@ import org.apache.commons.jelly.JellyContext;
 import org.jenkins.ui.icon.Icon;
 import org.jenkins.ui.icon.IconSet;
 import org.jenkins.ui.icon.IconSpec;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.Stapler;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -35,7 +36,7 @@ public class TuleapLink implements Action, IconSpec {
             Icon icon = IconSet.icons.getIconByClassSpec(iconClassName + " icon-md");
             if (icon != null) {
                 JellyContext ctx = new JellyContext();
-                ctx.setVariable("resURL", Stapler.getCurrentRequest().getContextPath() + Jenkins.RESOURCE_PATH);
+                ctx.setVariable("resURL", Stapler.getCurrentRequest2().getContextPath() + Jenkins.RESOURCE_PATH);
                 return icon.getQualifiedUrl(ctx);
             }
         }
@@ -52,6 +53,7 @@ public class TuleapLink implements Action, IconSpec {
         return url;
     }
 
+    @NotNull
     @Override
     public String getIconClassName() {
         return iconClassName;
