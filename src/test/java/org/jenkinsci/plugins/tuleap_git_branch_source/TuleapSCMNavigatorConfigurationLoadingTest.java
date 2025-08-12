@@ -27,7 +27,7 @@ public class TuleapSCMNavigatorConfigurationLoadingTest extends TuleapBranchSour
         assertThat(instance.getRepositories(), is(Collections.emptyMap()));
         assertThat(instance.getTraits(),
                    contains(
-                       Matchers.<SCMTrait<?>>allOf(
+                       Matchers.allOf(
                            instanceOf(WildcardSCMSourceFilterTrait.class),
                            hasProperty("includes", is("*")),
                            hasProperty("excludes", is("")))
