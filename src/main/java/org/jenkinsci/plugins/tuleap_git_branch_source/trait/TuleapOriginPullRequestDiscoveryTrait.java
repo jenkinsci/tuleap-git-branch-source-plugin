@@ -11,6 +11,7 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.tuleap_git_branch_source.Messages;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSource;
 import org.jenkinsci.plugins.tuleap_git_branch_source.TuleapSCMSourceContext;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class TuleapOriginPullRequestDiscoveryTrait extends SCMSourceTrait {
@@ -46,6 +47,7 @@ public class TuleapOriginPullRequestDiscoveryTrait extends SCMSourceTrait {
         /**
          * {@inheritDoc}
          */
+        @NotNull
         @Override
         public String getDisplayName() {
             return Messages.TuleapPullRequestDiscoveryTrait_displayName();
