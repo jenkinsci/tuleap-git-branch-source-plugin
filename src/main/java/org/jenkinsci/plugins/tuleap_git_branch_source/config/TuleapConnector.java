@@ -48,7 +48,7 @@ public class TuleapConnector {
             model.includeEmptyValue();
         }
         return model.includeEmptyValue().includeMatchingAs(
-            context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication() : ACL.SYSTEM,
+            context instanceof Queue.Task task ? task.getDefaultAuthentication2() : ACL.SYSTEM2,
             context, TuleapAccessToken.class, TuleapDomainRequirements(apiUri), allTuleapAccessTokenMatch());
     }
 
@@ -86,9 +86,9 @@ public class TuleapConnector {
         } else {
             return CredentialsMatchers
                 .firstOrNull(
-                    CredentialsProvider.lookupCredentials(TuleapAccessToken.class, context,
-                        context instanceof Queue.Task ? ((Queue.Task) context).getDefaultAuthentication()
-                            : ACL.SYSTEM,
+                    CredentialsProvider.lookupCredentialsInItem(TuleapAccessToken.class, context,
+                        context instanceof Queue.Task task ? task.getDefaultAuthentication2()
+                            : ACL.SYSTEM2,
                         TuleapDomainRequirements(apiUri)),
                     CredentialsMatchers.allOf(withId(scanCredentialsId),
                                               allTuleapAccessTokenMatch()));

@@ -18,10 +18,9 @@ public class TuleapPullRequestRevision extends ChangeRequestSCMRevision<TuleapPu
 
     @Override
     public boolean equivalent(ChangeRequestSCMRevision<?> revision) {
-        if(!(revision instanceof TuleapPullRequestRevision)){
+        if(!(revision instanceof TuleapPullRequestRevision tlpRevision)){
             return false;
         }
-        TuleapPullRequestRevision tlpRevision = (TuleapPullRequestRevision) revision;
         return this.origin.equals(tlpRevision.getOrigin());
     }
 

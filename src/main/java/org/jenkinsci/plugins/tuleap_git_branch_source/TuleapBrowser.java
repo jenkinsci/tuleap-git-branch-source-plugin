@@ -9,10 +9,9 @@ import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 public class TuleapBrowser extends GitRepositoryBrowser {
@@ -36,7 +35,7 @@ public class TuleapBrowser extends GitRepositoryBrowser {
     }
 
     @Override
-    public URL getFileLink(GitChangeSet.Path path) throws IOException, URISyntaxException {
+    public URL getFileLink(GitChangeSet.Path path) throws IOException {
         if (path.getEditType().equals(EditType.DELETE)) {
             return null;
         }
@@ -58,8 +57,7 @@ public class TuleapBrowser extends GitRepositoryBrowser {
         }
 
         @Override
-        public TuleapBrowser newInstance(StaplerRequest req, @NonNull JSONObject jsonObject)
-            throws FormException {
+        public TuleapBrowser newInstance(StaplerRequest2 req, @NonNull JSONObject jsonObject) {
             return req.bindJSON(TuleapBrowser.class, jsonObject);
         }
     }

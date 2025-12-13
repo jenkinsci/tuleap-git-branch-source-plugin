@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.tuleap_git_branch_source;
 import io.jenkins.plugins.tuleap_api.deprecated_client.api.TuleapProject;
 import jenkins.scm.api.metadata.AvatarMetadataAction;
 
+import java.util.Objects;
+
 public class TuleapProjectMetadataAction extends AvatarMetadataAction {
 
     private final String avatar;
@@ -31,11 +33,8 @@ public class TuleapProjectMetadataAction extends AvatarMetadataAction {
             return false;
         }
 
-        if (o instanceof TuleapProjectMetadataAction) {
-            TuleapProjectMetadataAction that = (TuleapProjectMetadataAction) o;
-            return avatar != null ? avatar.equals(that.avatar) : that.avatar == null;
-        }
-        return false;
+        TuleapProjectMetadataAction that = (TuleapProjectMetadataAction) o;
+        return Objects.equals(avatar, that.avatar);
     }
 
     /**

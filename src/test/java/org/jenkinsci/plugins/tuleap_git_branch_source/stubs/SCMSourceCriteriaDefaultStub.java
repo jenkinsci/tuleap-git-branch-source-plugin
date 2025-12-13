@@ -4,11 +4,9 @@ import hudson.model.TaskListener;
 import jenkins.scm.api.SCMSourceCriteria;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 public class SCMSourceCriteriaDefaultStub implements SCMSourceCriteria {
     @Override
-    public boolean isHead(@NotNull Probe probe, @NotNull TaskListener listener) throws IOException {
+    public boolean isHead(@NotNull Probe probe, @NotNull TaskListener listener) {
         return false;
     }
 }
