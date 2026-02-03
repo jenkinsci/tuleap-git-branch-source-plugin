@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.tuleap_git_branch_source;
 import jenkins.branch.OrganizationFolder;
 import jenkins.plugins.git.traits.RefSpecsSCMSourceTrait;
 import jenkins.scm.api.SCMNavigator;
-import jenkins.scm.api.trait.SCMTrait;
 import jenkins.scm.impl.trait.WildcardSCMSourceFilterTrait;
 import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.tuleap_git_branch_source.trait.TuleapBranchDiscoveryTrait;
@@ -16,7 +15,6 @@ import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
 
 public class TuleapSCMNavigatorDefaultConfigurationTest {
 
@@ -34,7 +32,7 @@ public class TuleapSCMNavigatorDefaultConfigurationTest {
 
         assertThat(newInstance.getTraits(),
             containsInAnyOrder(
-                Matchers.<SCMTrait<?>>allOf(
+                Matchers.allOf(
                     instanceOf(WildcardSCMSourceFilterTrait.class),
                     hasProperty("includes", is("*")),
                     hasProperty("excludes", is(""))),

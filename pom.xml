@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.71</version>
+    <version>5.7</version>
     <relativePath />
   </parent>
   <artifactId>tuleap-git-branch-source</artifactId>
@@ -14,21 +14,20 @@
 
   <properties>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-    <jenkins.baseline>2.361</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.4</jenkins.version>
+    <jenkins.baseline>2.479</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.1</jenkins.version>
     <maven.javadoc.skip>true</maven.javadoc.skip> <!-- we don't like documentation -->
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <jcasc.version>1625.v27444588cc3d</jcasc.version>
   </properties>
 
   <name>Tuleap Git Branch Source Plugin</name>
-  <description>Mimic the Github Branch Source plugin for Tuleap so that Jenkins' jobs are
-    autocreated when a git repository containing a Jenkinsfile is discovered in the Tuleap project's
+  <description>Mimic the GitHub Branch Source plugin for Tuleap so that Jenkins' jobs are
+    auto-created when a git repository containing a Jenkinsfile is discovered in the Tuleap project's
     repo</description>
   <url>https://github.com/jenkinsci/tuleap-git-branch-source-plugin</url>
   <scm>
-    <connection>scm:git:ssh://github.com/jenkinsci/tuleap-git-branch-source-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/tuleap-git-branch-source-plugin.git</developerConnection>
+    <connection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/tuleap-git-branch-source-plugin</url>
     <tag>HEAD</tag>
   </scm>
@@ -64,15 +63,20 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>2102.v854b_fec19c92</version>
+        <version>4136.vca_c3202a_7fd1</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib-common</artifactId>
-        <version>1.9.0</version>
+        <version>1.9.10</version>
       </dependency>
+      <dependency>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-stdlib-jdk8</artifactId>
+        <version>1.9.10</version>
+        </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -89,7 +93,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.11.0</version>
+      <version>4.12.0</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -107,17 +111,16 @@
     </dependency>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
+      <artifactId>commons-lang3-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
       <artifactId>tuleap-api</artifactId>
       <version>2.5.2</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>branch-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.20.0</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
@@ -140,31 +143,17 @@
     <dependency>
       <groupId>io.jenkins</groupId>
       <artifactId>configuration-as-code</artifactId>
-      <version>${jcasc.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.jenkins.configuration-as-code</groupId>
       <artifactId>test-harness</artifactId>
-      <version>${jcasc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.21.0</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest-core</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
   </dependencies>
 
