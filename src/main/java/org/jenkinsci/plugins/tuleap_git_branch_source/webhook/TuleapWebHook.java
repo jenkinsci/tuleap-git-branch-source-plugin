@@ -2,15 +2,15 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.webhook;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Extension;
 import hudson.model.UnprotectedRootAction;
 import org.jenkinsci.plugins.tuleap_git_branch_source.guice.TuleapWebhookGuiceModule;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor.TuleapWebHookProcessor;
 import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 
-import javax.annotation.CheckForNull;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,7 +47,7 @@ public class TuleapWebHook implements UnprotectedRootAction {
         return WEBHOOK_URL;
     }
 
-    public HttpResponse doIndex(final StaplerRequest request, final StaplerResponse response) throws IOException {
+    public HttpResponse doIndex(final StaplerRequest2 request, final StaplerResponse2 response) throws IOException {
         LOGGER.log(Level.FINEST, "Tuleap WebHook called with URL: {0} ", request.getRequestURIWithQueryString());
         return this.tuleapWebHookActionProcessor.process(request);
     }

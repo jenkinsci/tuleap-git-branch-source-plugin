@@ -35,17 +35,15 @@ public class JobFinderTest {
     @Test(expected = TuleapProjectNotFoundException.class)
     public void testThrowsTuleapProjectNotFoundExceptionWhenThereIsNoTuleapOrganizationFolder() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException, RepositoryScanFailedException {
         OrganizationFolder folderWithSeveralOrigin = mock(OrganizationFolder.class);
-        when(folderWithSeveralOrigin.isSingleOrigin()).thenReturn(false);
+        when(folderWithSeveralOrigin.getSCMNavigators()).thenReturn(List.of());
 
         OrganizationFolder folderWithBadSCMNavigator = mock(OrganizationFolder.class);
-        when(folderWithBadSCMNavigator.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> scmNavigatorList = new ArrayList<>();
         SCMNavigator classicNavigator = mock(SCMNavigator.class);
         scmNavigatorList.add(classicNavigator);
         when(folderWithBadSCMNavigator.getSCMNavigators()).thenReturn(scmNavigatorList);
 
         OrganizationFolder tuleapFolderWithAUnwantedName = mock(OrganizationFolder.class);
-        when(tuleapFolderWithAUnwantedName.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
@@ -62,7 +60,6 @@ public class JobFinderTest {
     @Test(expected = RepositoryNotFoundException.class)
     public void testThrowRepositoryNotFoundExceptionWhenTheRepositoryDoesNotExist() throws TuleapProjectNotFoundException, RepositoryNotFoundException, BranchNotFoundException, RepositoryScanFailedException {
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
@@ -94,7 +91,6 @@ public class JobFinderTest {
         when(representation.getBranchName()).thenReturn("W204");
 
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
@@ -124,7 +120,6 @@ public class JobFinderTest {
         when(representation.getBranchName()).thenReturn("W204");
 
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
@@ -152,7 +147,6 @@ public class JobFinderTest {
         when(representation.getRepositoryName()).thenReturn("C63");
 
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);
@@ -182,7 +176,6 @@ public class JobFinderTest {
         when(representation.getRepositoryName()).thenReturn("C63");
 
         OrganizationFolder tuleapFolder = mock(OrganizationFolder.class);
-        when(tuleapFolder.isSingleOrigin()).thenReturn(true);
         List<SCMNavigator> tuleapScmNavigatorList = new ArrayList<>();
         TuleapSCMNavigator tuleapNavigator = mock(TuleapSCMNavigator.class);
         tuleapScmNavigatorList.add(tuleapNavigator);

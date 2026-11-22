@@ -19,7 +19,7 @@ public class TuleapSCMNavigatorDeserializationTest {
         OrganizationFolder folder = (OrganizationFolder) jenkins.getInstance().getItemByFullName("step");
         TuleapSCMNavigator navigator = folder.getNavigators().get(TuleapSCMNavigator.class);
 
-        assertEquals(navigator.getTuleapProjectId(), "101");
+        assertEquals("101", navigator.getTuleapProjectId());
     }
 
     @Test
@@ -28,6 +28,6 @@ public class TuleapSCMNavigatorDeserializationTest {
         OrganizationFolder folder = (OrganizationFolder) jenkins.getInstance().getItemByFullName("step");
         TuleapSCMNavigator navigator = folder.getNavigators().get(TuleapSCMNavigator.class);
 
-        assertEquals(navigator.getTuleapProjectId(), "101");
+        assertEquals("101", navigator.getTuleapProjectId());
     }
 }

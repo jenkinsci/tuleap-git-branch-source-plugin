@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jenkinsci.plugins.tuleap_git_branch_source.config.TuleapConnector.*;
@@ -130,7 +129,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @NonNull
     @Override
     protected List<Action> retrieveActions(@NonNull SCMHead head, @CheckForNull SCMHeadEvent event,
-                                           @NonNull TaskListener listener) throws IOException, InterruptedException {
+                                           @NonNull TaskListener listener) {
         SCMSourceOwner owner = getOwner();
         if (owner instanceof Actionable) {
             return TuleapRepositoryActionBuilder.buildTuleapRepositoryActions((Actionable) owner, head,this.repository, this.projectId, this.getGitBaseUri());
@@ -140,8 +139,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
 
     @NonNull
     @Override
-    protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener)
-        throws IOException, InterruptedException {
+    protected List<Action> retrieveActions(@CheckForNull SCMSourceEvent event, @NonNull TaskListener listener) {
         List<Action> result = new ArrayList<>();
         result.add(new TuleapLink("icon-git-repo", getGitBaseUri() + repositoryPath.replace(".git", "")));
         return result;
@@ -151,7 +149,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     protected void retrieve(@CheckForNull SCMSourceCriteria criteria, @NonNull SCMHeadObserver observer,
                             @CheckForNull SCMHeadEvent<?> event, @NonNull TaskListener listener) throws IOException, InterruptedException {
         try (final TuleapSCMSourceRequest request = new TuleapSCMSourceContext(criteria, observer).withTraits(traits).newRequest(this, listener)) {
-            TuleapAccessToken credentials = lookupScanCredentials((Item) getOwner(), getApiBaseUri(),
+            TuleapAccessToken credentials = lookupScanCredentials(getOwner(), getApiBaseUri(),
                 getCredentialsId());
             setCredentials(credentials);
             setRemoteUrl(getGitBaseUri() + repositoryPath);
@@ -165,16 +163,16 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     .configure()
                     .call();
                 int count = 0;
-                for (TuleapBranches branch : branches.collect(Collectors.toList())) {
+                for (TuleapBranches branch : branches.toList()) {
                     count++;
                     request.listener().getLogger().format("Search at '%s'", branch.getName());
                     TuleapBranchSCMHead tuleapBranchSCMHead = new TuleapBranchSCMHead(branch.getName());
                     if (request.process(tuleapBranchSCMHead, (SCMSourceRequest.RevisionLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>) head ->
                             new TuleapBranchSCMRevision(head, branch.getCommit().getId()),
-                        new SCMSourceRequest.ProbeLambda<TuleapBranchSCMHead, TuleapBranchSCMRevision>() {
+                        new SCMSourceRequest.ProbeLambda<>() {
                             @NotNull
                             @Override
-                            public SCMSourceCriteria.Probe create(@NotNull TuleapBranchSCMHead head, @Nullable TuleapBranchSCMRevision revisionInfo) throws IOException, InterruptedException {
+                            public SCMSourceCriteria.Probe create(@NotNull TuleapBranchSCMHead head, @Nullable TuleapBranchSCMRevision revisionInfo) throws IOException {
                                 return createProbe(head, revisionInfo);
                             }
                         }, new OFWitness(listener))) {
@@ -229,7 +227,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                                     partialPullRequest.getHead().getId()
                                 )
                             ),
-                        new SCMSourceRequest.ProbeLambda<TuleapPullRequestSCMHead, TuleapPullRequestRevision>() {
+                        new SCMSourceRequest.ProbeLambda<>() {
                             @NotNull
                             @Override
                             public SCMSourceCriteria.Probe create(@NotNull TuleapPullRequestSCMHead head, @Nullable TuleapPullRequestRevision revisionInfo) throws IOException, InterruptedException {
@@ -295,7 +293,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @Override
     public SCMRevision getTrustedRevision(@NonNull SCMRevision revision, @NonNull TaskListener listener)
         throws IOException, InterruptedException {
-        if (revision instanceof TuleapPullRequestRevision) {
+        if (revision instanceof TuleapPullRequestRevision rev) {
             TuleapPullRequestSCMHead head = (TuleapPullRequestSCMHead) revision.getHead();
 
             try (TuleapSCMSourceRequest request = new TuleapSCMSourceContext(null, SCMHeadObserver.none())
@@ -305,7 +303,6 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
                     return revision;
                 }
             }
-            TuleapPullRequestRevision rev = (TuleapPullRequestRevision) revision;
             listener.getLogger().format("Loading trusted Jenkins files from target branch %s at %s rather than %s%n",
                 head.getTarget().getName(), rev.getTarget(), rev.getOrigin().getHead().getName());
             return new SCMRevisionImpl(head.getTarget(), rev.getTargetHash());
@@ -314,7 +311,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     }
 
     @Override
-    protected SCMRevision retrieve(SCMHead head, TaskListener listener) throws IOException, InterruptedException {
+    protected SCMRevision retrieve(@NotNull SCMHead head, @NotNull TaskListener listener) throws IOException {
 
         if (head instanceof TuleapBranchSCMHead) {
             Optional<String> revision = Optional.empty();
@@ -333,8 +330,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
             if (revision.isPresent()) {
                 return new TuleapBranchSCMRevision(head, revision.get());
             }
-        } else if (head instanceof TuleapPullRequestSCMHead) {
-            TuleapPullRequestSCMHead tlpSCMHead = (TuleapPullRequestSCMHead) head;
+        } else if (head instanceof TuleapPullRequestSCMHead tlpSCMHead) {
             PullRequest pullRequest = TuleapApiRetriever.getPullRequestApi().getPullRequest(tlpSCMHead.getId(), this.credentials);
             String targetReference = pullRequest.getDestinationReference();
             return new TuleapPullRequestRevision(
@@ -378,6 +374,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         return new TuleapSCMBuilder(scmHead, scmRevision, remoteUrl, credentialsId, repositoryUri).withTraits(traits).build();
     }
 
+    @NotNull
     public List<SCMSourceTrait> getTraits() {
         return Collections.unmodifiableList(traits);
     }
@@ -459,11 +456,13 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
     @Extension
     public static class DescriptorImpl extends SCMSourceDescriptor {
 
+        @NotNull
         @Override
         public String getDisplayName() {
             return "Tuleap";
         }
 
+        @NotNull
         public List<SCMSourceTrait> getTraitsDefaults() {
             return Arrays.asList(new TuleapBranchDiscoveryTrait(), new TuleapOriginPullRequestDiscoveryTrait(), new RefSpecsSCMSourceTrait());
         }
@@ -493,7 +492,7 @@ public class TuleapSCMSource extends AbstractGitSCMSource {
         @SuppressWarnings("unused") // stapler
         @RequirePOST
         public ListBoxModel doFillProjectIdItems(@CheckForNull @AncestorInPath Item context,
-                                                 @QueryParameter String credentialsId) throws IOException {
+                                                 @QueryParameter String credentialsId) {
             if (credentialsId.isEmpty()) {
                 return new StandardListBoxModel().includeEmptyValue();
             }

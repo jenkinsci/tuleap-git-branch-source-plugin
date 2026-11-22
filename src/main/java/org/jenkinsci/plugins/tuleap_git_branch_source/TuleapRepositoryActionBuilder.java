@@ -24,8 +24,7 @@ public final class TuleapRepositoryActionBuilder {
                 if (head instanceof TuleapBranchSCMHead) {
                     String url = repoLink.getUrl() + "?a=shortlog&h=" + URLEncoder.encode(head.getName(), StandardCharsets.UTF_8);
                     result.add(new TuleapLink("icon-git-branch", url));
-                } else if (head instanceof TuleapPullRequestSCMHead) {
-                    TuleapPullRequestSCMHead tuleapPullRequestSCMHead = (TuleapPullRequestSCMHead) head;
+                } else if (head instanceof TuleapPullRequestSCMHead tuleapPullRequestSCMHead) {
                     String encodedRepositoryId = URLEncoder.encode(Integer.toString(repository.getId()), StandardCharsets.UTF_8);
                     String encodedPullRequestId = URLEncoder.encode(tuleapPullRequestSCMHead.getId(), StandardCharsets.UTF_8);
                     String encodedProjectId = URLEncoder.encode(projectId, StandardCharsets.UTF_8);

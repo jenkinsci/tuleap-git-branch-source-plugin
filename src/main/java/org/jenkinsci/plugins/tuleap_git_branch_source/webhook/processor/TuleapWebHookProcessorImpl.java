@@ -2,8 +2,6 @@ package org.jenkinsci.plugins.tuleap_git_branch_source.webhook.processor;
 
 import com.google.gson.Gson;
 import hudson.util.HttpResponses;
-import io.jenkins.plugins.tuleap_api.client.authentication.WebhookTokenApi;
-import org.jenkinsci.plugins.tuleap_git_branch_source.helpers.TuleapApiRetriever;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.check.TuleapWebHookChecker;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.BranchNotFoundException;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.RepositoryNotFoundException;
@@ -12,9 +10,9 @@ import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.exceptions.TuleapP
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.helper.TuleapWebHookHelper;
 import org.jenkinsci.plugins.tuleap_git_branch_source.webhook.model.WebHookRepresentation;
 import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
@@ -40,7 +38,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
         this.helper = helper;
     }
 
-    public HttpResponse process(StaplerRequest request) throws IOException {
+    public HttpResponse process(StaplerRequest2 request) throws IOException {
         if (!this.webHookChecker.checkRequestHeaderContentType(request.getContentType())) {
             return HttpResponses.error(400, "Content type not supported");
         }
@@ -51,13 +49,7 @@ public class TuleapWebHookProcessorImpl implements TuleapWebHookProcessor {
             return HttpResponses.error(400, "Jenkins job cannot be triggered. The request is empty");
         }
 
-        String decodedPayload;
-        try {
-            decodedPayload = helper.getUTF8DecodedPayload(payload);
-        } catch (UnsupportedEncodingException e) {
-            return HttpResponses.error(500, "Error while decoding the payload");
-        }
-
+        String decodedPayload = helper.getUTF8DecodedPayload(payload);
         LOGGER.log(Level.FINEST, "Checking the payload content...");
 
         WebHookRepresentation representation = this.gson.fromJson(decodedPayload, WebHookRepresentation.class);

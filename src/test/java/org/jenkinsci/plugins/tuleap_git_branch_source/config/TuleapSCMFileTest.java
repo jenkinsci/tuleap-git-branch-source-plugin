@@ -43,12 +43,12 @@ public class TuleapSCMFileTest {
             }
 
             @Override
-            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws TreeNotFoundException {
+            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return null;
             }
 
             @Override
-            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
+            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return null;
             }
 
@@ -92,7 +92,7 @@ public class TuleapSCMFileTest {
             }
 
             @Override
-            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
+            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return null;
             }
 
@@ -135,12 +135,12 @@ public class TuleapSCMFileTest {
             }
 
             @Override
-            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws TreeNotFoundException {
+            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return ImmutableList.of(file1, file2, tree, symlink);
             }
 
             @Override
-            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
+            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return null;
             }
 
@@ -191,12 +191,12 @@ public class TuleapSCMFileTest {
             }
 
             @Override
-            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws TreeNotFoundException {
+            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return null;
             }
 
             @Override
-            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws FileContentNotFoundException {
+            public GitFileContent getFileContent(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return new GitFileContentStub("SSdtIGhlcmUsIEknbSBub3QgaGVyZQ==");
             }
 
@@ -246,7 +246,7 @@ public class TuleapSCMFileTest {
             }
 
             @Override
-            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) throws TreeNotFoundException {
+            public List<GitTreeContent> getTree(String s, String s1, String s2, TuleapAccessToken tuleapAccessToken) {
                 return null;
             }
 
